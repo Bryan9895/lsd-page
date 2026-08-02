@@ -1,0 +1,458 @@
+/* =========================================
+   RESETS E CONFIGURAÇÕES GERAIS
+   ========================================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    background-attachment: fixed !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    min-height: 100vh;
+}
+
+/* =========================================
+   DIVISORES (ONDAS SVG) - CORREÇÃO DE VAZAMENTO
+   ========================================= */
+.custom-shape-divider-top-1 svg,
+.custom-shape-divider-bottom-1 svg,
+.custom-shape-divider-top-2 svg,
+.custom-shape-divider-top-3 svg,
+.custom-shape-divider-top-4 svg {
+    height: 60px;
+    width: 100%; 
+    display: block;
+}
+
+.custom-shape-divider-top-2 svg {
+    height: 80px;
+    width: 100%; 
+    display: block;
+    padding-top: 55px;
+}
+
+/* =========================================
+   CORREÇÕES GERAIS DE CARDS E PLANETA
+   ========================================= */
+/* Evitar cards achatados usando min-height (REMOVIDO .cardRede DAQUI) */
+.card, .card-3 {
+    height: auto !important;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cardEquipe, .flip-card {
+    height: auto !important;
+    min-height: 450px;
+    display: flex !important;
+    visibility: visible !important;
+}
+
+
+.planetafundo {
+    display: block !important;
+    position: absolute;
+    z-index: 1; 
+    pointer-events: none; 
+    opacity: 0.07; 
+}
+
+/* =========================================
+   RESPONSIVIDADE: NOTEBOOKS (Até 1200px)
+   ========================================= */
+@media (max-width: 1200px) {
+    .hero-titulo { font-size: 3rem; }
+    .hero-subtitulo { font-size: 1.5rem; }
+    .tituloProjetos, .tituloRedes, .sobre-texto h2 { font-size: 2.2rem; }
+    
+    .cards, .sobre-cards, .hero-status {
+        gap: 20px;
+        padding: 0 20px;
+    }
+}
+
+/* =========================================
+   RESPONSIVIDADE: TABLETS (Até 1024px)
+   ========================================= */
+@media (max-width: 1024px) {
+    /* ----- NAVBAR ----- */
+    nav {
+        padding: 0 20px;
+        z-index: 1001;
+    }
+    .options-nav ul {
+        gap: 20px;
+        z-index: 1000;
+    }
+
+    /* ----- INDEX: HERO ----- */
+    .hero {
+        flex-direction: column;
+        text-align: center;
+        padding: 140px 5% 60px;
+        gap: 40px;
+    }
+    .hero-texto {
+        margin: 0 auto;
+        align-items: center;
+        z-index: 1000;
+    }
+    .hero-butoes, .hero-status {
+        justify-content: center;
+        z-index: 1000;
+    }
+    .hero-slider {
+        width: 100%;
+        max-width: 520px;
+        z-index: 1000;
+    }
+    .hero-status {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+
+    /* ----- INDEX: SOBRE ----- */
+    .container-sobre {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+    }
+    .sobre-texto { margin: 0 auto; }
+    .sobre-cards { grid-template-columns: repeat(2, 1fr); }
+
+    /* ----- INDEX: PROJETOS ----- */
+    .cards {
+        grid-template-columns: repeat(2, 1fr);
+        justify-content: center;
+    }
+    .card-3 {
+        width: 100%;
+        max-width: 350px;
+        margin: 0 auto;
+    }
+
+    /* ----- EQUIPE COMPLETA ----- */
+    .slide-membro {
+        flex-direction: column;
+        text-align: center;
+        gap: 30px;
+        padding: 0 40px;
+    }
+    .membro-foto {
+        flex: 0 0 auto;
+        width: 250px;
+        max-width: 100%;
+    }
+    .membro-bio { margin: 0 auto 25px; }
+    .membro-redes, .selos-membro { justify-content: center; }
+    .sobre {
+        flex-direction: column-reverse;
+        padding: 80px 5%;
+        text-align: center;
+    }
+    .box-sobre {
+        width: 100%;
+        height: auto;
+        min-height: 300px;
+        max-width: 450px;
+    }
+
+    /* ----- COMPARTILHADO: REDES & PLANETA ----- */
+    .cardsRedes {
+        flex-wrap: wrap; /* Garante que os cards desçam se faltar espaço */
+        justify-content: center;
+        gap: 30px;
+    }
+    .planetafundo {
+        width: 400px;
+        height: 400px;
+        right: -50px; 
+        top: 15%;
+        z-index: 1;
+    }
+    .footer-pinguim img { right: 20px; }
+}
+
+/* =========================================
+   RESPONSIVIDADE: MOBILE GERAL (Até 768px)
+   ========================================= */
+@media (max-width: 768px) {
+    /* ----- NAVBAR ----- */
+    nav {
+        flex-direction: column;
+        height: auto;
+        padding: 15px 20px;
+        gap: 15px;
+        background: transparent;
+    }
+    .logo-subtexto { display: none; }
+    .options-nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+    .options-nav a { font-size: 14px; }
+
+    /* ----- INDEX: HERO ----- */
+    .hero {
+        padding-top: 150px;
+        background-color: #1a274c;
+    }
+    .hero-butoes .btn-projetos {
+        width: 60%;
+    }
+    .hero-butoes .saibaMais-btn {
+        width: 60%;
+    }
+    .hero-titulo { font-size: 2.2rem; }
+    .hero-subtitulo { font-size: 1.2rem; }
+    .hero-status {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .hero-slider { height: 250px; }
+
+    /* ----- INDEX: SOBRE & PROJETOS ----- */
+    .sobre-cards, .cards, .membros-grid {
+        grid-template-columns: 1fr; 
+        gap: 20px;
+    }
+    .sobre-texto h2, .tituloProjetos, .tituloRedes { font-size: 1.8rem; }
+
+    /* ----- INDEX: EQUIPE (CARD GIRATÓRIO) ----- */
+    .containerEquipe {
+        min-height: auto; 
+        padding: 40px 15px;
+    }
+    .cardEquipe, .flip-card {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        min-height: 400px;
+    }
+    .verso {
+        padding: 20px;
+        overflow-y: auto;
+    }
+
+    /* ----- EQUIPE COMPLETA ----- */
+    .membro-foto { 
+        width: 180px; 
+    }
+    .membro-nome { 
+        font-size: 1.5rem;
+    }
+    
+    .custom-shape-divider-top-1 svg {
+         height: 40px; 
+    }
+
+    /* ----- COMPARTILHADO: REDES & PLANETA ----- */
+
+    .cardsRedes {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .cardRede {
+        max-width: 300px; 
+        height: 350px; 
+        margin: 0 auto;
+    }
+
+    .planetafundo {
+        width: 250px;
+        height: 250px;
+        top: 20%;
+        right: 0;
+        left: 0;
+        margin: 0 auto;
+        z-index: 1;
+    }
+
+    /* ----- COMPARTILHADO: FOOTER ----- */
+    .footer-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+    .footer-pinguim img {
+        position: static; 
+        margin: 10px auto 0;
+        width: 80px;
+    }
+}
+
+/* =========================================
+   RESPONSIVIDADE: CELULARES PEQUENOS (Até 480px)
+   ========================================= */
+@media (max-width: 480px) {
+    .hero-titulo { font-size: 1.8rem; } 
+    .hero-subtitulo { font-size: 1rem; }
+    
+    .hero-butoes {
+        flex-direction: column; 
+        align-items: center;
+        gap: 15px;
+        width: 100%;
+    }
+    .hero-butoes a {
+        width: 100%;
+        text-align: center;
+    }
+
+    .sobre-texto h2, .tituloProjetos, .tituloRedes {
+        font-size: 1.5rem;
+    }
+    
+    /* REMOVIDO .cardRede DA REDUÇÃO DE PADDING PARA NÃO QUEBRAR O GIRO 3D */
+    .card, .card-3, .cardEquipe {
+        padding: 15px; 
+    }
+}
+
+/* =========================================
+   RESPONSIVIDADE: EQUIPE COMPLETA 
+   ========================================= */
+
+/* ----- TVS E TELAS ULTRA WIDE (Acima de 1920px) ----- */
+@media (min-width: 1921px) {
+
+    .carrossel-membros { max-width: 1600px; z-index: 2;}
+    .membro-foto { flex: 0 0 500px; z-index: 2;}
+    .membro-nome { font-size: 4rem; z-index: 2; }
+    .membro-bio { font-size: 1.5rem; max-width: 100%; z-index: 2; }
+    
+    .card-sobre { min-height: 300px; z-index: 2; }
+    .box-sobre { width: 25%; height: 900px; z-index: 2; }
+    .sobre-titulo { font-size: 80px; z-index: 2; }
+    .sobre-desc { font-size: 24px; max-width: 800px; z-index: 2; }
+    .membro-nome, 
+    .membro-bio,
+    .header-membro{
+        position: relative;
+        z-index: 10 !important;
+    }
+}
+
+/* ----- NOTEBOOKS E TELAS MÉDIAS (Até 1200px) ----- */
+@media (max-width: 1200px) {
+    .carrossel-membros { 
+        max-width: 90%; 
+        gap: 30px; 
+        z-index: 2;
+    }
+    .cards {
+        z-index: 2;
+    }
+    .nome-membro, 
+    .bio-membro,
+    .header-membro{
+        position: relative;
+        z-index: 10 !important;
+    }
+    .membro-foto { flex: 0 0 350px; z-index: 2; }
+    .card-sobre {min-height: 200px; z-index: 2;}
+    .sobre { gap: 40px; padding: 0 5%; z-index: 2; }
+    .box-sobre { width: 35%; z-index: 2; } 
+
+    .btn-nav.prev { left: -20px; }
+    .btn-nav.next { right: -20px; }
+}
+
+/* ----- TABLETS (Até 1024px) ----- */
+@media (max-width: 1024px) {
+    .hero { 
+        padding-top: 120px; 
+        min-height: auto;
+    }
+    .nome-membro, 
+    .bio-membro,
+    .header-membro{
+        position: relative;
+        z-index: 10 !important;
+    }
+
+    .slide-membro { 
+        flex-direction: column; 
+        text-align: center; 
+        gap: 25px;
+        padding: 0 30px;
+    }
+    .membro-foto { flex: 0 0 auto; width: 250px; z-index: 2; }
+    .membro-foto img { max-width: 250px; margin: 0 auto; z-index: 2; }
+    .membro-bio { margin: 0 auto 25px; z-index: 2; }
+    .membro-redes, .selos-membro { justify-content: center; z-index: 2; }
+
+    .sobre {
+        flex-direction: column-reverse;
+        padding: 80px 5%;
+        text-align: center;
+    }
+    .sobre-texto { max-width: 100%; margin: 0 auto; z-index: 2; }
+    .box-sobre { 
+        width: 100%; 
+        max-width: 500px; 
+        height: 500px; 
+        margin: 0 auto; 
+        z-index: 2;
+    }
+}
+
+/* ----- CELULARES GERAIS (Até 768px) ----- */
+@media (max-width: 768px) {
+    .carrossel-membros { min-height: auto; padding: 40px 0; z-index: 2; }
+    .card-sobre { min-height: 200px; z-index: 2; }
+
+    .membro-foto { width: 200px; z-index: 2; }
+    .membro-foto img { max-width: 200px; z-index: 2; }
+    .membro-nome { font-size: 2.2rem; z-index: 2; }
+    .membro-funcao { font-size: 1rem; margin-bottom: 15px; z-index: 2; }
+    .membro-bio { font-size: 1rem; margin-bottom: 20px; z-index: 2; }
+    
+    .btn-nav { width: 40px; height: 40px; font-size: 1rem; z-index: 3; }
+    .btn-nav.prev { left: 0; z-index: 3; }
+    .btn-nav.next { right: 0; z-index: 3; }
+
+    .sobre-titulo { font-size: 40px; z-index: 2; }
+    .sobre-desc { font-size: 16px; z-index: 2; }
+    .box-sobre { height: 400px; z-index: 2; }
+    .planetafundo { width: 300px; height: 300px; top: 20%; right: 0; left: 0; margin: 0 auto; z-index: 1; }
+
+    .nome-membro, 
+    .bio-membro,
+    .header-membro {
+        position: relative;
+        z-index: 10;
+    }
+}
+
+/* ----- CELULARES PEQUENOS (Até 480px) ----- */
+@media (max-width: 480px) {
+
+    .slide-membro { padding: 0 15px; gap: 15px; z-index: 2; }
+    .membro-foto { width: 150px; z-index: 2; }
+    .membro-foto img { max-width: 150px; z-index: 2; }
+    .membro-nome { font-size: 1.8rem; z-index: 2; }
+
+    .selos-membro { gap: 8px; z-index: 2; }
+    .selo { font-size: 0.75rem; padding: 4px 10px; }
+    
+    .sobre-titulo { font-size: 32px; z-index: 2; }
+    .box-sobre { height: 350px; z-index: 2; }
+    
+    /* Aproxima os botões de navegação para garantir o clique */
+    .btn-nav.prev { left: 5px; background-color: rgba(255, 255, 255, 0.15); z-index: 3; }
+    .btn-nav.next { right: 5px; background-color: rgba(255, 255, 255, 0.15); z-index: 3; }
+    
+    .card-sobre .header-membro img { width: 50px; height: 50px; z-index: 2; }
+}
+
