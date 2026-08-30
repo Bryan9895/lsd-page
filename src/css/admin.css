@@ -1,0 +1,160 @@
+.admin-main {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 5%;
+}
+
+.admin-header {
+    margin-bottom: 30px;
+}
+
+.admin-header h2 {
+    color: var(--azul-escuro);
+    font-size: 26px;
+}
+
+.admin-header p {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.admin-table-container {
+    background: var(--branco);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(20, 40, 79, .08);
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.admin-table th {
+    background: rgba(230, 233, 239, .5);
+    color: var(--azul-escuro);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 16px 20px;
+    border-bottom: 2px solid rgba(0,0,0,0.05);
+}
+
+.admin-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    vertical-align: middle;
+}
+
+/* Identificação do Usuário na tabela */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-info img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.user-details strong {
+    display: block;
+    color: var(--azul-escuro);
+    font-size: 14px;
+}
+
+.user-details span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* Badges de Nível */
+.badge-admin {
+    background: #2c3e50;
+    color: var(--amarelo);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.badge-membro {
+    background: #e9ecef;
+    color: #495057;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Botões de Ação */
+.btn-acao {
+    background: none;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+    margin-right: 5px;
+}
+
+.btn-acao.promover { color: #2980b9; background: rgba(41, 128, 185, 0.1); }
+.btn-acao.promover:hover { background: #2980b9; color: white; }
+
+.btn-acao.excluir { color: #e74c3c; background: rgba(231, 76, 60, 0.1); }
+.btn-acao.excluir:hover { background: #e74c3c; color: white; }
+
+/* Alertas */
+.mensagem-admin {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Badges de Advertência */
+.badge-ok {
+    background: #d4edda;
+    color: #155724;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.badge-alerta {
+    background: #fff3cd;
+    color: #856404;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.badge-perigo {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    animation: piscar 1s infinite alternate;
+}
+
+@keyframes piscar {
+    from { opacity: 1; }
+    to { opacity: 0.7; }
+}
+
+/* Botão de Advertir */
+.btn-acao.advertir { color: #f39c12; background: rgba(243, 156, 18, 0.1); }
+.btn-acao.advertir:hover { background: #f39c12; color: white; }
+
+.msg-sucesso { background: #d4edda; color: #155724; }
+.msg-erro { background: #f8d7da; color: #721c24; }

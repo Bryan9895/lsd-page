@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./src/css/styles.css">
+    <link rel="stylesheet" href="./src/css/dashboard.css">
+    <link rel="stylesheet" href="./src/css/admin.css">
+    <title>Painel Admin — LSD</title>
+</head>
+<body class="dash-body">
+    <header class="dash-nav">
+        <div class="dash-nav-logo">
+            <img src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
+            <span>LSD <strong>Admin</strong></span>
+        </div>
+        <nav class="dash-nav-links">
+            <a href="dashboard.html"><i class="fas fa-columns"></i> Quadro</a>
+            <a href="perfil.html"><i class="fas fa-user"></i> Meu Perfil</a>
+            <a href="#" id="logoutLink"><i class="fas fa-right-from-bracket"></i> Sair</a>
+        </nav>
+    </header>
+
+    <main class="admin-main">
+        <div class="admin-header">
+            <h2>Gerenciamento de Equipe</h2>
+            <p>Controle os acessos e membros do laboratório.</p>
+            <div id="mensagemAdmin"></div>
+        </div>
+
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Membro</th>
+                        <th>Função</th>
+                        <th>Nível de Acesso</th>
+                        <th>Ações</th>
+                        <th>Advertências</th>
+                    </tr>
+                </thead>
+                <tbody id="listaUsuarios">
+                    <tr><td colspan="4" style="text-align: center;">Carregando membros...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    <script src="./src/js/admin.js"></script>
+</body>
+</html>
