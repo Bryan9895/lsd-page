@@ -130,23 +130,27 @@ if (formLogin) {
         const botao = formLogin.querySelector(".btn-auth");
         alternarCarregando(botao, true);
 
-        // TODO BACKEND: substituir pelo login real.
-        // try {
-        //     const resposta = await fetch('/api/auth/login', {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify({ email, senha })
-        //     });
-        //     if (!resposta.ok) throw new Error('Credenciais inválidas.');
-        //     const dados = await resposta.json();
-        //     // salvar token (ex: cookie httpOnly definido pelo backend, ou localStorage se for SPA)
-        //     window.location.href = 'index.html';
-        //     return;
-        // } catch (err) {
-        //     mostrarMensagem('login-mensagem', 'erro', err.message);
-        // } finally {
-        //     alternarCarregando(botao, false);
-        // }
+        try {
+            const resposta = await fetch('http://127.0.0.1:5000/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha })
+            });
+            
+            const dados = await resposta.json();
+            
+            if (!resposta.ok) throw new Error(dados.erro || 'Credenciais inválidas.');
+            
+            // Salvar token no localStorage para manter a sessão
+            localStorage.setItem('token', dados.token);
+            
+            window.location.href = 'index.html'; // Redireciona
+            return;
+        } catch (err) {
+            mostrarMensagem('login-mensagem', 'erro', err.message);
+        } finally {
+            alternarCarregando(botao, false);
+        }
 
         setTimeout(() => {
             alternarCarregando(botao, false);
