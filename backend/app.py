@@ -34,7 +34,7 @@ class Usuario(db.Model):
     bio = db.Column(db.String(160))
     instagram = db.Column(db.String(200))
     github = db.Column(db.String(200))
-    foto = db.Column(db.String(200)) # Caminho da imagem salva
+    foto = db.Column(db.String(200))
 
 with app.app_context():
     db.create_all()
