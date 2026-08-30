@@ -92,18 +92,9 @@ if (slides.length) {
     contagem();
 }
 
-/** flip card da Equipe **/
-const teamCard = document.getElementById("teamCard");
-
-teamCard?.addEventListener("click", () => {
-    teamCard.classList.toggle("active");
-});
-
-/** Carrossel de Equipe — expande dentro da própria seção, sem navegar de página **/
+/** Carrossel de Equipe — Carrega diretamente na página **/
 const carrosselWrapper = document.getElementById("carrosselEquipeWrapper");
 const carrosselTrack = document.getElementById("carrosselEquipe");
-const botoesVerEquipe = document.querySelectorAll(".btn-ver-equipe");
-const btnFecharCarrossel = document.getElementById("fecharCarrossel");
 const btnCarrosselPrev = document.getElementById("carrosselPrev");
 const btnCarrosselNext = document.getElementById("carrosselNext");
 
@@ -193,38 +184,11 @@ if (carrosselWrapper && carrosselTrack && typeof equipeMembros !== "undefined" &
         autoplayId = setInterval(proximoMembro, 10000);
     }
 
-    function abrirCarrossel() {
-        montarCarrossel();
-        teamCard.style.display = "none";
-        carrosselWrapper.hidden = false;
+    // Monta e inicializa o carrossel diretamente
+    montarCarrossel();
+    atualizarCarrossel();
+    reiniciarAutoplay();
 
-        requestAnimationFrame(() => {
-            atualizarCarrossel();
-            requestAnimationFrame(() => carrosselWrapper.classList.add("aberto"));
-        });
-
-        reiniciarAutoplay();
-    }
-
-    function fecharCarrossel() {
-        clearInterval(autoplayId);
-        carrosselWrapper.classList.remove("aberto");
-        teamCard.classList.remove("active");
-
-        setTimeout(() => {
-            carrosselWrapper.hidden = true;
-            teamCard.style.display = "";
-        }, 400);
-    }
-
-    botoesVerEquipe.forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            abrirCarrossel();
-        });
-    });
-
-    btnFecharCarrossel?.addEventListener("click", fecharCarrossel);
     btnCarrosselNext?.addEventListener("click", proximoMembro);
     btnCarrosselPrev?.addEventListener("click", membroAnterior);
 }

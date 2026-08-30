@@ -1,13 +1,10 @@
-/**
- * Dados dos membros do LSD, usados pelo carrossel da seção Equipe (index.html).
- * Extraídos de equipe-completa.html.
- */
+
 const equipeMembros = [
     {
         nome: "Bryan William",
         funcao: "Desenvolvedor Full Stack",
         bio: "Nunca hesite, pois no momento que você hesitar, perderá.",
-        foto: "./src/images/equipe/avatar/bryan.jpg",
+        foto: "./src/images/equipe/avatar/bryan.jpeg",
         selos: ["Student teach Student", "Líder"],
         redes: {
             instagram: "https://instagram.com/seu_asd",
@@ -19,7 +16,7 @@ const equipeMembros = [
         nome: "Heitor Martins",
         funcao: "Desenvolvedor Full Stack",
         bio: "Esta bio está em desenvolvimento.",
-        foto: "./src/images/equipe/avatar/heitor.jpg",
+        foto: "./src/images/equipe/avatar/heitor.jpeg",
         selos: ["Robótica Educacional", "Lupa Digital", "Líder"],
         redes: {
             instagram: "https://instagram.com/seu_perfil",
@@ -31,7 +28,7 @@ const equipeMembros = [
         nome: "Francisco Adriel",
         funcao: "Robotista",
         bio: "Esta bio está em desenvolvimento.",
-        foto: "./src/images/equipe/avatar/adriel.jpg",
+        foto: "./src/images/equipe/avatar/adriel.jpeg",
         selos: ["Lupa Digital", "Robótica Educacional"],
         redes: {
             instagram: "https://instagram.com/seu_perfil",
@@ -43,7 +40,7 @@ const equipeMembros = [
         nome: "Paula Giovanna",
         funcao: "Diretora de Mídia",
         bio: "O seu sorriso pode mudar o mundo, por isso não deixe o mundo mudar o seu sorriso!",
-        foto: "./src/images/equipe/avatar/giovanna.jpg",
+        foto: "./src/images/equipe/avatar/giovanna.jpeg",
         selos: ["Equipe de Mídia"],
         redes: {
             instagram: "https://instagram.com/giosampp_",
@@ -52,10 +49,10 @@ const equipeMembros = [
         }
     },
     {
-        nome: "Suellen",
+        nome: "Suellen Quintela",
         funcao: "Em desenvolvimento",
         bio: "Eu quero inventar meu próprio pecado, quero inventar meu próprio veneno.",
-        foto: "./src/images/equipe/avatar/suellen.jpg",
+        foto: "./src/images/equipe/avatar/suellen.jpeg",
         selos: ["Laboratório de Sistemas e Dados"],
         redes: {
             instagram: "https://www.instagram.com/susu.life77",
@@ -64,22 +61,10 @@ const equipeMembros = [
         }
     },
     {
-        nome: "John Keyrrison",
-        funcao: "Programador",
-        bio: "Com coragem e esforço, até o impossível se torna realidade.",
-        foto: "./src/images/equipe/avatar/john.jpg",
-        selos: ["Simulados Enem"],
-        redes: {
-            instagram: "https://instagram.com/john_lima013",
-            github: "https://github.com/johnlima08-a11y",
-            email: "john.lima08@aluno.ifce.edu.br"
-        }
-    },
-    {
         nome: "Isabelly Gomes",
         funcao: "Produtora Criativa",
         bio: "Ad astra per aspera.",
-        foto: "./src/images/equipe/avatar/isabelly.jpg",
+        foto: "./src/images/equipe/avatar/isabelly.jpeg",
         selos: ["Simulados Enem", "Equipe de Mídia"],
         redes: {
             instagram: "https://instagram.com/isabelly_gomesds",
@@ -91,7 +76,7 @@ const equipeMembros = [
         nome: "Lilia Carla",
         funcao: "Em desenvolvimento",
         bio: "Aquilo que mais receamos é o que nos faz sair dos nossos hábitos.",
-        foto: "./src/images/equipe/avatar/lilia.jpg",
+        foto: "./src/images/equipe/avatar/lilia.jpeg",
         selos: ["Laboratório de Sistemas e Dados"],
         redes: {
             instagram: "https://instagram.com/seu_perfil",
@@ -103,7 +88,7 @@ const equipeMembros = [
         nome: "Maria Liliane",
         funcao: "Designer",
         bio: "Não se preocupe com o que os outros pensam. Apenas seja você mesmo.",
-        foto: "./src/images/equipe/avatar/liliane.jpg",
+        foto: "./src/images/equipe/avatar/liliane.jpeg",
         selos: ["Corrige AI", "Simulados Enem"],
         redes: {
             instagram: "https://instagram.com/l1anes_",
@@ -112,22 +97,10 @@ const equipeMembros = [
         }
     },
     {
-        nome: "Augusto Saul",
-        funcao: "Desenvolvedor Back-End",
-        bio: "Incendeie o seu coração.",
-        foto: "./src/images/equipe/avatar/augusto.jpg",
-        selos: ["Lupa Digital"],
-        redes: {
-            instagram: "https://instagram.com/seu_perfil",
-            github: "https://github.com/Luas-Znxm",
-            email: "saul.rodrigues10@aluno.ifce.edu.br"
-        }
-    },
-    {
         nome: "Valentina Maciel",
         funcao: "Em desenvolvimento",
         bio: "O impossível não é impossível. Sua própria existência é a prova disso.",
-        foto: "./src/images/equipe/avatar/valentina.jpg",
+        foto: "./src/images/equipe/avatar/valentina.jpeg",
         selos: ["Corrige AI"],
         redes: {
             instagram: "https://instagram.com/seu_perfil",
@@ -139,7 +112,7 @@ const equipeMembros = [
         nome: "Nicolas Mateus",
         funcao: "Programador",
         bio: "Não há como aprender a voar sem cair algumas vezes.",
-        foto: "./src/images/equipe/avatar/nicolas.jpg",
+        foto: "./src/images/equipe/avatar/nicolas.jpeg",
         selos: ["FioCruz", "Lupa Digital"],
         redes: {
             instagram: "https://instagram.com/seu_perfil",
@@ -151,7 +124,7 @@ const equipeMembros = [
         nome: "Murilo Belizário",
         funcao: "Desenvolvedor Full Stack",
         bio: "Sapere Aude.",
-        foto: "./src/images/equipe/avatar/murilo.jpg",
+        foto: "./src/images/equipe/avatar/murilo.jpeg",
         selos: ["Laboratório de Sistemas e Dados"],
         redes: {
             instagram: "https://instagram.com/seu_perfil",
@@ -163,7 +136,7 @@ const equipeMembros = [
         nome: "Hanna Sophia",
         funcao: "Desenvolvedora Python",
         bio: "Em desenvolvimento.",
-        foto: "./src/images/equipe/avatar/hanna.jpg",
+        foto: "./src/images/equipe/avatar/hanna.jpeg",
         selos: ["Laboratório de Sistemas e Dados"],
         redes: {
             instagram: "https://instagram.com/",
@@ -175,7 +148,7 @@ const equipeMembros = [
         nome: "Wendell",
         funcao: "Robótico",
         bio: "Em desenvolvimento.",
-        foto: "./src/images/equipe/avatar/wendell.jpg",
+        foto: "./src/images/equipe/avatar/wendell.jpeg",
         selos: ["Laboratório de Sistemas e Dados"],
         redes: {
             instagram: "https://instagram.com/",
@@ -184,10 +157,10 @@ const equipeMembros = [
         }
     },
     {
-        nome: "Gilvan",
+        nome: "José Gilvan",
         funcao: "Membro Esporádico",
         bio: "Em desenvolvimento.",
-        foto: "./src/images/equipe/avatar/gilvan.jpg",
+        foto: "./src/images/equipe/avatar/gilvan.jpeg",
         selos: ["Lupa Digital"],
         redes: {
             instagram: "https://instagram.com/",
@@ -199,7 +172,7 @@ const equipeMembros = [
         nome: "Caio Salgado Marques",
         funcao: "Desenvolvedor Full Stack",
         bio: "Sei lá!",
-        foto: "./src/images/equipe/avatar/caio.jpg",
+        foto: "./src/images/equipe/avatar/caio.jpeg",
         selos: ["Laboratório de Sistemas e Dados"],
         redes: {
             instagram: "https://instagram.com/",
@@ -223,7 +196,7 @@ const equipeMembros = [
         nome: "Felipe Chen Fan",
         funcao: "Em desenvolvimento",
         bio: "Em desenvolvimento.",
-        foto: "./src/images/equipe/avatar/felipe.jpg",
+        foto: "./src/images/equipe/avatar/felipe.jpeg",
         selos: ["Laboratório de Sistemas e Dados"],
         redes: {
             instagram: "https://instagram.com/",
