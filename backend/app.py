@@ -45,6 +45,14 @@ with app.app_context():
 
 @app.route('/api/auth/cadastro', methods=['POST'])
 def cadastro():
+    codigo_recebido = request.form.get('codigo_acesso')
+    codigo_secreto = "20251321000001"
+
+    # Se o código estiver errado, bloqueia o cadastro na hora!
+    if codigo_recebido != codigo_secreto:
+        return jsonify({"erro": "Código de acesso da equipe inválido!"}), 403
+
+    nome = request.form.get('nome')
     nome = request.form.get('nome')
     email = request.form.get('email')
     senha = request.form.get('senha')
