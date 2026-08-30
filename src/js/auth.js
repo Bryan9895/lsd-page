@@ -154,6 +154,7 @@ if (formCadastro) {
         const senha = document.getElementById("senha").value;
         const confirmarSenha = document.getElementById("confirmar-senha").value;
         const termos = document.getElementById("termos").checked;
+        const codigoAcesso = document.getElementById("codigo_acesso").value.trim();
         let valido = true;
 
         if (nome.length < 3) {
@@ -204,6 +205,9 @@ if (formCadastro) {
             formData.append('bio', dadosPerfil.bio);
             formData.append('instagram', dadosPerfil.instagram);
             formData.append('github', dadosPerfil.github);
+            formData.append('codigo_acesso', codigoAcesso);
+            
+
             
             if (dadosPerfil.foto) {
                 formData.append('foto', dadosPerfil.foto);
