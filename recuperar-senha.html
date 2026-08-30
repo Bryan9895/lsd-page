@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+        <link rel="stylesheet" href="./src/css/styles.css">
+        <link rel="stylesheet" href="./src/css/auth.css">
+        <title>Recuperar senha — LSD</title>
+    </head>
+
+    <body class="auth-body">
+        <div class="auth-wrapper">
+
+            <aside class="auth-marca">
+                <a href="index.html" class="auth-marca-logo">
+                    <img src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
+                    <div class="logo-subtexto">
+                        <span>Sistemas</span>
+                        <span>&amp; Dados</span>
+                    </div>
+                </a>
+
+                <div class="auth-marca-conteudo">
+                    <span class="tag-sobre">Área do membro</span>
+                    <h1>Acontece.</h1>
+                    <p>Informe o e-mail da sua conta e enviaremos um link seguro pra você criar uma nova senha.</p>
+                </div>
+
+                <a href="index.html" class="auth-marca-voltar">
+                    <i class="fas fa-arrow-left"></i> Voltar ao site
+                </a>
+            </aside>
+
+            <main class="auth-form-painel">
+                <div class="auth-card">
+                    <div class="auth-card-topo">
+                        <h2>Recuperar senha</h2>
+                        <p>Lembrou a senha? <a href="equipe-completa.html">Voltar para o login</a></p>
+                    </div>
+
+                    <div class="auth-mensagem" id="recuperar-mensagem"></div>
+
+                    <form id="form-recuperar" novalidate>
+                        <div class="campo">
+                            <label for="email">E-mail cadastrado</label>
+                            <div class="campo-input">
+                                <input type="email" id="email" name="email" placeholder="seu.nome@aluno.ifce.edu.br" autocomplete="email" required>
+                            </div>
+                            <span class="campo-erro" id="email-erro"></span>
+                        </div>
+
+                        <button type="submit" class="btn-auth">
+                            <span class="spinner"></span>
+                            <span class="btn-auth-texto">Enviar link de recuperação</span>
+                        </button>
+                    </form>
+
+                    <p class="auth-card-rodape">
+                        <a href="equipe-completa.html"><i class="fas fa-arrow-left"></i> Voltar para o login</a>
+                    </p>
+                </div>
+            </main>
+
+        </div>
+
+        <script src="./src/js/auth.js"></script>
+    </body>
+</html>
