@@ -20,6 +20,7 @@ body {
     --azul: #2E5AA7;
     --azul-claro: #86C5FF;
     --amarelo: #E8A020;
+    --verde: #22C55E;
     --branco: #FFFFFF;
     --cinza: #E6E9EF;
     --preto: #252525;
@@ -32,7 +33,6 @@ body {
     --azul-escuro: #14284f;
 }
 
-/**tmnc, tou ficando puto de tanto mudar cor**/
 .text-azul {
     color: var(--azul);
 }
@@ -44,6 +44,11 @@ body {
 .text-amarelo-border {
     color: var(--amarelo);
     border: 0.2px solid #E8A020;
+}
+
+.text-verde-border {
+    color: var(--verde);
+    border: 0.2px solid;
 }
 
 .text-azul-claro {
@@ -965,37 +970,15 @@ nav.scrolled{
     width: 100%;
     max-width: 1100px;
     margin: 30px auto 0;
-    opacity: 0;
-    transform: translateY(18px);
-    transition: opacity .5s ease, transform .5s ease;
+    opacity: 1;
+    transform: translateY(0);
 }
+.tituloprincipalEquipe { font-size: 36px; color: var(--navy); font-weight: 700; text-align: center;}
+.titulosecundarioEquipe {text-align: center; color: var(--muted); margin-top: 10px;}
 
 .carrossel-equipe-wrapper.aberto {
     opacity: 1;
     transform: translateY(0);
-}
-
-.fechar-carrossel {
-    position: absolute;
-    top: -6px;
-    right: 6px;
-    width: 38px;
-    height: 38px;
-    border: none;
-    border-radius: 50%;
-    background: var(--navy);
-    color: var(--branco);
-    font-size: 20px;
-    line-height: 1;
-    cursor: pointer;
-    z-index: 20;
-    transition: background .25s ease, transform .25s ease;
-}
-
-.fechar-carrossel:hover {
-    background: var(--amarelo);
-    color: #1a1a1a;
-    transform: rotate(90deg);
 }
 
 .carrossel-equipe {
