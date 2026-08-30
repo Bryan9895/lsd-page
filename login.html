@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+        <link rel="stylesheet" href="./src/css/styles.css">
+        <link rel="stylesheet" href="./src/css/auth.css">
+        <title>Criar conta — LSD</title>
+    </head>
+
+    <body class="auth-body">
+        <div class="auth-wrapper">
+
+            <aside class="auth-marca">
+                <a href="index.html" class="auth-marca-logo">
+                    <img src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
+                    <div class="logo-subtexto">
+                        <span>Sistemas</span>
+                        <span>&amp; Dados</span>
+                    </div>
+                </a>
+
+                <div class="auth-marca-conteudo">
+                    <span class="tag-sobre">Faça parte</span>
+                    <h1>Crie sua conta e monte seu perfil na equipe.</h1>
+                    <p>As informações abaixo são as mesmas usadas no card do carrossel "Conheça o Time" — foto, função, bio e redes sociais.</p>
+                </div>
+
+                <a href="index.html" class="auth-marca-voltar">
+                    <i class="fas fa-arrow-left"></i> Voltar ao site
+                </a>
+            </aside>
+
+            <main class="auth-form-painel">
+                <div class="auth-card">
+                    <div class="auth-card-topo">
+                        <h2>Criar conta</h2>
+                        <p>Já tem uma conta? <a href="equipe-completa.html">Entrar</a></p>
+                    </div>
+
+                    <div class="auth-mensagem" id="cadastro-mensagem"></div>
+
+                    <form id="form-cadastro" novalidate>
+
+                        <div class="campo">
+                            <label for="nome">Nome completo</label>
+                            <div class="campo-input">
+                                <input type="text" id="nome" name="nome" placeholder="Seu nome completo" autocomplete="name" required>
+                            </div>
+                            <span class="campo-erro" id="nome-erro"></span>
+                        </div>
+
+                        <div class="campo">
+                            <label for="email">E-mail institucional</label>
+                            <div class="campo-input">
+                                <input type="email" id="email" name="email" placeholder="seu.nome@aluno.ifce.edu.br" autocomplete="email" required>
+                            </div>
+                            <span class="campo-erro" id="email-erro"></span>
+                        </div>
+
+                        <div class="campo-foto">
+                            <div class="campo-foto-preview" id="foto-preview">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="campo-foto-info">
+                                <label for="foto" class="botao-upload">Escolher foto</label>
+                                <input type="file" id="foto" name="foto" accept="image/*">
+                                <p>Usada no seu card da equipe. JPG ou PNG.</p>
+                                <span class="campo-erro" id="foto-erro"></span>
+                            </div>
+                        </div>
+
+                        <div class="campo">
+                            <label for="funcao">Cargo / função no LSD</label>
+                            <div class="campo-input">
+                                <input type="text" id="funcao" name="funcao" placeholder="Ex: Desenvolvedor Full Stack">
+                            </div>
+                        </div>
+
+                        <div class="campo">
+                            <label for="bio">Bio curta <span class="opcional">(opcional)</span></label>
+                            <div class="campo-input">
+                                <textarea id="bio" name="bio" maxlength="160" placeholder="Uma frase curta pra aparecer no seu card da equipe."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="campo">
+                            <label for="instagram">Instagram <span class="opcional">(opcional)</span></label>
+                            <div class="campo-input">
+                                <input type="url" id="instagram" name="instagram" placeholder="https://instagram.com/seuusuario">
+                            </div>
+                        </div>
+
+                        <div class="campo">
+                            <label for="github">GitHub <span class="opcional">(opcional)</span></label>
+                            <div class="campo-input">
+                                <input type="url" id="github" name="github" placeholder="https://github.com/seuusuario">
+                            </div>
+                        </div>
+
+                        <div class="campo-linha">
+                            <div class="campo">
+                                <label for="senha">Senha</label>
+                                <div class="campo-input">
+                                    <input type="password" id="senha" name="senha" placeholder="Mín. 8 caracteres" autocomplete="new-password" required>
+                                    <button type="button" class="campo-senha-toggle" data-alvo="senha" aria-label="Mostrar senha">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <span class="campo-erro" id="senha-erro"></span>
+                            </div>
+
+                            <div class="campo">
+                                <label for="confirmar-senha">Confirmar senha</label>
+                                <div class="campo-input">
+                                    <input type="password" id="confirmar-senha" name="confirmar-senha" placeholder="Repita a senha" autocomplete="new-password" required>
+                                    <button type="button" class="campo-senha-toggle" data-alvo="confirmar-senha" aria-label="Mostrar senha">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <span class="campo-erro" id="confirmar-senha-erro"></span>
+                            </div>
+                        </div>
+
+                        <div class="campo-checkbox">
+                            <input type="checkbox" id="termos" name="termos">
+                            <label for="termos">Li e aceito os <a href="#">termos de uso</a> e a <a href="#">política de privacidade</a> do LSD.</label>
+                        </div>
+                        <span class="campo-erro" id="termos-erro" style="margin-top:-14px; margin-bottom: 16px;"></span>
+
+                        <button type="submit" class="btn-auth">
+                            <span class="spinner"></span>
+                            <span class="btn-auth-texto">Criar conta</span>
+                        </button>
+                    </form>
+
+                    <p class="auth-card-rodape">
+                        <a href="index.html"><i class="fas fa-arrow-left"></i> Voltar ao site</a>
+                    </p>
+                </div>
+            </main>
+
+        </div>
+
+        <script src="./src/js/auth.js"></script>
+    </body>
+</html>
