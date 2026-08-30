@@ -1,19 +1,23 @@
-from flask import Flask, request, jsonify
+import os
+import uuid
+import datetime
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from werkzeug.utils import secure_filename
 import jwt
-import datetime
-import os
 
+# 1. Primeiro criamos a aplicação Flask
 app = Flask(__name__)
 CORS(app)
 
-# Configurações do Banco de Dados SQLite e chave de segurança
+# 2. Configurações gerais
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///banco_de_dados.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_segura' # Mude isso em produção!
+
+# 3. Configuração da pasta de uploads
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -22,7 +26,7 @@ db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
 # ==========================================
-# 1. MODELO DO BANCO DE DADOS
+# MODELO DO BANCO DE DADOS
 # ==========================================
 
 class Usuario(db.Model):
@@ -34,15 +38,21 @@ class Usuario(db.Model):
     bio = db.Column(db.String(160))
     instagram = db.Column(db.String(200))
     github = db.Column(db.String(200))
-    foto = db.Column(db.String(200))
+    foto = db.Column(db.String(200)) # Aqui vamos salvar a URL completa da foto
 
 with app.app_context():
     db.create_all()
 
 # ==========================================
-# 2. ROTAS DA API
+# ROTAS DA API
 # ==========================================
 
+# ROTA PARA EXIBIR A FOTO NO NAVEGADOR
+@app.route('/uploads/<nome_arquivo>')
+def acessar_foto(nome_arquivo):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], nome_arquivo)
+
+# ROTA DE CADASTRO
 @app.route('/api/auth/cadastro', methods=['POST'])
 def cadastro():
     codigo_recebido = request.form.get('codigo_acesso')
@@ -53,7 +63,6 @@ def cadastro():
         return jsonify({"erro": "Código de acesso da equipe inválido!"}), 403
 
     nome = request.form.get('nome')
-    nome = request.form.get('nome')
     email = request.form.get('email')
     senha = request.form.get('senha')
     
@@ -62,13 +71,21 @@ def cadastro():
 
     senha_criptografada = bcrypt.generate_password_hash(senha).decode('utf-8')
 
-    caminho_foto = None
+    url_foto = None
     foto = request.files.get('foto')
+    
+    # Lógica inteligente para salvar a foto
     if foto and foto.filename != '':
-        nome_arquivo = secure_filename(foto.filename)
-        caminho_completo = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
+        # Pega a extensão do arquivo (ex: .png, .jpg)
+        extensao = foto.filename.rsplit('.', 1)[-1].lower()
+        # Cria um nome único usando UUID para não sobreescrever fotos
+        nome_unico = f"{uuid.uuid4().hex}.{extensao}"
+        
+        caminho_completo = os.path.join(app.config['UPLOAD_FOLDER'], nome_unico)
         foto.save(caminho_completo)
-        caminho_foto = caminho_completo
+        
+        # Salva a URL completa para o front-end usar direto na tag <img>
+        url_foto = f"http://127.0.0.1:5000/uploads/{nome_unico}"
 
     novo_usuario = Usuario(
         nome=nome,
@@ -78,7 +95,7 @@ def cadastro():
         bio=request.form.get('bio'),
         instagram=request.form.get('instagram'),
         github=request.form.get('github'),
-        foto=caminho_foto
+        foto=url_foto
     )
     db.session.add(novo_usuario)
     db.session.commit()
@@ -101,7 +118,12 @@ def login():
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
         }, app.config['SECRET_KEY'], algorithm='HS256')
         
-        return jsonify({"token": token, "mensagem": "Login aprovado!"}), 200
+        return jsonify({
+            "token": token, 
+            "mensagem": "Login aprovado!",
+            "nome": usuario.nome,
+            "foto": usuario.foto
+        }), 200
     
     return jsonify({"erro": "E-mail ou senha incorretos."}), 401
 
@@ -115,6 +137,7 @@ def recuperar_senha():
     print(f"Lógica de envio de e-mail acionada para: {email}")
     
     return jsonify({"ok": True, "mensagem": "Link enviado se o e-mail existir."}), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

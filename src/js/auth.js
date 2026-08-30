@@ -1,5 +1,13 @@
 /**
  * Lógica compartilhada das páginas de autenticação (login, cadastro, recuperar senha).
+ *
+ * Este arquivo cuida da validação no front-end, feedback visual e comunicação 
+ * com a API real do servidor.
+ *
+ * Sugestão de contrato de API (ajustado para o backend real):
+ *   POST /api/auth/login          { email, senha }                    -> { token }
+ *   POST /api/auth/cadastro       { nome, email, senha, codigo... }    -> { token }
+ *   POST /api/auth/recuperar-senha { email }                           -> { ok: true }
  */
 
 // ---------- Utilitários ----------
@@ -207,8 +215,6 @@ if (formCadastro) {
             formData.append('github', dadosPerfil.github);
             formData.append('codigo_acesso', codigoAcesso);
             
-
-            
             if (dadosPerfil.foto) {
                 formData.append('foto', dadosPerfil.foto);
             }
@@ -235,16 +241,18 @@ if (formCadastro) {
             
             const dadosLogin = await respostaLogin.json();
             
-            if (respostaLogin.ok) {
-                // Salva o token de acesso
+            if (resposta.ok) {
                 localStorage.setItem('token_lsd', dadosLogin.token);
-                // Redireciona para o site inicial em 1,5 segundos
-                setTimeout(() => { window.location.href = 'index.html'; }, 1500);
-            } else {
-                // Se der erro no auto-login, joga para a tela de login
-                setTimeout(() => { window.location.href = 'login.html'; }, 1500);
-            }
+                localStorage.setItem('nome_usuario_lsd', dadosLogin.nome || "Membro Logado");
 
+                if (dadosLogin.foto) {
+                    localStorage.setItem('foto_usuario_lsd', dadosLogin.foto);
+                } else {
+                    localStorage.removeItem('foto_usuario_lsd');
+                }
+                
+                setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+            }
         } catch (err) {
             mostrarMensagem('cadastro-mensagem', 'erro', err.message);
         } finally {
@@ -274,6 +282,9 @@ if (formRecuperar) {
         alternarCarregando(botao, true);
 
         // TODO BACKEND: substituir pelo envio real do e-mail de recuperação.
+        // Importante: responder sempre com a mesma mensagem genérica,
+        // exista ou não o e-mail na base, por segurança.
+        
         setTimeout(() => {
             alternarCarregando(botao, false);
             formRecuperar.querySelector(".btn-auth-texto").textContent = "Link enviado";
