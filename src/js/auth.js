@@ -205,11 +205,11 @@ if (formCadastro) {
             formData.append('instagram', dadosPerfil.instagram);
             formData.append('github', dadosPerfil.github);
             
-            // Adiciona a foto, se existir
             if (dadosPerfil.foto) {
                 formData.append('foto', dadosPerfil.foto);
             }
 
+            // 1. Envia os dados para cadastrar
             const resposta = await fetch('http://127.0.0.1:5000/api/auth/cadastro', {
                 method: 'POST',
                 body: formData
@@ -219,12 +219,27 @@ if (formCadastro) {
 
             if (!resposta.ok) throw new Error(dados.erro || 'Erro ao criar conta.');
             
-            mostrarMensagem("cadastro-mensagem", "sucesso", "Conta criada com sucesso! Redirecionando...");
+            // 2. Mostra a mensagem de sucesso
+            mostrarMensagem("cadastro-mensagem", "sucesso", '<i class="fas fa-circle-check"></i> Cadastro concluído! Entrando...');
             
-            // Manda o usuário para o login após 2 segundos
-            setTimeout(() => {
-                window.location.href = 'login.html'; 
-            }, 2000);
+            // 3. Faz o LOGIN AUTOMÁTICO com os mesmos dados
+            const respostaLogin = await fetch('http://127.0.0.1:5000/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: dadosPerfil.email, senha: dadosPerfil.senha })
+            });
+            
+            const dadosLogin = await respostaLogin.json();
+            
+            if (respostaLogin.ok) {
+                // Salva o token de acesso
+                localStorage.setItem('token_lsd', dadosLogin.token);
+                // Redireciona para o site inicial em 1,5 segundos
+                setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+            } else {
+                // Se der erro no auto-login, joga para a tela de login
+                setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+            }
 
         } catch (err) {
             mostrarMensagem('cadastro-mensagem', 'erro', err.message);

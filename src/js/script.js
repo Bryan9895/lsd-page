@@ -193,6 +193,38 @@ if (carrosselWrapper && carrosselTrack && typeof equipeMembros !== "undefined" &
     btnCarrosselPrev?.addEventListener("click", membroAnterior);
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+    // Procura a área de usuário que criamos no index.html
+    const areaUsuario = document.getElementById("area-usuario");
+    
+    // Verifica se existe um token salvo no navegador
+    const token = localStorage.getItem("token_lsd");
+
+    if (areaUsuario) {
+        if (token) {
+            // Se TEM token, o usuário está logado! 
+            // Trocamos o botão de "Entrar" por um botão de "Sair"
+            areaUsuario.innerHTML = `
+                <a href="#" id="btn-sair" style="color: var(--azul); font-weight: bold; text-decoration: none;">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            `;
+
+            // Lógica para quando o usuário clicar em "Sair"
+            document.getElementById("btn-sair").addEventListener("click", (e) => {
+                e.preventDefault();
+                // Remove o token (rasga o crachá)
+                localStorage.removeItem("token_lsd");
+                // Recarrega a página
+                window.location.reload();
+            });
+            
+        } else {
+            // Se NÃO TEM token, o botão padrão de login é mantido.
+            // Aqui você pode colocar o HTML exato de como é o seu botão original caso queira garantir.
+        }
+    }
+});
 /** nav bar scroll **/
 const navbar = document.querySelector("nav");
 
