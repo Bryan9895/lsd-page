@@ -1,21 +1,5 @@
 /**
  * Lógica compartilhada das páginas de autenticação (login, cadastro, recuperar senha).
- *
- * Este arquivo só cuida de validação no front-end e feedback visual.
- * Nenhuma chamada real de rede é feita — os pontos exatos onde conectar
- * o backend estão marcados com "TODO BACKEND" abaixo.
- *
- * Sugestão de contrato de API (ajuste conforme o backend real):
- *   POST /api/auth/login          { email, senha }              -> { token }
- *   POST /api/auth/cadastro       { nome, email, senha, ... }    -> { token }
- *   POST /api/auth/recuperar-senha { email }                     -> { ok: true }
- *
- * Regras de segurança que o backend deve garantir (não fazer no front):
- *   - Hash da senha (bcrypt/argon2), nunca armazenar em texto puro.
- *   - Rate limiting nas rotas de login e recuperação de senha.
- *   - Resposta genérica em "recuperar senha" mesmo se o e-mail não existir,
- *     pra não revelar quais e-mails estão cadastrados.
- *   - Token de redefinição de senha com expiração curta (ex: 30 min).
  */
 
 // ---------- Utilitários ----------
@@ -139,27 +123,19 @@ if (formLogin) {
             
             const dados = await resposta.json();
             
-            if (!resposta.ok) throw new Error(dados.erro || 'Credenciais inválidas.');
+            if (!resposta.ok) throw new Error(dados.erro || 'E-mail ou senha incorretos.');
             
-            // Salvar token no localStorage para manter a sessão
-            localStorage.setItem('token', dados.token);
+            // Salva o "crachá" (Token) de acesso no navegador do usuário
+            localStorage.setItem('token_lsd', dados.token);
             
-            window.location.href = 'index.html'; // Redireciona
-            return;
+            // Redireciona para a página principal ou área restrita
+            window.location.href = 'index.html'; 
+            
         } catch (err) {
             mostrarMensagem('login-mensagem', 'erro', err.message);
         } finally {
             alternarCarregando(botao, false);
         }
-
-        setTimeout(() => {
-            alternarCarregando(botao, false);
-            mostrarMensagem(
-                "login-mensagem",
-                "erro",
-                '<i class="fas fa-circle-info"></i>&nbsp; Esta página ainda não está conectada a um backend — este é apenas o front-end pronto pra integração.'
-            );
-        }, 700);
     });
 }
 
@@ -204,7 +180,8 @@ if (formCadastro) {
 
         const botao = formCadastro.querySelector(".btn-auth");
         alternarCarregando(botao, true);
-
+        
+        // Declarando a variável dadosPerfil corretamente
         const dadosPerfil = {
             nome,
             email,
@@ -216,33 +193,44 @@ if (formCadastro) {
             foto: inputFoto?.files?.[0] || null
         };
 
-        // TODO BACKEND: substituir pelo cadastro real (multipart/form-data por causa da foto).
-        // try {
-        //     const formData = new FormData();
-        //     Object.entries(dadosPerfil).forEach(([chave, valor]) => {
-        //         if (valor) formData.append(chave, valor);
-        //     });
-        //     const resposta = await fetch('/api/auth/cadastro', {
-        //         method: 'POST',
-        //         body: formData
-        //     });
-        //     if (!resposta.ok) throw new Error('Não foi possível concluir o cadastro.');
-        //     window.location.href = 'equipe-completa.html';
-        //     return;
-        // } catch (err) {
-        //     mostrarMensagem('cadastro-mensagem', 'erro', err.message);
-        // } finally {
-        //     alternarCarregando(botao, false);
-        // }
+        try {
+            const formData = new FormData();
+            
+            // Adiciona os textos ao FormData
+            formData.append('nome', dadosPerfil.nome);
+            formData.append('email', dadosPerfil.email);
+            formData.append('senha', dadosPerfil.senha);
+            formData.append('funcao', dadosPerfil.funcao);
+            formData.append('bio', dadosPerfil.bio);
+            formData.append('instagram', dadosPerfil.instagram);
+            formData.append('github', dadosPerfil.github);
+            
+            // Adiciona a foto, se existir
+            if (dadosPerfil.foto) {
+                formData.append('foto', dadosPerfil.foto);
+            }
 
-        setTimeout(() => {
+            const resposta = await fetch('http://127.0.0.1:5000/api/auth/cadastro', {
+                method: 'POST',
+                body: formData
+            });
+
+            const dados = await resposta.json();
+
+            if (!resposta.ok) throw new Error(dados.erro || 'Erro ao criar conta.');
+            
+            mostrarMensagem("cadastro-mensagem", "sucesso", "Conta criada com sucesso! Redirecionando...");
+            
+            // Manda o usuário para o login após 2 segundos
+            setTimeout(() => {
+                window.location.href = 'login.html'; 
+            }, 2000);
+
+        } catch (err) {
+            mostrarMensagem('cadastro-mensagem', 'erro', err.message);
+        } finally {
             alternarCarregando(botao, false);
-            mostrarMensagem(
-                "cadastro-mensagem",
-                "sucesso",
-                '<i class="fas fa-circle-check"></i>&nbsp; Formulário validado! Falta só conectar este front-end a um backend real para criar a conta.'
-            );
-        }, 700);
+        }
     });
 }
 
@@ -267,18 +255,6 @@ if (formRecuperar) {
         alternarCarregando(botao, true);
 
         // TODO BACKEND: substituir pelo envio real do e-mail de recuperação.
-        // Importante: responder sempre com a mesma mensagem genérica,
-        // exista ou não o e-mail na base, por segurança.
-        // try {
-        //     await fetch('/api/auth/recuperar-senha', {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify({ email })
-        //     });
-        // } finally {
-        //     alternarCarregando(botao, false);
-        // }
-
         setTimeout(() => {
             alternarCarregando(botao, false);
             formRecuperar.querySelector(".btn-auth-texto").textContent = "Link enviado";
