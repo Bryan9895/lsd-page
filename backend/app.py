@@ -1,277 +1,373 @@
 import os
-import uuid
 import datetime
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import jwt
 
 app = Flask(__name__)
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///banco_de_dados.db'
+# Configurações
+app.config['SECRET_KEY'] = 'lsd_secret_key_2026'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lsd_database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_segura' 
-
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
 
-# ==========================================
-# MODELO DO BANCO DE DADOS
-# ==========================================
-class Usuario(db.Model):
+# =========================================================
+# MODELOS DE BANCO DE DADOS
+# =========================================================
+
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    senha_hash = db.Column(db.String(128), nullable=False)
-    funcao = db.Column(db.String(100))
-    bio = db.Column(db.String(160))
-    instagram = db.Column(db.String(200))
-    github = db.Column(db.String(200))
-    foto = db.Column(db.String(200)) 
+    senha_hash = db.Column(db.String(255), nullable=False)
+    funcao = db.Column(db.String(100), default='Membro LSD')
+    foto = db.Column(db.String(255), default='/uploads/default-avatar.png')
+    capa = db.Column(db.String(255), default='/uploads/default-capa.jpg')
+    projetos_ativos = db.Column(db.Integer, default=0)
+    data_entrada = db.Column(db.String(50), default='Mar 2024')
+    localizacao = db.Column(db.String(100), default='Maranguape, CE')
     is_admin = db.Column(db.Boolean, default=False)
-    advertencias = db.Column(db.Integer, default=0)
 
-with app.app_context():
-    # Como adicionamos uma coluna nova, recrie o banco deletando o arquivo .db anterior se der erro
-    db.create_all()
+class Card(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), default='afazer') # afazer, andamento, concluido
+    cor = db.Column(db.String(20), default='amarelo') # amarelo, azul, rosa, verde, lilas
+    data_criacao = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    responsavel_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    
+    responsavel = db.relationship('User', backref='cards')
 
-# ==========================================
-# MIDDLEWARE DE SEGURANÇA (EXIGE TOKEN)
-# ==========================================
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    texto = db.Column(db.Text, nullable=False)
+    data_criacao = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    usuario = db.relationship('User', backref='posts')
+    curtidas = db.relationship('PostCurtida', backref='post', cascade="all, delete-orphan")
+
+class PostCurtida(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+# =========================================================
+# DECORADOR DE AUTENTICAÇÃO JWT
+# =========================================================
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        if 'Authorization' in request.headers:
-            token = request.headers['Authorization'].split(" ")[1]
-        
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(" ")[1]
+
         if not token:
-            return jsonify({'erro': 'Token ausente. Faça login novamente.'}), 401
-        
+            return jsonify({'message': 'Token de autenticação ausente!'}), 401
+
         try:
-            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            current_user = Usuario.query.get(data['user_id'])
-        except:
-            return jsonify({'erro': 'Token inválido ou expirado.'}), 401
-            
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+            current_user = User.query.get(data['user_id'])
+            if not current_user:
+                return jsonify({'message': 'Usuário inválido!'}), 401
+        except Exception as e:
+            return jsonify({'message': 'Token inválido ou expirado!'}), 401
+
         return f(current_user, *args, **kwargs)
     return decorated
 
-# ==========================================
-# ROTAS DA API
-# ==========================================
+# =========================================================
+# ROTAS DE AUTENTICAÇÃO E PERFIL
+# =========================================================
 
-@app.route('/uploads/<nome_arquivo>')
-def acessar_foto(nome_arquivo):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], nome_arquivo)
-
-@app.route('/api/auth/cadastro', methods=['POST'])
-def cadastro():
-    codigo_recebido = request.form.get('codigo_acesso')
-    codigo_secreto = "20251321000001"
-
-    if codigo_recebido != codigo_secreto:
-        return jsonify({"erro": "Código de acesso inválido!"}), 403
-
-    nome = request.form.get('nome')
-    email = request.form.get('email')
-    senha = request.form.get('senha')
-    
-    if Usuario.query.filter_by(email=email).first():
-        return jsonify({"erro": "Este e-mail já está em uso."}), 400
-
-    senha_criptografada = bcrypt.generate_password_hash(senha).decode('utf-8')
-    url_foto = None
-    foto = request.files.get('foto')
-    
-    if foto and foto.filename != '':
-        extensao = foto.filename.rsplit('.', 1)[-1].lower()
-        nome_unico = f"{uuid.uuid4().hex}.{extensao}"
-        caminho_completo = os.path.join(app.config['UPLOAD_FOLDER'], nome_unico)
-        foto.save(caminho_completo)
-        url_foto = f"http://127.0.0.1:5000/uploads/{nome_unico}"
-
-    # Dá admin automaticamente para o Bryan
-    is_admin = True if nome.lower() == 'bryan william' else False
-
-    novo_usuario = Usuario(
-        nome=nome,
-        email=email,
-        senha_hash=senha_criptografada,
-        funcao=request.form.get('funcao'),
-        bio=request.form.get('bio'),
-        instagram=request.form.get('instagram'),
-        github=request.form.get('github'),
-        foto=url_foto,
-        is_admin=is_admin
-    )
-    db.session.add(novo_usuario)
-    db.session.commit()
-
-    return jsonify({"mensagem": "Cadastro realizado!"}), 201
-
-@app.route('/api/auth/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
-    dados = request.get_json()
-    usuario = Usuario.query.filter_by(email=dados.get('email')).first()
+    data = request.get_json()
+    email = data.get('email')
+    senha = data.get('senha')
 
-    if usuario and bcrypt.check_password_hash(usuario.senha_hash, dados.get('senha')):
-        token = jwt.encode({
-            'user_id': usuario.id,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-        }, app.config['SECRET_KEY'], algorithm='HS256')
-        
-        return jsonify({
-            "token": token, 
-            "nome": usuario.nome,
-            "foto": usuario.foto,
-            "is_admin": usuario.is_admin
-        }), 200
-    
-    return jsonify({"erro": "E-mail ou senha incorretos."}), 401
+    user = User.query.filter_by(email=email).first()
+    if not user or not check_password_hash(user.senha_hash, senha):
+        return jsonify({'message': 'Credenciais inválidas!'}), 401
 
-# --- NOVAS ROTAS DE PERFIL ---
+    token = jwt.encode({
+        'user_id': user.id,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
+    }, app.config['SECRET_KEY'], algorithm="HS256")
+
+    return jsonify({'token': token, 'user_id': user.id})
 
 @app.route('/api/perfil', methods=['GET'])
 @token_required
-def obter_perfil(current_user):
+def get_perfil(current_user):
     return jsonify({
-        "nome": current_user.nome,
-        "email": current_user.email,
-        "funcao": current_user.funcao,
-        "bio": current_user.bio,
-        "instagram": current_user.instagram,
-        "github": current_user.github,
-        "foto": current_user.foto,
-        "is_admin": current_user.is_admin
-    }), 200
+        'id': current_user.id,
+        'nome': current_user.nome,
+        'email': current_user.email,
+        'funcao': current_user.funcao,
+        'foto': current_user.foto,
+        'capa': current_user.capa,
+        'projetos_ativos': current_user.projetos_ativos,
+        'data_entrada': current_user.data_entrada,
+        'localizacao': current_user.localizacao,
+        'is_admin': current_user.is_admin
+    })
 
 @app.route('/api/perfil', methods=['PUT'])
 @token_required
-def atualizar_perfil(current_user):
-    # Atualiza dados de texto
-    current_user.bio = request.form.get('bio', current_user.bio)
-    current_user.instagram = request.form.get('instagram', current_user.instagram)
-    current_user.github = request.form.get('github', current_user.github)
-    
-    novo_email = request.form.get('email')
-    if novo_email and novo_email != current_user.email:
-        if Usuario.query.filter_by(email=novo_email).first():
-            return jsonify({"erro": "Este e-mail já pertence a outra conta."}), 400
-        current_user.email = novo_email
+def update_perfil(current_user):
+    nome = request.form.get('nome')
+    funcao = request.form.get('funcao')
 
-    # Atualiza foto
-    foto = request.files.get('foto')
-    if foto and foto.filename != '':
-        extensao = foto.filename.rsplit('.', 1)[-1].lower()
-        nome_unico = f"{uuid.uuid4().hex}.{extensao}"
-        caminho_completo = os.path.join(app.config['UPLOAD_FOLDER'], nome_unico)
-        foto.save(caminho_completo)
-        current_user.foto = f"http://127.0.0.1:5000/uploads/{nome_unico}"
+    if nome: current_user.nome = nome
+    if funcao: current_user.funcao = funcao
+
+    if 'avatar' in request.files:
+        file = request.files['avatar']
+        if file.filename != '':
+            filename = secure_filename(f"avatar_{current_user.id}_{file.filename}")
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            current_user.foto = f"/uploads/{filename}"
+
+    if 'capa' in request.files:
+        file = request.files['capa']
+        if file.filename != '':
+            filename = secure_filename(f"capa_{current_user.id}_{file.filename}")
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            current_user.capa = f"/uploads/{filename}"
 
     db.session.commit()
-    
-    return jsonify({
-        "mensagem": "Perfil atualizado com sucesso!",
-        "foto_nova": current_user.foto
-    }), 200
+    return jsonify({'message': 'Perfil atualizado com sucesso!'})
 
-# ==========================================
-# ROTAS DO PAINEL ADMINISTRATIVO
-# ==========================================
+# =========================================================
+# ROTAS DO KANBAN (CARDS)
+# =========================================================
 
-@app.route('/api/admin/usuarios', methods=['GET'])
+@app.route('/api/cards', methods=['GET'])
 @token_required
-def listar_usuarios(current_user):
-    # Trava de segurança extra: só passa se for Admin
-    if not current_user.is_admin:
-        return jsonify({"erro": "Acesso negado. Área restrita para administradores."}), 403
-    
-    usuarios = Usuario.query.all()
-    lista = []
-    for u in usuarios:
-        lista.append({
-            "id": u.id,
-            "nome": u.nome,
-            "email": u.email,
-            "funcao": u.funcao,
-            "foto": u.foto,
-            "is_admin": u.is_admin,
-            "advertencias": u.advertencias
+def get_cards(current_user):
+    cards = Card.query.all()
+    resultado = []
+    for c in cards:
+        resultado.append({
+            'id': c.id,
+            'titulo': c.titulo,
+            'descricao': c.descricao,
+            'status': c.status,
+            'cor': c.cor,
+            'data_criacao': c.data_criacao.isoformat(),
+            'responsavel': {
+                'id': c.responsavel.id,
+                'nome': c.responsavel.nome,
+                'foto': c.responsavel.foto
+            } if c.responsavel else None
         })
-    return jsonify(lista), 200
+    return jsonify(resultado)
 
-@app.route('/api/admin/usuarios/<int:user_id>', methods=['DELETE'])
+@app.route('/api/cards', methods=['POST'])
 @token_required
-def excluir_usuario(current_user, user_id):
-    if not current_user.is_admin:
-        return jsonify({"erro": "Acesso negado."}), 403
+def create_card(current_user):
+    data = request.get_json()
     
-    # Impede que o admin exclua a si mesmo sem querer
-    if current_user.id == user_id:
-        return jsonify({"erro": "Você não pode excluir sua própria conta por aqui."}), 400
-        
-    usuario = Usuario.query.get(user_id)
-    if not usuario:
-        return jsonify({"erro": "Usuário não encontrado."}), 404
-        
-    db.session.delete(usuario)
+    novo_card = Card(
+        titulo=data.get('titulo'),
+        descricao=data.get('descricao', ''),
+        status=data.get('status', 'afazer'),
+        cor=data.get('cor', 'amarelo'),
+        responsavel_id=current_user.id
+    )
+    db.session.add(novo_card)
     db.session.commit()
-    return jsonify({"mensagem": "Usuário removido da equipe com sucesso!"}), 200
 
-@app.route('/api/admin/usuarios/<int:user_id>/toggle-admin', methods=['PUT'])
-@token_required
-def toggle_admin(current_user, user_id):
-    if not current_user.is_admin:
-        return jsonify({"erro": "Acesso negado."}), 403
-        
-    if current_user.id == user_id:
-        return jsonify({"erro": "Você não pode alterar seu próprio nível de acesso."}), 400
-        
-    usuario = Usuario.query.get(user_id)
-    if not usuario:
-        return jsonify({"erro": "Usuário não encontrado."}), 404
-        
-    # Inverte o status de admin (se era True vira False, se era False vira True)
-    usuario.is_admin = not usuario.is_admin
-    db.session.commit()
-    
-    nivel = "Administrador" if usuario.is_admin else "Membro"
-    return jsonify({"mensagem": f"{usuario.nome} agora é {nivel}!"}), 200
+    return jsonify({'message': 'Card criado!', 'id': novo_card.id}), 201
 
-@app.route('/api/admin/usuarios/<int:user_id>/advertir', methods=['POST'])
+@app.route('/api/cards/<int:card_id>', methods=['PUT'])
 @token_required
-def advertir_usuario(current_user, user_id):
-    if not current_user.is_admin:
-        return jsonify({"erro": "Acesso negado."}), 403
-        
-    if current_user.id == user_id:
-        return jsonify({"erro": "Você não pode advertir a si mesmo."}), 400
-        
-    usuario = Usuario.query.get(user_id)
-    if not usuario:
-        return jsonify({"erro": "Usuário não encontrado."}), 404
-        
-    # Incrementa o número de advertências
-    if usuario.advertencias is None:
-        usuario.advertencias = 0
-    usuario.advertencias += 1
+def update_card(current_user, card_id):
+    card = Card.query.get_or_404(card_id)
+    data = request.get_json()
+
+    card.titulo = data.get('titulo', card.titulo)
+    card.descricao = data.get('descricao', card.descricao)
+    card.status = data.get('status', card.status)
+    card.cor = data.get('cor', card.cor)
+
+    db.session.commit()
+    return jsonify({'message': 'Card atualizado!'})
+
+@app.route('/api/cards/<int:card_id>', methods=['DELETE'])
+@token_required
+def delete_card(current_user, card_id):
+    card = Card.query.get_or_404(card_id)
+    db.session.delete(card)
+    db.session.commit()
+    return jsonify({'message': 'Card excluído!'})
+
+@app.route('/api/cards/<int:card_id>/assumir', methods=['POST'])
+@token_required
+def assumir_card(current_user, card_id):
+    # Regra de negócio: limite de no máximo 2 tarefas ativas por usuário
+    tarefas_ativas = Card.query.filter_by(responsavel_id=current_user.id).filter(Card.status != 'concluido').count()
+    if tarefas_ativas >= 2:
+        return jsonify({'message': 'Você já possui 2 tarefas em andamento! Conclua uma antes de assumir outra.'}), 400
+
+    card = Card.query.get_or_404(card_id)
+    card.responsavel_id = current_user.id
+    if card.status == 'afazer':
+        card.status = 'andamento'
+
+    db.session.commit()
+    return jsonify({'message': 'Tarefa assumida com sucesso!'})
+
+# =========================================================
+# ROTAS DO FEED DA COMUNIDADE (POSTS)
+# =========================================================
+
+@app.route('/api/posts', methods=['GET'])
+@token_required
+def get_posts(current_user):
+    posts = Post.query.order_by(Post.data_criacao.desc()).all()
+    resultado = []
+    for p in posts:
+        curtido_por_mim = any(c.usuario_id == current_user.id for c in p.curtidas)
+        resultado.append({
+            'id': p.id,
+            'autor': p.usuario.nome,
+            'foto': p.usuario.foto,
+            'meta': f"{p.data_criacao.strftime('%d/%m/%Y às %H:%M')} · {p.usuario.funcao}",
+            'texto': p.texto,
+            'curtidas': len(p.curtidas),
+            'curtido': curtido_por_mim
+        })
+    return jsonify(resultado)
+
+@app.route('/api/posts', methods=['POST'])
+@token_required
+def create_post(current_user):
+    data = request.get_json()
+    texto = data.get('texto', '').strip()
+    if not texto:
+        return jsonify({'message': 'O texto do post não pode estar vazio.'}), 400
+
+    novo_post = Post(texto=texto, usuario_id=current_user.id)
+    db.session.add(novo_post)
+    db.session.commit()
+
+    return jsonify({'message': 'Post publicado com sucesso!'}), 201
+
+@app.route('/api/posts/<int:post_id>/curtir', methods=['POST'])
+@token_required
+def curtir_post(current_user, post_id):
+    curtida = PostCurtida.query.filter_by(post_id=post_id, usuario_id=current_user.id).first()
+    if curtida:
+        db.session.delete(curtida)
+        db.session.commit()
+        return jsonify({'message': 'Curtida removida!'})
+    else:
+        nova_curtida = PostCurtida(post_id=post_id, usuario_id=current_user.id)
+        db.session.add(nova_curtida)
+        db.session.commit()
+        return jsonify({'message': 'Post curtido!'})
+
+# =========================================================
+# ROUTE DE MEMBROS E ARQUIVOS ESTÁTICOS
+# =========================================================
+
+@app.route('/api/membros', methods=['GET'])
+@token_required
+def get_membros(current_user):
+    membros = User.query.filter(User.id != current_user.id).all()
+    return jsonify([{
+        'id': m.id,
+        'nome': m.nome,
+        'funcao': m.funcao,
+        'foto': m.foto
+    } for m in membros])
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# =========================================================
+# POVOAMENTO INICIAL DE DADOS (SEED)
+# =========================================================
+
+def init_db():
+    with app.app_context():
+        db.create_all()
+        if not User.query.filter_by(email="bryan.william10@aluno.ifce.edu.br").first():
+            user = User(
+                nome="Bryan William",
+                email="bryan.william10@aluno.ifce.edu.br",
+                senha_hash=generate_password_hash("123456"),
+                funcao="Desenvolvedor Full Stack · Pesquisador LSD",
+                projetos_ativos=4,
+                is_admin=True
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            # Seed de cards
+            cards_demo = [
+                Card(titulo="FioCruz", descricao="Monitorar mosquitos modificados para impedir transmissão.", status="andamento", cor="amarelo", responsavel_id=user.id),
+                Card(titulo="Racismo Algorítmico", descricao="Análise do impacto do racismo em IAs.", status="andamento", cor="rosa", responsavel_id=user.id),
+                Card(titulo="Lupa Digital", descricao="Ferramenta visual com OpenCV.", status="afazer", cor="azul")
+            ]
+            db.session.add_all(cards_demo)
+            db.session.commit()
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    # Suporta dados vindos via FormData ou via JSON
+    data = request.form if request.form else (request.get_json() or {})
     
+    email = data.get('email')
+    nome = data.get('nome')
+    senha = data.get('senha', '123456')
+    funcao = data.get('funcao', 'Membro LSD')
+
+    if not email or not nome:
+        return jsonify({'message': 'Preencha os campos obrigatórios!'}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({'message': 'E-mail já cadastrado!'}), 400
+
+    foto_path = '/uploads/default-avatar.png'
+    if 'foto' in request.files:
+        file = request.files['foto']
+        if file.filename != '':
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            foto_path = f"/uploads/{filename}"
+
+    novo_usuario = User(
+        nome=nome,
+        email=email,
+        senha_hash=generate_password_hash(senha),
+        funcao=funcao,
+        foto=foto_path
+    )
+    
+    db.session.add(novo_usuario)
     db.session.commit()
     
-    mensagem = f"Advertência aplicada em {usuario.nome}. Total: {usuario.advertencias}."
-    if usuario.advertencias >= 3:
-        mensagem += " ⚠️ ALERTA: Este usuário atingiu o limite de advertências!"
-        
-    return jsonify({"mensagem": mensagem}), 200
+    return jsonify({'message': 'Usuário cadastrado com sucesso!'}), 201
 
 if __name__ == '__main__':
+    init_db()
     app.run(debug=True, port=5000)
