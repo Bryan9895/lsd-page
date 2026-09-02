@@ -34,9 +34,11 @@ class User(db.Model):
     foto = db.Column(db.String(255), default='/uploads/default-avatar.png')
     capa = db.Column(db.String(255), default='/uploads/default-capa.jpg')
     projetos_ativos = db.Column(db.Integer, default=0)
-    data_entrada = db.Column(db.String(50), default='Mar 2024')
+    data_entrada = db.Column(db.String(50), default='Set 2026')
     localizacao = db.Column(db.String(100), default='Maranguape, CE')
     is_admin = db.Column(db.Boolean, default=False)
+    cargo = db.Column(db.String(50), default='membro')
+    advertencias = db.Column(db.Integer, default=0)
     bio = db.Column(db.Text, nullable=True)
     github = db.Column(db.String(255), nullable=True)
     instagram = db.Column(db.String(255), nullable=True)
@@ -45,8 +47,8 @@ class Card(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text, nullable=True)
-    status = db.Column(db.String(20), default='afazer') # afazer, andamento, concluido
-    cor = db.Column(db.String(20), default='amarelo') # amarelo, azul, rosa, verde, lilas
+    status = db.Column(db.String(20), default='afazer') 
+    cor = db.Column(db.String(20), default='amarelo') 
     data_criacao = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     responsavel_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     
@@ -58,6 +60,13 @@ class Post(db.Model):
     data_criacao = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
+    # Novos campos para suporte a anexos
+    midia_url = db.Column(db.String(255), nullable=True)
+    arquivo_url = db.Column(db.String(255), nullable=True)
+    arquivo_nome = db.Column(db.String(255), nullable=True)
+    codigo_snippet = db.Column(db.Text, nullable=True)
+    codigo_linguagem = db.Column(db.String(50), nullable=True)
+    
     usuario = db.relationship('User', backref='posts')
     curtidas = db.relationship('PostCurtida', backref='post', cascade="all, delete-orphan")
 
@@ -66,10 +75,10 @@ class PostCurtida(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-# =========================================================
-# DECORADOR DE AUTENTICAÇÃO JWT
-# =========================================================
 
+# =========================================================
+# DECORADOR DE AUTENTICAÇÃO JWT (MOVIDO PARA CIMA)
+# =========================================================
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -92,6 +101,91 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorated
 
+
+# =========================================================
+# ROTAS DO FEED (COM SUPORTE A ANEXOS E FORMDATA)
+# =========================================================
+@app.route('/api/posts', methods=['GET'])
+@token_required  # Faltava isso aqui
+def get_posts(current_user):
+    posts = Post.query.order_by(Post.data_criacao.desc()).all()
+    resultado = []
+    for p in posts:
+        curtido_por_mim = any(c.usuario_id == current_user.id for c in p.curtidas)
+        resultado.append({
+            'id': p.id,
+            'autor': p.usuario.nome,
+            'foto': p.usuario.foto,
+            'meta': f"{p.data_criacao.strftime('%d/%m/%Y às %H:%M')} · {p.usuario.funcao}",
+            'texto': p.texto,
+            'midia_url': p.midia_url,
+            'arquivo_url': p.arquivo_url,
+            'arquivo_nome': p.arquivo_nome,
+            'codigo_snippet': p.codigo_snippet,
+            'codigo_linguagem': p.codigo_linguagem,
+            'curtidas': len(p.curtidas),
+            'curtido': curtido_por_mim
+        })
+    return jsonify(resultado)
+
+@app.route('/api/posts', methods=['POST'])
+@token_required
+def create_post(current_user):
+    data = request.form if request.form else (request.get_json() or {})
+    texto = data.get('texto', '').strip()
+    codigo_snippet = data.get('codigo_snippet', '').strip()
+    codigo_linguagem = data.get('codigo_linguagem', 'html')
+
+    if not texto and not codigo_snippet and 'foto' not in request.files and 'arquivo' not in request.files:
+        return jsonify({'message': 'O post precisa conter texto, um arquivo ou trecho de código.'}), 400
+
+    midia_url = None
+    if 'foto' in request.files:
+        file = request.files['foto']
+        if file.filename != '':
+            filename = secure_filename(f"post_img_{current_user.id}_{datetime.datetime.utcnow().timestamp()}_{file.filename}")
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            midia_url = f"/uploads/{filename}"
+
+    arquivo_url = None
+    arquivo_nome = None
+    if 'arquivo' in request.files:
+        file = request.files['arquivo']
+        if file.filename != '':
+            filename = secure_filename(f"post_file_{current_user.id}_{datetime.datetime.utcnow().timestamp()}_{file.filename}")
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            arquivo_url = f"/uploads/{filename}"
+            arquivo_nome = file.filename
+
+    novo_post = Post(
+        texto=texto,
+        usuario_id=current_user.id,
+        midia_url=midia_url,
+        arquivo_url=arquivo_url,
+        arquivo_nome=arquivo_nome,
+        codigo_snippet=codigo_snippet if codigo_snippet else None,
+        codigo_linguagem=codigo_linguagem
+    )
+
+    db.session.add(novo_post)
+    db.session.commit()
+
+    return jsonify({'message': 'Post publicado com sucesso!'}), 201
+
+@app.route('/api/posts/<int:post_id>/curtir', methods=['POST'])
+@token_required
+def curtir_post(current_user, post_id):
+    curtida = PostCurtida.query.filter_by(post_id=post_id, usuario_id=current_user.id).first()
+    if curtida:
+        db.session.delete(curtida)
+        db.session.commit()
+        return jsonify({'message': 'Curtida removida!'})
+    else:
+        nova_curtida = PostCurtida(post_id=post_id, usuario_id=current_user.id)
+        db.session.add(nova_curtida)
+        db.session.commit()
+        return jsonify({'message': 'Post curtido!'})
+
 # =========================================================
 # ROTAS DE AUTENTICAÇÃO E PERFIL
 # =========================================================
@@ -113,6 +207,44 @@ def login():
 
     return jsonify({'token': token, 'user_id': user.id})
 
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.form if request.form else (request.get_json() or {})
+    
+    email = data.get('email')
+    nome = data.get('nome')
+    senha = data.get('senha', '123456')
+    funcao = data.get('funcao', 'Membro LSD')
+
+    if not email or not nome:
+        return jsonify({'message': 'Preencha os campos obrigatórios!'}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({'message': 'E-mail já cadastrado!'}), 400
+
+    foto_path = '/uploads/default-avatar.png'
+    if 'foto' in request.files:
+        file = request.files['foto']
+        if file.filename != '':
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            foto_path = f"/uploads/{filename}"
+
+    novo_usuario = User(
+        nome=nome,
+        email=email,
+        senha_hash=generate_password_hash(senha),
+        funcao=funcao,
+        foto=foto_path,
+        cargo='membro',
+        is_admin=False
+    )
+    
+    db.session.add(novo_usuario)
+    db.session.commit()
+    
+    return jsonify({'message': 'Usuário cadastrado com sucesso!'}), 201
+
 @app.route('/api/perfil', methods=['GET'])
 @token_required
 def get_perfil(current_user):
@@ -126,7 +258,9 @@ def get_perfil(current_user):
         'projetos_ativos': current_user.projetos_ativos,
         'data_entrada': current_user.data_entrada,
         'localizacao': current_user.localizacao,
-        'is_admin': current_user.is_admin
+        'is_admin': current_user.is_admin,
+        'cargo': current_user.cargo,
+        'advertencias': current_user.advertencias
     })
 
 @app.route('/api/perfil', methods=['PUT'])
@@ -134,6 +268,8 @@ def get_perfil(current_user):
 def update_perfil(current_user):
     current_user.nome = request.form.get('nome', current_user.nome)
     current_user.funcao = request.form.get('funcao', current_user.funcao)
+    current_user.email = request.form.get('email', current_user.email)
+    current_user.localizacao = request.form.get('localizacao', current_user.localizacao)
     current_user.bio = request.form.get('bio', current_user.bio)
     current_user.github = request.form.get('github', current_user.github)
     current_user.instagram = request.form.get('instagram', current_user.instagram)
@@ -156,6 +292,67 @@ def update_perfil(current_user):
 
     db.session.commit()
     return jsonify({'message': 'Perfil atualizado com sucesso!'})
+
+# =========================================================
+# ROTAS PAINEL ADMINISTRATIVO (/api/admin/membros)
+# =========================================================
+
+@app.route('/api/admin/membros', methods=['GET'])
+@token_required
+def listar_membros_admin(current_user):
+    membros = User.query.all()
+    return jsonify([{
+        'id': m.id,
+        'nome': m.nome,
+        'email': m.email,
+        'funcao': m.funcao,
+        'foto': m.foto,
+        'is_admin': m.is_admin,
+        'cargo': m.cargo,
+        'advertencias': m.advertencias
+    } for m in membros]), 200
+
+@app.route('/api/admin/membros/<int:membro_id>/adverter', methods=['POST'])
+@token_required
+def adverter_membro(current_user, membro_id):
+    if not current_user.is_admin:
+        return jsonify({'message': 'Acesso negado. Apenas administradores podem adverter.'}), 403
+
+    membro = User.query.get_or_404(membro_id)
+    membro.advertencias = (membro.advertencias or 0) + 1
+    db.session.commit()
+    return jsonify({'message': 'Advertência aplicada com sucesso!', 'advertencias': membro.advertencias}), 200
+
+@app.route('/api/admin/membros/<int:membro_id>/cargo', methods=['PATCH'])
+@token_required
+def alterar_cargo_membro(current_user, membro_id):
+    if not current_user.is_admin:
+        return jsonify({'message': 'Acesso negado. Apenas administradores podem alterar cargos.'}), 403
+
+    membro = User.query.get_or_404(membro_id)
+    data = request.get_json() or {}
+
+    if 'is_admin' in data:
+        membro.is_admin = bool(data['is_admin'])
+    if 'cargo' in data:
+        membro.cargo = data['cargo']
+
+    db.session.commit()
+    return jsonify({'message': 'Cargo do membro atualizado com sucesso!'}), 200
+
+@app.route('/api/admin/membros/<int:membro_id>', methods=['DELETE'])
+@token_required
+def expulsar_membro_admin(current_user, membro_id):
+    if not current_user.is_admin:
+        return jsonify({'message': 'Acesso negado. Apenas administradores podem expulsar membros.'}), 403
+
+    membro_alvo = User.query.get_or_404(membro_id)
+    if membro_alvo.id == current_user.id:
+        return jsonify({'message': 'Você não pode expulsar a si mesmo.'}), 400
+
+    db.session.delete(membro_alvo)
+    db.session.commit()
+    return jsonify({'message': 'Membro expulso com sucesso!'}), 200
 
 # =========================================================
 # ROTAS DO KANBAN (CARDS)
@@ -224,7 +421,6 @@ def delete_card(current_user, card_id):
 @app.route('/api/cards/<int:card_id>/assumir', methods=['POST'])
 @token_required
 def assumir_card(current_user, card_id):
-    # Regra de negócio: limite de no máximo 2 tarefas ativas por usuário
     tarefas_ativas = Card.query.filter_by(responsavel_id=current_user.id).filter(Card.status != 'concluido').count()
     if tarefas_ativas >= 2:
         return jsonify({'message': 'Você já possui 2 tarefas em andamento! Conclua uma antes de assumir outra.'}), 400
@@ -238,57 +434,7 @@ def assumir_card(current_user, card_id):
     return jsonify({'message': 'Tarefa assumida com sucesso!'})
 
 # =========================================================
-# ROTAS DO FEED DA COMUNIDADE (POSTS)
-# =========================================================
-
-@app.route('/api/posts', methods=['GET'])
-@token_required
-def get_posts(current_user):
-    posts = Post.query.order_by(Post.data_criacao.desc()).all()
-    resultado = []
-    for p in posts:
-        curtido_por_mim = any(c.usuario_id == current_user.id for c in p.curtidas)
-        resultado.append({
-            'id': p.id,
-            'autor': p.usuario.nome,
-            'foto': p.usuario.foto,
-            'meta': f"{p.data_criacao.strftime('%d/%m/%Y às %H:%M')} · {p.usuario.funcao}",
-            'texto': p.texto,
-            'curtidas': len(p.curtidas),
-            'curtido': curtido_por_mim
-        })
-    return jsonify(resultado)
-
-@app.route('/api/posts', methods=['POST'])
-@token_required
-def create_post(current_user):
-    data = request.get_json()
-    texto = data.get('texto', '').strip()
-    if not texto:
-        return jsonify({'message': 'O texto do post não pode estar vazio.'}), 400
-
-    novo_post = Post(texto=texto, usuario_id=current_user.id)
-    db.session.add(novo_post)
-    db.session.commit()
-
-    return jsonify({'message': 'Post publicado com sucesso!'}), 201
-
-@app.route('/api/posts/<int:post_id>/curtir', methods=['POST'])
-@token_required
-def curtir_post(current_user, post_id):
-    curtida = PostCurtida.query.filter_by(post_id=post_id, usuario_id=current_user.id).first()
-    if curtida:
-        db.session.delete(curtida)
-        db.session.commit()
-        return jsonify({'message': 'Curtida removida!'})
-    else:
-        nova_curtida = PostCurtida(post_id=post_id, usuario_id=current_user.id)
-        db.session.add(nova_curtida)
-        db.session.commit()
-        return jsonify({'message': 'Post curtido!'})
-
-# =========================================================
-# ROUTE DE MEMBROS E ARQUIVOS ESTÁTICOS
+# ROTAS AUXILIARES E ARQUIVOS ESTÁTICOS
 # =========================================================
 
 @app.route('/api/membros', methods=['GET'])
@@ -318,14 +464,14 @@ def init_db():
                 nome="Bryan William",
                 email="bryan.william10@aluno.ifce.edu.br",
                 senha_hash=generate_password_hash("123456"),
-                funcao="Desenvolvedor Full Stack · Pesquisador LSD", 
-                projetos_ativos=4,
-                is_admin=True
+                funcao="Desenvolvedor Full Stack", 
+                projetos_ativos=0,
+                is_admin=True,
+                cargo="admin"
             )
             db.session.add(user)
             db.session.commit()
 
-            # Seed de cards
             cards_demo = [
                 Card(titulo="FioCruz", descricao="Monitorar mosquitos modificados para impedir transmissão.", status="andamento", cor="amarelo", responsavel_id=user.id),
                 Card(titulo="Racismo Algorítmico", descricao="Análise do impacto do racismo em IAs.", status="andamento", cor="rosa", responsavel_id=user.id),
@@ -333,60 +479,6 @@ def init_db():
             ]
             db.session.add_all(cards_demo)
             db.session.commit()
-
-@app.route('/api/register', methods=['POST'])
-def register():
-    # Suporta dados vindos via FormData ou via JSON
-    data = request.form if request.form else (request.get_json() or {})
-    
-    email = data.get('email')
-    nome = data.get('nome')
-    senha = data.get('senha', '123456')
-    funcao = data.get('funcao', 'Membro LSD')
-
-    if not email or not nome:
-        return jsonify({'message': 'Preencha os campos obrigatórios!'}), 400
-
-    if User.query.filter_by(email=email).first():
-        return jsonify({'message': 'E-mail já cadastrado!'}), 400
-
-    foto_path = '/uploads/default-avatar.png'
-    if 'foto' in request.files:
-        file = request.files['foto']
-        if file.filename != '':
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            foto_path = f"/uploads/{filename}"
-
-    novo_usuario = User(
-        nome=nome,
-        email=email,
-        senha_hash=generate_password_hash(senha),
-        funcao=funcao,
-        foto=foto_path
-    )
-    
-    db.session.add(novo_usuario)
-    db.session.commit()
-    
-    return jsonify({'message': 'Usuário cadastrado com sucesso!'}), 201
-
-@app.route('/api/membros/<int:membro_id>', methods=['DELETE'])
-@token_required
-def expulsar_membro(current_user, membro_id):
-    # Verifica se o membro logado é o Admin
-    if not current_user.is_admin:
-        return jsonify({'message': 'Acesso negado. Apenas administradores podem expulsar membros.'}), 403
-
-    membro_alvo = User.query.get_or_404(membro_id)
-    
-    # Previne que o admin exclua a si mesmo
-    if membro_alvo.id == current_user.id:
-        return jsonify({'message': 'Você não pode expulsar a si mesmo.'}), 400
-
-    db.session.delete(membro_alvo)
-    db.session.commit()
-    return jsonify({'message': 'Membro expulso com sucesso!'})
 
 if __name__ == '__main__':
     init_db()
