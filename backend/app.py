@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 import jwt
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
 # Configurações
 app.config['SECRET_KEY'] = 'lsd_secret_key_2026'
@@ -37,6 +37,9 @@ class User(db.Model):
     data_entrada = db.Column(db.String(50), default='Mar 2024')
     localizacao = db.Column(db.String(100), default='Maranguape, CE')
     is_admin = db.Column(db.Boolean, default=False)
+    bio = db.Column(db.Text, nullable=True)
+    github = db.Column(db.String(255), nullable=True)
+    instagram = db.Column(db.String(255), nullable=True)
 
 class Card(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -129,11 +132,11 @@ def get_perfil(current_user):
 @app.route('/api/perfil', methods=['PUT'])
 @token_required
 def update_perfil(current_user):
-    nome = request.form.get('nome')
-    funcao = request.form.get('funcao')
-
-    if nome: current_user.nome = nome
-    if funcao: current_user.funcao = funcao
+    current_user.nome = request.form.get('nome', current_user.nome)
+    current_user.funcao = request.form.get('funcao', current_user.funcao)
+    current_user.bio = request.form.get('bio', current_user.bio)
+    current_user.github = request.form.get('github', current_user.github)
+    current_user.instagram = request.form.get('instagram', current_user.instagram)
 
     if 'avatar' in request.files:
         file = request.files['avatar']
@@ -315,7 +318,7 @@ def init_db():
                 nome="Bryan William",
                 email="bryan.william10@aluno.ifce.edu.br",
                 senha_hash=generate_password_hash("123456"),
-                funcao="Desenvolvedor Full Stack · Pesquisador LSD",
+                funcao="Desenvolvedor Full Stack · Pesquisador LSD", 
                 projetos_ativos=4,
                 is_admin=True
             )
@@ -367,6 +370,23 @@ def register():
     db.session.commit()
     
     return jsonify({'message': 'Usuário cadastrado com sucesso!'}), 201
+
+@app.route('/api/membros/<int:membro_id>', methods=['DELETE'])
+@token_required
+def expulsar_membro(current_user, membro_id):
+    # Verifica se o membro logado é o Admin
+    if not current_user.is_admin:
+        return jsonify({'message': 'Acesso negado. Apenas administradores podem expulsar membros.'}), 403
+
+    membro_alvo = User.query.get_or_404(membro_id)
+    
+    # Previne que o admin exclua a si mesmo
+    if membro_alvo.id == current_user.id:
+        return jsonify({'message': 'Você não pode expulsar a si mesmo.'}), 400
+
+    db.session.delete(membro_alvo)
+    db.session.commit()
+    return jsonify({'message': 'Membro expulso com sucesso!'})
 
 if __name__ == '__main__':
     init_db()

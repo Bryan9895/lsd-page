@@ -40,7 +40,7 @@
 
             <div class="perfil-info-barra">
                 <div class="perfil-avatar-wrap">
-                    <img class="perfil-avatar" src="./src/images/equipe/avatar/bryan.jpg" alt="Avatar do membro">
+                    <img class="perfil-avatar" src="./src/images/equipe/avatar/bryan.jpeg" alt="Avatar do membro">
                 </div>
 
                 <div class="perfil-nome-funcao">
@@ -48,19 +48,18 @@
                     <p id="perfilFuncao">Desenvolvedor Full Stack · Pesquisador LSD</p>
                 </div>
 
-                    <div class="perfil-acoes">
-                        <button type="button" class="btn-secundario" id="btnNovoCardHeader"><i class="fas fa-plus"></i> Novo Card</button>
-                        <button type="button" class="btn-principal" id="btnEditarPerfil"><i class="fas fa-pen"></i> Editar Perfil</button>
-                    </div>
+                <div class="perfil-acoes">
+                    <button type="button" class="btn-secundario" id="btnNovoCardHeader"><i class="fas fa-plus"></i> Novo Card</button>
+                    <button type="button" class="btn-principal" id="btnEditarPerfil"><i class="fas fa-pen"></i> Editar Perfil</button>
+                </div>
             </div>
         </section>
 
-        <!-- ===== GRID PRINCIPAL (3 colunas) ===== -->
+        <!-- ===== GRID PRINCIPAL ===== -->
         <main class="dash-grid">
 
-            <!-- ---- Coluna esquerda ---- -->
+            <!-- Coluna esquerda -->
             <aside class="dash-col dash-col-esquerda sidebar-left">
-
                 <div class="card-lateral">
                     <h3>Sobre</h3>
                     <ul class="lista-info">
@@ -92,10 +91,9 @@
                     </div>
                     <span class="progresso-mini-pct"><span id="miniPct">0</span>% concluído</span>
                 </div>
-
             </aside>
 
-            <!-- ---- Coluna central ---- -->
+            <!-- Coluna central -->
             <section class="dash-col dash-col-central">
 
                 <div class="abas-nav dash-tabs" role="tablist">
@@ -105,13 +103,16 @@
                     <button type="button" class="aba-btn" data-aba="comunidade" role="tab" aria-selected="false">
                         <i class="fas fa-people-group"></i> Feed da Comunidade
                     </button>
+                    <button type="button" class="aba-btn" data-aba="admin" id="btnAbaAdmin" role="tab" style="display: none;">
+                        <i class="fas fa-user-shield"></i> Painel Admin
+                    </button>
                 </div>
 
-                <!-- Aba: Quadro Kanban -->
+                <!-- Aba 1: Quadro Kanban -->
                 <div class="aba-conteudo ativa" id="aba-kanban" role="tabpanel">
 
                     <div class="kanban-topo">
-                        <p class="kanban-legenda">Arraste os cards entre as colunas pra atualizar o andamento.</p>
+                        <p class="kanban-legenda">Arraste os cards entre as colunas ou assuma uma tarefa diretamente.</p>
                         <button type="button" class="btn-principal" id="btnNovoCard"><i class="fas fa-plus"></i> Novo card</button>
                     </div>
 
@@ -147,11 +148,10 @@
                     </div>
                 </div>
 
-                <!-- Aba: Feed da Comunidade -->
+                <!-- Aba 2: Feed da Comunidade -->
                 <div class="aba-conteudo" id="aba-comunidade" role="tabpanel" hidden>
-
                     <div class="post-criador">
-                        <img class="post-criador-avatar" src="./src/images/equipe/avatar/bryan.jpg" alt="Você">
+                        <img class="post-criador-avatar" src="./src/images/equipe/avatar/bryan.jpeg" alt="Você">
                         <div class="post-criador-corpo">
                             <textarea id="novoPostTexto" placeholder="Compartilhe uma atualização, ideia ou conquista com o LSD..." maxlength="500"></textarea>
                             <div class="post-criador-acoes">
@@ -166,12 +166,34 @@
                     </div>
 
                     <div class="feed-lista" id="feedLista"></div>
+                </div>
 
+                <!-- Aba 3: Painel do Admin -->
+                <div class="aba-conteudo" id="aba-admin" role="tabpanel" hidden>
+                    <div class="admin-card">
+                        <h2><i class="fas fa-users-gear"></i> Gerenciamento de Membros</h2>
+                        <div class="tabela-responsive">
+                            <table class="tabela-admin">
+                                <thead>
+                                    <tr>
+                                        <th>Membro</th>
+                                        <th>Email</th>
+                                        <th>Cargo</th>
+                                        <th>Advertências</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaMembrosCorpo">
+                                    <!-- Preenchido via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
             </section>
 
-            <!-- ---- Coluna direita ---- -->
+            <!-- Coluna direita -->
             <aside class="dash-col dash-col-direita">
                 <div class="card-lateral">
                     <h3>Membros em Destaque</h3>
@@ -181,7 +203,7 @@
 
         </main>
 
-        <!-- ===== Modal: criar/editar card ===== -->
+        <!-- ===== Modal: Criar/Editar Card ===== -->
         <div class="modal-overlay" id="modalOverlay" hidden>
             <div class="modal-card">
                 <button class="modal-fechar" id="modalFechar" aria-label="Fechar">&times;</button>
@@ -215,6 +237,27 @@
                             </select>
                         </label>
                     </div>
+
+                    <div class="modal-linha">
+                        <label for="cardPrioridade">Prioridade
+                            <select id="cardPrioridade">
+                                <option value="baixa">Baixa</option>
+                                <option value="media" selected>Média</option>
+                                <option value="alta">Alta</option>
+                            </select>
+                        </label>
+
+                        <label for="cardDataEntrega">Data Limite
+                            <input type="date" id="cardDataEntrega">
+                        </label>
+                    </div>
+
+                    <label for="cardResponsavel">Responsável pela tarefa
+                        <select id="cardResponsavel">
+                            <option value="">Ninguém (Não atribuído)</option>
+                            <option value="logado">Assumir por mim (Bryan William)</option>
+                        </select>
+                    </label>
 
                     <div class="modal-acoes">
                         <button type="button" class="btn-cancelar" id="modalCancelar">Cancelar</button>
@@ -264,7 +307,7 @@
             </div>
         </div>
 
-        <!-- ===== Modal: confirmar exclusão ===== -->
+        <!-- ===== Modal: Confirmar Exclusão ===== -->
         <div class="modal-overlay" id="confirmOverlay" hidden>
             <div class="modal-card modal-confirm">
                 <p><i class="fas fa-triangle-exclamation"></i> Tem certeza que quer excluir este card? Essa ação não pode ser desfeita.</p>
@@ -272,6 +315,28 @@
                     <button class="btn-cancelar" id="confirmCancelar">Cancelar</button>
                     <button class="btn-excluir" id="confirmExcluir">Excluir</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- ===== Modal: Adverter Membro ===== -->
+        <div class="modal-overlay" id="modalAdverter" hidden>
+            <div class="modal-card">
+                <button class="modal-fechar" data-modal-close aria-label="Fechar">&times;</button>
+                <h2><i class="fas fa-triangle-exclamation" style="color: #e67e22;"></i> Adverter Membro</h2>
+                <form id="formAdverter">
+                    <input type="hidden" id="adverterMembroId">
+                    <p style="font-size: 14px; margin-bottom: 12px; color: #14284F;">
+                        Membro: <strong id="adverterMembroNome">---</strong>
+                    </p>
+                    <label for="adverterMotivo">Motivo da Advertência
+                        <textarea id="adverterMotivo" maxlength="300" required placeholder="Descreva detalhadamente o motivo da advertência..."></textarea>
+                    </label>
+
+                    <div class="modal-acoes">
+                        <button type="button" class="btn-cancelar" data-modal-cancel>Cancelar</button>
+                        <button type="submit" class="btn-salvar" style="background: #e67e22; color: #fff;">Aplicar Advertência</button>
+                    </div>
+                </form>
             </div>
         </div>
 

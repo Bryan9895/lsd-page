@@ -1,20 +1,29 @@
 /**
- * Painel do Membro — LSD
- * Kanban (CRUD + drag-and-drop + localStorage), troca de abas e
- * Feed da Comunidade (criação de posts + localStorage).
- *
- * Nada aqui depende de backend: a camada de dados fica isolada em
- * funções de carregar/salvar, prontas pra trocar por chamadas fetch
- * quando a API existir. Contrato sugerido:
- *
- *   GET    /api/cards            -> [{ id, titulo, descricao, status, cor }]
- *   POST   /api/cards            { titulo, descricao, status, cor } -> card criado
- *   PUT    /api/cards/:id        { titulo, descricao, status, cor } -> card atualizado
- *   DELETE /api/cards/:id        -> 204
- *
- *   GET    /api/posts            -> [{ id, autor, foto, meta, texto, curtidas, comentarios }]
- *   POST   /api/posts            { texto } -> post criado
+ * Painel do Membro — LSD (Integração Completa Flask + SQLite)
  */
+
+const API_BASE = "http://127.0.0.1:5000"; 
+const TOKEN_KEY = "token_lsd";
+
+function normalizarUrlImagem(path, fallback = "./src/images/equipe/avatar/bryan.jpg") {
+    if (!path) return fallback;
+    if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("./")) {
+        return path;
+    }
+    return `${API_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
+function obterToken() {
+    return localStorage.getItem(TOKEN_KEY);
+}
+
+function getHeaders(isFormData = false) {
+    const token = obterToken();
+    const headers = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    if (!isFormData) headers["Content-Type"] = "application/json";
+    return headers;
+}
 
 function escapeHTML(texto) {
     const div = document.createElement("div");
@@ -22,51 +31,263 @@ function escapeHTML(texto) {
     return div.innerHTML;
 }
 
-function gerarId() {
-    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+// Estado local
+let usuarioAtual = null;
+let cards = [];
+let posts = [];
+let editandoId = null;
+let excluindoId = null;
+
+// Validação de permissão de Administrador
+function usuarioEhAdmin() {
+    return usuarioAtual && (usuarioAtual.is_admin === true || usuarioAtual.cargo === "admin");
 }
 
 /* =========================================================
-   KANBAN
+   1. TROCA DE ABAS E SISTEMA DE ADMINISTRADOR
    ========================================================= */
 
-const KANBAN_STORAGE_KEY = "lsd_kanban_cards";
+function inicializarTrocaDeAbas() {
+    const btnsAba = document.querySelectorAll(".aba-btn, [data-aba]");
+    const abasConteudo = document.querySelectorAll(".aba-conteudo");
 
-// Cards iniciais, baseados nos projetos reais do site (usados só na
-// primeira visita, quando ainda não existe nada salvo no navegador).
-const cardsIniciais = [
-    { id: gerarId(), titulo: "FioCruz", descricao: "Monitorar mosquitos modificados para impedir a transmissão de dengue.", status: "andamento", cor: "amarelo" },
-    { id: gerarId(), titulo: "Racismo Algorítmico", descricao: "Análise do impacto do racismo em algoritmos de IA.", status: "andamento", cor: "rosa" },
-    { id: gerarId(), titulo: "Lupa Digital", descricao: "Ferramenta de apoio visual com OpenCV.", status: "andamento", cor: "azul" },
-    { id: gerarId(), titulo: "Corrige AI", descricao: "Corrige redação com inteligência artificial treinada.", status: "andamento", cor: "verde" },
-    { id: gerarId(), titulo: "TTNet", descricao: "Análise de partidas de Ping Pong com visão computacional.", status: "concluido", cor: "lilas" },
-    { id: gerarId(), titulo: "Simulados Enem", descricao: "Inscrição, notas e premiações dos simulados.", status: "concluido", cor: "amarelo" },
-    { id: gerarId(), titulo: "Card de exemplo", descricao: "Este é um card de exemplo — edite ou exclua e crie os seus.", status: "afazer", cor: "azul" }
-];
+    btnsAba.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            btnsAba.forEach((b) => b.classList.remove("ativa", "active"));
+            btn.classList.add("ativa", "active");
 
-function carregarCards() {
-    const salvo = localStorage.getItem(KANBAN_STORAGE_KEY);
-    if (salvo) {
-        try {
-            const dados = JSON.parse(salvo);
-            if (Array.isArray(dados)) return dados;
-        } catch (erro) {
-            console.warn("Não foi possível ler os cards salvos, recomeçando do zero.", erro);
+            const alvo = btn.dataset.aba;
+
+            abasConteudo.forEach((aba) => {
+                if (aba.id === `aba-${alvo}`) {
+                    aba.classList.add("ativa");
+                    aba.hidden = false;
+                    aba.style.display = "block";
+                } else {
+                    aba.classList.remove("ativa");
+                    aba.hidden = true;
+                    aba.style.display = "none";
+                }
+            });
+
+            if (alvo === "admin") {
+                carregarMembrosAdmin();
+            }
+        });
+    });
+}
+
+// Buscar e renderizar membros
+async function carregarMembrosAdmin() {
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/membros`, { headers: getHeaders() });
+        if (res.ok) {
+            const membros = await res.json();
+            renderizarTabelaMembros(membros);
+        } else {
+            console.error("Erro ao carregar membros.");
+        }
+    } catch (err) {
+        console.error("Erro na requisição de membros:", err);
+    }
+}
+
+function renderizarTabelaMembros(membros) {
+    const tbody = document.getElementById("tabelaMembrosCorpo");
+    if (!tbody) return;
+
+    const eAdmin = usuarioEhAdmin();
+
+    tbody.innerHTML = membros.map((m) => {
+        const itemIsAdmin = m.is_admin || m.cargo === "admin";
+        
+        return `
+            <tr>
+                <td>
+                    <div class="membro-celula">
+                        <img src="${normalizarUrlImagem(m.foto)}" alt="${escapeHTML(m.nome)}">
+                        <div>
+                            <strong>${escapeHTML(m.nome)}</strong>
+                            <small>${escapeHTML(m.funcao || 'Membro')}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>${escapeHTML(m.email)}</td>
+                <td>
+                    <span class="badge-cargo ${itemIsAdmin ? 'badge-admin' : 'badge-membro'}">
+                        ${itemIsAdmin ? 'Admin' : 'Membro'}
+                    </span>
+                </td>
+                <td><strong>${m.advertencias || 0}</strong> adv.</td>
+                <td>
+                    <div class="acoes-admin-flex">
+                        <button type="button" class="btn-adm btn-adm-adv" data-id="${m.id}" data-nome="${escapeHTML(m.nome)}" ${!eAdmin ? 'disabled title="Apenas administradores podem adverter"' : 'title="Adverter"'}>
+                            <i class="fas fa-exclamation-triangle"></i> Adverter
+                        </button>
+                        
+                        <button type="button" class="btn-adm btn-adm-cargo" data-id="${m.id}" data-admin="${itemIsAdmin}" ${!eAdmin ? 'disabled title="Apenas administradores podem alterar cargos"' : 'title="Alterar Cargo"'}>
+                            <i class="fas ${itemIsAdmin ? 'fa-arrow-down' : 'fa-arrow-up'}"></i> ${itemIsAdmin ? 'Rebaixar' : 'Promover'}
+                        </button>
+
+                        <button type="button" class="btn-adm btn-adm-del" data-id="${m.id}" data-nome="${escapeHTML(m.nome)}" ${!eAdmin ? 'disabled title="Apenas administradores podem expulsar"' : 'title="Expulsar"'}>
+                            <i class="fas fa-user-xmark"></i> Expulsar
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join("");
+}
+
+// Listeners com trava de segurança para ações de Admin
+document.getElementById("tabelaMembrosCorpo")?.addEventListener("click", async (e) => {
+    const btnAdv = e.target.closest(".btn-adm-adv");
+    const btnCargo = e.target.closest(".btn-adm-cargo");
+    const btnDel = e.target.closest(".btn-adm-del");
+
+    if (btnAdv || btnCargo || btnDel) {
+        if (!usuarioEhAdmin()) {
+            alert("Acesso Negado: Apenas administradores têm permissão para executar esta ação.");
+            return;
         }
     }
-    salvarCards(cardsIniciais);
-    return cardsIniciais;
+
+    // Adverter
+    if (btnAdv) {
+        document.getElementById("adverterMembroId").value = btnAdv.dataset.id;
+        document.getElementById("adverterMembroNome").textContent = btnAdv.dataset.nome;
+        document.getElementById("modalAdverter").hidden = false;
+    }
+
+    // Promover / Rebaixar
+    if (btnCargo) {
+        const id = btnCargo.dataset.id;
+        const itemIsAdmin = btnCargo.dataset.admin === "true";
+        const novoCargo = itemIsAdmin ? "membro" : "admin";
+
+        if (confirm(`Deseja alterar o cargo deste membro para "${novoCargo}"?`)) {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/membros/${id}/cargo`, {
+                    method: "PATCH",
+                    headers: getHeaders(),
+                    body: JSON.stringify({ cargo: novoCargo, is_admin: !itemIsAdmin })
+                });
+                if (res.ok) await carregarMembrosAdmin();
+                else alert("Erro ao alterar cargo do membro.");
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    }
+
+    // Expulsar
+    if (btnDel) {
+        const id = btnDel.dataset.id;
+        const nome = btnDel.dataset.nome;
+
+        if (confirm(`ATENÇÃO: Tem certeza que deseja expulsar ${nome} da plataforma?`)) {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/membros/${id}`, {
+                    method: "DELETE",
+                    headers: getHeaders()
+                });
+                if (res.ok) await carregarMembrosAdmin();
+                else alert("Erro ao expulsar membro.");
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    }
+});
+
+// Submit do formulário de advertência
+document.getElementById("formAdverter")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (!usuarioEhAdmin()) {
+        alert("Acesso Negado: Você não possui permissão para aplicar advertências.");
+        return;
+    }
+
+    const id = document.getElementById("adverterMembroId").value;
+    const motivo = document.getElementById("adverterMotivo").value.trim();
+
+    if (!motivo) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/membros/${id}/adverter`, {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify({ motivo })
+        });
+
+        if (res.ok) {
+            document.getElementById("modalAdverter").hidden = true;
+            document.getElementById("formAdverter").reset();
+            alert("Advertência registrada com sucesso!");
+            await carregarMembrosAdmin();
+        } else {
+            alert("Erro ao aplicar advertência.");
+        }
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+/* =========================================================
+   2. PERFIL DO MEMBRO
+   ========================================================= */
+
+async function carregarPerfil() {
+    try {
+        const res = await fetch(`${API_BASE}/api/perfil`, { headers: getHeaders() });
+        if (res.status === 401) {
+            console.warn("Usuário não autenticado no banco de dados.");
+            return;
+        }
+        if (!res.ok) throw new Error("Erro ao carregar perfil");
+
+        usuarioAtual = await res.json();
+        renderizarPerfil();
+    } catch (err) {
+        console.error("Erro na requisição de perfil:", err);
+    }
 }
 
-function salvarCards(lista) {
-    localStorage.setItem(KANBAN_STORAGE_KEY, JSON.stringify(lista));
-    // TODO BACKEND: substituir pela sincronização real com a API (ver contrato no topo do arquivo).
+function renderizarPerfil() {
+    if (!usuarioAtual) return;
+
+    const nomeEl = document.getElementById("perfilNome");
+    const funcaoEl = document.getElementById("perfilFuncao");
+    const avatarEl = document.querySelector(".perfil-avatar");
+    const capaEl = document.querySelector(".perfil-capa img");
+
+    if (nomeEl) nomeEl.textContent = usuarioAtual.nome;
+    if (funcaoEl) funcaoEl.textContent = usuarioAtual.funcao;
+    if (avatarEl) avatarEl.src = normalizarUrlImagem(usuarioAtual.foto);
+    if (capaEl) capaEl.src = normalizarUrlImagem(usuarioAtual.capa, "./src/images/lab/lsd_panorama.JPG");
+
+    const postAvatar = document.querySelector(".post-criador-avatar");
+    if (postAvatar) postAvatar.src = normalizarUrlImagem(usuarioAtual.foto);
+
+    const listaInfo = document.querySelector(".lista-info");
+    if (listaInfo) {
+        listaInfo.innerHTML = `
+            <li><i class="fas fa-envelope"></i> ${escapeHTML(usuarioAtual.email)}</li>
+            <li><i class="fas fa-diagram-project"></i> <span>${usuarioAtual.projetos_ativos || 0}</span> projetos ativos</li>
+            <li><i class="fas fa-calendar-days"></i> Entrou em ${escapeHTML(usuarioAtual.data_entrada || 'Mar 2024')}</li>
+            <li><i class="fas fa-location-dot"></i> ${escapeHTML(usuarioAtual.localizacao || 'Maranguape, CE')}</li>
+        `;
+    }
+    const btnAbaAdmin = document.getElementById("btnAbaAdmin");
+    if (btnAbaAdmin) {
+        // Usamos "flex" porque no seu CSS a classe .aba-btn usa display: flex
+        btnAbaAdmin.style.display = usuarioEhAdmin() ? "flex" : "none";}
 }
 
-let cards = carregarCards();
-let editandoId = null;
-let excluindoId = null;
+/* =========================================================
+   3. QUADRO KANBAN
+   ========================================================= */
 
 const listas = {
     afazer: document.getElementById("lista-afazer"),
@@ -81,30 +302,30 @@ const contadores = {
 };
 
 const kanbanBoard = document.querySelector(".kanban-board");
-
-// Elementos do mini-resumo de progresso (coluna esquerda)
-const miniTotal = document.getElementById("miniTotal");
-const miniAndamento = document.getElementById("miniAndamento");
-const miniConcluido = document.getElementById("miniConcluido");
-const miniBarra = document.getElementById("miniBarra");
-const miniPct = document.getElementById("miniPct");
-
 const modalOverlay = document.getElementById("modalOverlay");
 const modalTitulo = document.getElementById("modalTitulo");
 const formCard = document.getElementById("formCard");
-const campoTitulo = document.getElementById("cardTitulo");
-const campoDescricao = document.getElementById("cardDescricao");
-const campoStatus = document.getElementById("cardStatus");
-const campoCor = document.getElementById("cardCor");
-
 const confirmOverlay = document.getElementById("confirmOverlay");
+
+async function carregarCards() {
+    try {
+        const res = await fetch(`${API_BASE}/api/cards`, { headers: getHeaders() });
+        if (res.ok) {
+            cards = await res.json();
+            renderizarKanban();
+        }
+    } catch (err) {
+        console.error("Erro ao buscar cards:", err);
+    }
+}
 
 function renderizarKanban() {
     Object.keys(listas).forEach((status) => {
         const lista = listas[status];
-        const itens = cards.filter((c) => c.status === status);
+        if (!lista) return;
 
-        contadores[status].textContent = itens.length;
+        const itens = cards.filter((c) => c.status === status);
+        if (contadores[status]) contadores[status].textContent = itens.length;
 
         lista.innerHTML = itens.length
             ? itens.map(cardParaHTML).join("")
@@ -116,23 +337,55 @@ function renderizarKanban() {
 }
 
 function cardParaHTML(card) {
+    let responsavelHTML = "";
+
+    if (card.responsavel && card.responsavel.nome) {
+        responsavelHTML = `
+            <div class="post-it-user" title="Atribuído a ${escapeHTML(card.responsavel.nome)}">
+                <img src="${normalizarUrlImagem(card.responsavel.foto)}" alt="${escapeHTML(card.responsavel.nome)}">
+                <span>${escapeHTML(card.responsavel.nome)}</span>
+            </div>
+        `;
+    } else {
+        responsavelHTML = `
+            <button type="button" class="btn-assumir" data-id="${card.id}">
+                <i class="fas fa-user-plus"></i> Assumir
+            </button>
+        `;
+    }
+
     return `
-        <article class="post-it cor-${card.cor}" draggable="true" data-id="${card.id}">
-            <div class="post-it-acoes">
-                <button type="button" class="post-it-editar" data-id="${card.id}" title="Editar" aria-label="Editar card">
-                    <i class="fas fa-pen"></i>
-                </button>
-                <button type="button" class="post-it-excluir" data-id="${card.id}" title="Excluir" aria-label="Excluir card">
-                    <i class="fas fa-trash"></i>
-                </button>
+        <article class="post-it cor-${card.cor || 'amarelo'}" draggable="true" data-id="${card.id}">
+            <div class="post-it-topo">
+                <span class="tag-prioridade prio-media">Média</span>
+                <div class="post-it-acoes">
+                    <button type="button" class="post-it-editar" data-id="${card.id}" title="Editar">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button type="button" class="post-it-excluir" data-id="${card.id}" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
             <h3>${escapeHTML(card.titulo)}</h3>
             <p>${escapeHTML(card.descricao)}</p>
+            <div class="post-it-rodape">
+                <span></span>
+                ${responsavelHTML}
+            </div>
         </article>
     `;
 }
 
 function renderizarProgresso() {
+    const miniTotal = document.getElementById("miniTotal");
+    const miniAndamento = document.getElementById("miniAndamento");
+    const miniConcluido = document.getElementById("miniConcluido");
+    const miniBarra = document.getElementById("miniBarra");
+    const miniPct = document.getElementById("miniPct");
+
+    if (!miniTotal) return;
+
     const total = cards.length;
     const emAndamento = cards.filter((c) => c.status === "andamento").length;
     const concluidos = cards.filter((c) => c.status === "concluido").length;
@@ -141,115 +394,136 @@ function renderizarProgresso() {
     miniTotal.textContent = total;
     miniAndamento.textContent = emAndamento;
     miniConcluido.textContent = concluidos;
-    miniBarra.style.width = progresso + "%";
-    miniPct.textContent = progresso;
+    if (miniBarra) miniBarra.style.width = progresso + "%";
+    if (miniPct) miniPct.textContent = progresso;
 }
 
-// ---------- CRUD: criar / editar ----------
+if (formCard) {
+    formCard.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-function abrirModalNovo(statusInicial) {
-    editandoId = null;
-    modalTitulo.textContent = "Novo card";
-    formCard.reset();
-    campoStatus.value = statusInicial || "afazer";
-    campoCor.value = "amarelo";
-    abrirModal(modalOverlay);
-    campoTitulo.focus();
+        const elTitulo = document.getElementById("cardTitulo") || formCard.querySelector("input[type='text']");
+        const elDesc = document.getElementById("cardDescricao") || formCard.querySelector("textarea");
+        const elStatus = document.getElementById("cardStatus") || formCard.querySelector("select");
+        const elCor = document.getElementById("cardCor");
+
+        const titulo = elTitulo ? elTitulo.value.trim() : "";
+        const descricao = elDesc ? elDesc.value.trim() : "";
+        let status = elStatus ? elStatus.value.toLowerCase() : "afazer";
+        const cor = elCor ? elCor.value.toLowerCase() : "amarelo";
+
+        if (status.includes("andamento")) status = "andamento";
+        else if (status.includes("conclui")) status = "concluido";
+        else if (status.includes("fazer")) status = "afazer";
+
+        if (editandoId && (!elStatus || !elStatus.value)) {
+            const cardOriginal = cards.find(c => c.id == editandoId);
+            if (cardOriginal) status = cardOriginal.status;
+        }
+
+        if (!titulo) {
+            alert("Preencha o título do card!");
+            return;
+        }
+
+        const payload = { titulo, descricao, status, cor };
+        const method = editandoId ? "PUT" : "POST";
+        const url = editandoId ? `${API_BASE}/api/cards/${editandoId}` : `${API_BASE}/api/cards`;
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: getHeaders(),
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                if (modalOverlay) modalOverlay.hidden = true;
+                formCard.reset();
+                editandoId = null;
+                await carregarCards();
+            } else {
+                alert(`Erro ao salvar no banco: ${data.message || 'Verifique se realizou o login.'}`);
+            }
+        } catch (err) {
+            console.error("Erro ao salvar card:", err);
+            alert(`Não foi possível conectar com o servidor Flask (${API_BASE}).`);
+        }
+    });
 }
 
-function abrirModalEditar(id) {
-    const card = cards.find((c) => c.id === id);
-    if (!card) return;
+if (kanbanBoard) {
+    kanbanBoard.addEventListener("click", async (e) => {
+        const btnEditar = e.target.closest(".post-it-editar");
+        const btnExcluir = e.target.closest(".post-it-excluir");
+        const btnAssumir = e.target.closest(".btn-assumir");
 
-    editandoId = id;
-    modalTitulo.textContent = "Editar card";
-    campoTitulo.value = card.titulo;
-    campoDescricao.value = card.descricao;
-    campoStatus.value = card.status;
-    campoCor.value = card.cor;
-    abrirModal(modalOverlay);
-    campoTitulo.focus();
+        if (btnEditar) {
+            const card = cards.find(c => c.id == btnEditar.dataset.id);
+            if (card) {
+                editandoId = card.id;
+                if (modalTitulo) modalTitulo.textContent = "Editar Card";
+                
+                const elTitulo = document.getElementById("cardTitulo") || formCard.querySelector("input[type='text']");
+                const elDesc = document.getElementById("cardDescricao") || formCard.querySelector("textarea");
+                const elStatus = document.getElementById("cardStatus") || formCard.querySelector("select");
+                const elCor = document.getElementById("cardCor");
+
+                if (elTitulo) elTitulo.value = card.titulo;
+                if (elDesc) elDesc.value = card.descricao || "";
+                if (elStatus && card.status) elStatus.value = card.status;
+                if (elCor && card.cor) elCor.value = card.cor;
+
+                if (modalOverlay) modalOverlay.hidden = false;
+            }
+        }
+
+        if (btnExcluir) {
+            excluindoId = btnExcluir.dataset.id;
+            if (confirmOverlay) confirmOverlay.hidden = false;
+        }
+
+        if (btnAssumir) {
+            const id = btnAssumir.dataset.id;
+            try {
+                const res = await fetch(`${API_BASE}/api/cards/${id}/assumir`, {
+                    method: "POST",
+                    headers: getHeaders()
+                });
+                
+                let data = {};
+                try { data = await res.json(); } catch(e) {}
+
+                if (res.ok) {
+                    await carregarCards();
+                } else {
+                    alert(data.message || "Erro ao assumir tarefa.");
+                }
+            } catch (err) {
+                console.error("Erro ao assumir tarefa:", err);
+            }
+        }
+    });
 }
 
-function abrirModal(el) { el.hidden = false; }
-function fecharModal(el) { el.hidden = true; }
-
-formCard.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    const titulo = campoTitulo.value.trim();
-    if (!titulo) return;
-
-    const dados = {
-        titulo,
-        descricao: campoDescricao.value.trim(),
-        status: campoStatus.value,
-        cor: campoCor.value
-    };
-
-    if (editandoId) {
-        cards = cards.map((c) => (c.id === editandoId ? { ...c, ...dados } : c));
-    } else {
-        cards.push({ id: gerarId(), ...dados });
+document.getElementById("confirmExcluir")?.addEventListener("click", async () => {
+    if (!excluindoId) return;
+    try {
+        const res = await fetch(`${API_BASE}/api/cards/${excluindoId}`, {
+            method: "DELETE",
+            headers: getHeaders()
+        });
+        if (res.ok) {
+            if (confirmOverlay) confirmOverlay.hidden = true;
+            excluindoId = null;
+            await carregarCards();
+        }
+    } catch (err) {
+        console.error("Erro ao excluir card:", err);
     }
-
-    salvarCards(cards);
-    renderizarKanban();
-    fecharModal(modalOverlay);
 });
-
-document.getElementById("btnNovoCard").addEventListener("click", () => abrirModalNovo());
-document.getElementById("btnNovoCardHeader").addEventListener("click", () => {
-    ativarAba("kanban");
-    abrirModalNovo();
-});
-document.getElementById("modalFechar").addEventListener("click", () => fecharModal(modalOverlay));
-document.getElementById("modalCancelar").addEventListener("click", () => fecharModal(modalOverlay));
-modalOverlay.addEventListener("click", (e) => {
-    if (e.target === modalOverlay) fecharModal(modalOverlay);
-});
-
-// ---------- CRUD: excluir ----------
-
-function pedirConfirmacaoExclusao(id) {
-    excluindoId = id;
-    abrirModal(confirmOverlay);
-}
-
-document.getElementById("confirmCancelar").addEventListener("click", () => {
-    excluindoId = null;
-    fecharModal(confirmOverlay);
-});
-
-document.getElementById("confirmExcluir").addEventListener("click", () => {
-    cards = cards.filter((c) => c.id !== excluindoId);
-    salvarCards(cards);
-    renderizarKanban();
-    excluindoId = null;
-    fecharModal(confirmOverlay);
-});
-
-confirmOverlay.addEventListener("click", (e) => {
-    if (e.target === confirmOverlay) fecharModal(confirmOverlay);
-});
-
-// Delegação: os cards são recriados a cada renderizarKanban(), então os
-// listeners de editar/excluir ficam no board (que é fixo), não nos cards.
-kanbanBoard.addEventListener("click", (e) => {
-    const botaoEditar = e.target.closest(".post-it-editar");
-    const botaoExcluir = e.target.closest(".post-it-excluir");
-
-    if (botaoEditar) abrirModalEditar(botaoEditar.dataset.id);
-    if (botaoExcluir) pedirConfirmacaoExclusao(botaoExcluir.dataset.id);
-});
-
-document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    if (!modalOverlay.hidden) fecharModal(modalOverlay);
-    if (!confirmOverlay.hidden) fecharModal(confirmOverlay);
-});
-
-// ---------- Arrastar e soltar entre colunas ----------
 
 function ativarDragDosCards() {
     document.querySelectorAll(".post-it").forEach((el) => {
@@ -259,343 +533,138 @@ function ativarDragDosCards() {
 }
 
 Object.values(listas).forEach((lista) => {
-    lista.addEventListener("dragover", (e) => {
+    if (!lista) return;
+    lista.addEventListener("dragover", (e) => e.preventDefault());
+    lista.addEventListener("drop", async (e) => {
         e.preventDefault();
-        lista.classList.add("drag-over");
-    });
-
-    lista.addEventListener("dragleave", () => lista.classList.remove("drag-over"));
-
-    lista.addEventListener("drop", (e) => {
-        e.preventDefault();
-        lista.classList.remove("drag-over");
-
         const cardArrastado = document.querySelector(".post-it.dragging");
         if (!cardArrastado) return;
 
         const id = cardArrastado.dataset.id;
         const novoStatus = lista.dataset.status;
+        const card = cards.find(c => c.id == id);
 
-        cards = cards.map((c) => (c.id === id ? { ...c, status: novoStatus } : c));
-        salvarCards(cards);
-        renderizarKanban();
-    });
-});
+        if (card && card.status !== novoStatus) {
+            card.status = novoStatus;
+            renderizarKanban();
 
-/* =========================================================
-   TROCA DE ABAS (Kanban / Feed)
-   ========================================================= */
-
-const botoesAba = document.querySelectorAll(".aba-btn");
-const paineisAba = {
-    kanban: document.getElementById("aba-kanban"),
-    comunidade: document.getElementById("aba-comunidade")
-};
-
-function ativarAba(nome) {
-    botoesAba.forEach((btn) => {
-        const ativa = btn.dataset.aba === nome;
-        btn.classList.toggle("ativa", ativa);
-        btn.classList.toggle("active", ativa);
-        btn.setAttribute("aria-selected", ativa ? "true" : "false");
-    });
-
-    Object.keys(paineisAba).forEach((chave) => {
-        const painel = paineisAba[chave];
-        const ativa = chave === nome;
-        painel.classList.toggle("ativa", ativa);
-        painel.classList.toggle("active", ativa);
-        painel.hidden = !ativa;
-    });
-}
-
-botoesAba.forEach((btn) => {
-    btn.addEventListener("click", () => ativarAba(btn.dataset.aba));
-});
-
-/* =========================================================
-   FEED DA COMUNIDADE
-   ========================================================= */
-
-const FEED_STORAGE_KEY = "lsd_feed_posts";
-const AVATAR_USUARIO = "./src/images/equipe/avatar/bryan.jpg";
-
-const postsIniciais = [
-    {
-        id: gerarId(),
-        autor: "Paula Giovanna",
-        foto: "./src/images/equipe/avatar/giovanna.jpg",
-        meta: "há 2 horas · Corrige AI",
-        texto: "Rodada de testes do Corrige AI com as primeiras redações reais terminou! O modelo já está pegando bem os critérios de coesão. Bora ajustar a rubrica de repertório sociocultural essa semana.",
-        midia: { icone: "fa-chart-line", texto: "Gráfico de acurácia do modelo" },
-        curtidas: 12,
-        comentarios: 4
-    },
-    {
-        id: gerarId(),
-        autor: "John Keyrrison",
-        foto: "./src/images/equipe/avatar/john.jpg",
-        meta: "há 5 horas · TTNet",
-        texto: "Subimos a análise de trajetória da bola pra 60fps no TTNet. Ainda preciso lapidar a detecção quando a mesa reflete luz, mas já dá pra ver a diferença no vídeo de teste.",
-        midia: { icone: "fa-video", texto: "Vídeo de demonstração — TTNet" },
-        curtidas: 9,
-        comentarios: 2
-    },
-    {
-        id: gerarId(),
-        autor: "Isabelly Gomes",
-        foto: "./src/images/equipe/avatar/isabelly.jpg",
-        meta: "ontem · Lupa Digital",
-        texto: "Primeiro protótipo de tela do Lupa Digital pronto pra revisão. Feedback de vocês é muito bem-vindo antes de eu partir pra versão com OpenCV integrado.",
-        midia: { icone: "fa-image", texto: "Print do protótipo — Lupa Digital" },
-        curtidas: 17,
-        comentarios: 6
-    }
-];
-
-function carregarPosts() {
-    const salvo = localStorage.getItem(FEED_STORAGE_KEY);
-    if (salvo) {
-        try {
-            const dados = JSON.parse(salvo);
-            if (Array.isArray(dados)) return dados;
-        } catch (erro) {
-            console.warn("Não foi possível ler os posts salvos, recomeçando do zero.", erro);
+            await fetch(`${API_BASE}/api/cards/${id}`, {
+                method: "PUT",
+                headers: getHeaders(),
+                body: JSON.stringify({ status: novoStatus })
+            });
+            await carregarCards();
         }
-    }
-    salvarPosts(postsIniciais);
-    return postsIniciais;
-}
+    });
+});
 
-function salvarPosts(lista) {
-    localStorage.setItem(FEED_STORAGE_KEY, JSON.stringify(lista));
-    // TODO BACKEND: GET/POST /api/posts (ver contrato no topo do arquivo).
-}
-
-let posts = carregarPosts();
-const curtidos = new Set();
+/* =========================================================
+   4. FEED DA COMUNIDADE
+   ========================================================= */
 
 const feedLista = document.getElementById("feedLista");
-const novoPostTexto = document.getElementById("novoPostTexto");
 const btnPublicarPost = document.getElementById("btnPublicarPost");
+const novoPostTexto = document.getElementById("novoPostTexto");
 
-function renderizarFeed() {
-    feedLista.innerHTML = posts.map(postParaHTML).join("");
+async function carregarPosts() {
+    try {
+        const res = await fetch(`${API_BASE}/api/posts`, { headers: getHeaders() });
+        if (res.ok) {
+            posts = await res.json();
+            renderizarFeed();
+        }
+    } catch (err) {
+        console.error("Erro ao carregar posts:", err);
+    }
 }
 
-function postParaHTML(post) {
-    const curtido = curtidos.has(post.id);
-    const midiaHTML = post.midia
-        ? `<div class="post-card-midia"><i class="fas ${post.midia.icone}"></i><span>${escapeHTML(post.midia.texto)}</span></div>`
-        : "";
-
-    return `
-        <article class="post-card" data-id="${post.id}">
+function renderizarFeed() {
+    if (!feedLista) return;
+    feedLista.innerHTML = posts.map((p) => `
+        <article class="post-card" data-id="${p.id}">
             <div class="post-card-topo">
-                <img src="${post.foto}" alt="${escapeHTML(post.autor)}">
+                <img src="${normalizarUrlImagem(p.foto)}" alt="${escapeHTML(p.autor)}">
                 <div>
-                    <div class="post-card-autor">${escapeHTML(post.autor)}</div>
-                    <div class="post-card-meta">${escapeHTML(post.meta)}</div>
+                    <div class="post-card-autor">${escapeHTML(p.autor)}</div>
+                    <div class="post-card-meta">${escapeHTML(p.meta)}</div>
                 </div>
             </div>
-
-            <p class="post-card-texto">${escapeHTML(post.texto)}</p>
-
-            ${midiaHTML}
-
+            <p class="post-card-texto">${escapeHTML(p.texto)}</p>
             <div class="post-card-acoes">
-                <button type="button" class="post-curtir ${curtido ? "curtido" : ""}" data-id="${post.id}">
-                    <i class="fa-solid fa-thumbs-up"></i> Curtir (${post.curtidas})
-                </button>
-                <button type="button">
-                    <i class="fa-regular fa-comment"></i> Comentar (${post.comentarios})
-                </button>
-                <button type="button">
-                    <i class="fa-solid fa-share"></i> Compartilhar
+                <button type="button" class="post-curtir ${p.curtido ? 'curtido' : ''}" data-id="${p.id}">
+                    <i class="fa-solid fa-thumbs-up"></i> Curtir (${p.curtidas})
                 </button>
             </div>
         </article>
-    `;
-}
-
-btnPublicarPost.addEventListener("click", () => {
-    const texto = novoPostTexto.value.trim();
-    if (!texto) {
-        novoPostTexto.focus();
-        return;
-    }
-
-    posts.unshift({
-        id: gerarId(),
-        autor: "Bryan William",
-        foto: AVATAR_USUARIO,
-        meta: "agora mesmo",
-        texto,
-        midia: null,
-        curtidas: 0,
-        comentarios: 0
-    });
-
-    salvarPosts(posts);
-    renderizarFeed();
-    novoPostTexto.value = "";
-});
-
-feedLista.addEventListener("click", (e) => {
-    const botaoCurtir = e.target.closest(".post-curtir");
-    if (!botaoCurtir) return;
-
-    const id = botaoCurtir.dataset.id;
-    const post = posts.find((p) => p.id === id);
-    if (!post) return;
-
-    if (curtidos.has(id)) {
-        curtidos.delete(id);
-        post.curtidas = Math.max(0, post.curtidas - 1);
-    } else {
-        curtidos.add(id);
-        post.curtidas += 1;
-    }
-
-    salvarPosts(posts);
-    renderizarFeed();
-});
-
-/* =========================================================
-   MEMBROS EM DESTAQUE (reaproveita os dados da Equipe)
-   ========================================================= */
-
-function renderizarMembrosDestaque() {
-    const container = document.getElementById("listaMembrosDestaque");
-    if (!container || typeof equipeMembros === "undefined") return;
-
-    const destaque = equipeMembros.slice(1, 6); // pula o próprio usuário logado (índice 0)
-
-    container.innerHTML = destaque.map((m) => `
-        <li>
-            <img src="${m.foto}" alt="${escapeHTML(m.nome)}">
-            <div>
-                <div class="membro-destaque-nome">${escapeHTML(m.nome)}</div>
-                <div class="membro-destaque-funcao">${escapeHTML(m.funcao)}</div>
-            </div>
-        </li>
     `).join("");
 }
 
+if (btnPublicarPost) {
+    btnPublicarPost.addEventListener("click", async () => {
+        const texto = novoPostTexto ? novoPostTexto.value.trim() : "";
+        if (!texto) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/api/posts`, {
+                method: "POST",
+                headers: getHeaders(),
+                body: JSON.stringify({ texto })
+            });
+
+            if (res.ok) {
+                if (novoPostTexto) novoPostTexto.value = "";
+                await carregarPosts();
+            } else {
+                alert("Erro ao publicar post. Verifique sua autenticação.");
+            }
+        } catch (err) {
+            console.error("Erro ao publicar post:", err);
+        }
+    });
+}
+
+if (feedLista) {
+    feedLista.addEventListener("click", async (e) => {
+        const btnCurtir = e.target.closest(".post-curtir");
+        if (!btnCurtir) return;
+
+        const id = btnCurtir.dataset.id;
+        try {
+            const res = await fetch(`${API_BASE}/api/posts/${id}/curtir`, {
+                method: "POST",
+                headers: getHeaders()
+            });
+            if (res.ok) await carregarPosts();
+        } catch (err) {
+            console.error("Erro ao curtir post:", err);
+        }
+    });
+}
+
 /* =========================================================
-   INÍCIO
+   5. INICIALIZAÇÃO DA APLICAÇÃO
    ========================================================= */
 
-renderizarKanban();
-renderizarFeed();
-renderizarMembrosDestaque();
+document.addEventListener("DOMContentLoaded", async () => {
+    inicializarTrocaDeAbas();
 
-/* =========================================================
-   MODAIS: Editar Capa / Editar Perfil
-   ========================================================= */
+    await carregarPerfil();
+    await carregarCards();
+    await carregarPosts();
+});
 
-const modalEditarCapa = document.getElementById('modalEditarCapa');
-const modalEditarPerfil = document.getElementById('modalEditarPerfil');
-const btnEditarCapa = document.getElementById('btnEditarCapa');
-const btnEditarPerfil = document.getElementById('btnEditarPerfil');
+const abrirModal = () => {
+    editandoId = null;
+    if (modalTitulo) modalTitulo.textContent = "Novo Card";
+    if (formCard) formCard.reset();
+    if (modalOverlay) modalOverlay.hidden = false;
+};
 
-if (btnEditarCapa && modalEditarCapa) {
-    btnEditarCapa.addEventListener('click', () => { modalEditarCapa.hidden = false; });
-    modalEditarCapa.addEventListener('click', (e) => { if (e.target === modalEditarCapa) modalEditarCapa.hidden = true; });
-    modalEditarCapa.querySelectorAll('[data-modal-close], [data-modal-cancel]').forEach((b) => b && b.addEventListener('click', () => modalEditarCapa.hidden = true));
+document.getElementById("btnNovoCard")?.addEventListener("click", abrirModal);
+document.getElementById("btnNovoCardHeader")?.addEventListener("click", abrirModal);
 
-    const formCapa = document.getElementById('formEditarCapa');
-    const inputCapa = document.getElementById('inputCapa');
-    if (formCapa) formCapa.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const file = inputCapa && inputCapa.files && inputCapa.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const img = document.querySelector('.perfil-capa img');
-                if (img) img.src = reader.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        modalEditarCapa.hidden = true;
+document.querySelectorAll(".modal-fechar, .btn-cancelar, [data-modal-cancel]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".modal-overlay").forEach((m) => m.hidden = true);
     });
-}
-
-if (btnEditarPerfil && modalEditarPerfil) {
-    btnEditarPerfil.addEventListener('click', () => {
-        const nomeEl = document.getElementById('perfilNome');
-        const funcEl = document.getElementById('perfilFuncao');
-        const nomeInput = document.getElementById('perfilNomeInput');
-        const funcInput = document.getElementById('perfilFuncaoInput');
-        if (nomeEl && nomeInput) nomeInput.value = nomeEl.textContent.trim();
-        if (funcEl && funcInput) funcInput.value = funcEl.textContent.trim();
-        modalEditarPerfil.hidden = false;
-    });
-    modalEditarPerfil.addEventListener('click', (e) => { if (e.target === modalEditarPerfil) modalEditarPerfil.hidden = true; });
-    modalEditarPerfil.querySelectorAll('[data-modal-close], [data-modal-cancel]').forEach((b) => b && b.addEventListener('click', () => modalEditarPerfil.hidden = true));
-
-    const formPerfil = document.getElementById('formEditarPerfil');
-    const inputAvatar = document.getElementById('inputAvatar');
-    if (formPerfil) formPerfil.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const nomeInput = document.getElementById('perfilNomeInput');
-        const funcInput = document.getElementById('perfilFuncaoInput');
-        const avatarFile = inputAvatar && inputAvatar.files && inputAvatar.files[0];
-        if (nomeInput) document.getElementById('perfilNome').textContent = nomeInput.value.trim() || 'Sem nome';
-        if (funcInput) document.getElementById('perfilFuncao').textContent = funcInput.value.trim() || '';
-        if (avatarFile) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const avatarImg = document.querySelector('.perfil-avatar');
-                if (avatarImg) avatarImg.src = reader.result;
-            };
-            reader.readAsDataURL(avatarFile);
-        }
-        modalEditarPerfil.hidden = true;
-    });
-}
-
-const API_URL = "http://127.0.0.1:5000/api";
-const token = localStorage.getItem("token_lsd") || "seu_token_mock";
-
-// Função para headers autenticados
-function getHeaders() {
-    return {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-    };
-}
-
-// Substitua a função carregarCards por:
-async function carregarCardsAPI() {
-    try {
-        const res = await fetch(`${API_URL}/cards`, { headers: getHeaders() });
-        cards = await res.json();
-        renderizarKanban();
-    } catch (err) {
-        console.error("Erro ao carregar cards da API:", err);
-    }
-}
-
-// Substitua a função salvar/criar card por:
-async function salvarCardAPI(dadosCard, id = null) {
-    const url = id ? `${API_URL}/cards/${id}` : `${API_URL}/cards`;
-    const method = id ? 'PUT' : 'POST';
-
-    await fetch(url, {
-        method: method,
-        headers: getHeaders(),
-        body: JSON.stringify(dadosCard)
-    });
-    await carregarCardsAPI();
-}
-
-// Substitua a publicação de Post do Feed por:
-async function publicarPostAPI(texto) {
-    await fetch(`${API_URL}/posts`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ texto })
-    });
-    await carregarFeedAPI();
-}
+})

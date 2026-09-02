@@ -965,6 +965,8 @@ nav.scrolled{
 
 /** Carrossel de Equipe (expande no lugar do card, sem navegar de página) **/
 
+/** Carrossel de Equipe (Corrigido) **/
+
 .carrossel-equipe-wrapper {
     position: relative;
     width: 100%;
@@ -972,7 +974,9 @@ nav.scrolled{
     margin: 30px auto 0;
     opacity: 1;
     transform: translateY(0);
+    padding: 60px 15px; /* Espaço extra superior/inferior para sombras e avatares */
 }
+
 .tituloprincipalEquipe { font-size: 36px; color: var(--navy); font-weight: 700; text-align: center;}
 .titulosecundarioEquipe {text-align: center; color: var(--muted); margin-top: 10px;}
 
@@ -983,8 +987,8 @@ nav.scrolled{
 
 .carrossel-equipe {
     position: relative;
-    height: clamp(360px, 44vh, 480px);
-    overflow: hidden;
+    height: clamp(380px, 48vh, 500px); /* Altura levemente expandida */
+    overflow: visible; /* Permite que as sombras e avatares apareçam sem cortes */
 }
 
 .membro-card {

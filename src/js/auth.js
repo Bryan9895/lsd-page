@@ -123,15 +123,16 @@ if (formLogin) {
         alternarCarregando(botao, true);
 
         try {
-            const resposta = await fetch('http://127.0.0.1:5000/api/auth/login', {
+            // Substitua o fetch fixo por este:
+            const resposta = await fetch(`${API_BASE}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, senha })
             });
-            
+                        
             const dados = await resposta.json();
             
-            if (!resposta.ok) throw new Error(dados.erro || 'E-mail ou senha incorretos.');
+            if (!resposta.ok) throw new Error(dados.message || dados.erro || 'E-mail ou senha incorretos.');
             
             // Salva o "crachá" (Token) de acesso no navegador do usuário
             localStorage.setItem('token_lsd', dados.token);
@@ -190,7 +191,6 @@ if (formCadastro) {
         const botao = formCadastro.querySelector(".btn-auth");
         alternarCarregando(botao, true);
         
-        // Declarando a variável dadosPerfil corretamente
         const dadosPerfil = {
             nome,
             email,
@@ -205,7 +205,6 @@ if (formCadastro) {
         try {
             const formData = new FormData();
             
-            // Adiciona os textos ao FormData
             formData.append('nome', dadosPerfil.nome);
             formData.append('email', dadosPerfil.email);
             formData.append('senha', dadosPerfil.senha);
@@ -219,46 +218,48 @@ if (formCadastro) {
                 formData.append('foto', dadosPerfil.foto);
             }
 
-            // 1. Envia os dados para cadastrar
-            const resposta = await fetch('http://127.0.0.1:5000/api/auth/cadastro', {
+            // Envia os dados para a API
+            const resposta = await fetch(`${API_BASE}/api/register`, {
                 method: 'POST',
                 body: formData
             });
 
             const dados = await resposta.json();
 
-            if (!resposta.ok) throw new Error(dados.erro || 'Erro ao criar conta.');
-            
-            // 2. Mostra a mensagem de sucesso
-            mostrarMensagem("cadastro-mensagem", "sucesso", '<i class="fas fa-circle-check"></i> Cadastro concluído! Entrando...');
-            
-            // 3. Faz o LOGIN AUTOMÁTICO com os mesmos dados
-            const respostaLogin = await fetch('http://127.0.0.1:5000/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: dadosPerfil.email, senha: dadosPerfil.senha })
-            });
-            
-            const dadosLogin = await respostaLogin.json();
-            
-            if (resposta.ok) {
-                localStorage.setItem('token_lsd', dadosLogin.token);
-                localStorage.setItem('nome_usuario_lsd', dadosLogin.nome || "Membro Logado");
-
-                if (dadosLogin.foto) {
-                    localStorage.setItem('foto_usuario_lsd', dadosLogin.foto);
-                } else {
-                    localStorage.removeItem('foto_usuario_lsd');
-                }
-                
-                setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+            // Prioriza 'dados.message' retornado pelo Flask
+            if (!resposta.ok) {
+                throw new Error(dados.message || dados.erro || 'Erro ao criar conta.');
             }
-        } catch (err) {
-            mostrarMensagem('cadastro-mensagem', 'erro', err.message);
+            
+            // Sucesso: Exibe mensagem e redireciona para a página de login
+            mostrarMensagem("cadastro-mensagem", "sucesso", '<i class="fas fa-circle-check"></i> Conta criada com sucesso! Redirecionando para a página de login...');
+            
+            setTimeout(() => { 
+                window.location.href = 'entrar-login.html'; 
+            }, 1500);
+
+        } catch (erro) {
+            // Agora exibirá "E-mail já cadastrado!" diretamente da API
+            mostrarMensagem('cadastro-mensagem', 'erro', erro.message);
         } finally {
             alternarCarregando(botao, false);
         }
     });
+}
+
+const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost")
+    ? "http://127.0.0.1:5000"
+    : window.location.origin; 
+
+const TOKEN_KEY = "token_lsd";
+
+// Normaliza caminhos de imagens usando caminhos relativos
+function normalizarUrlImagem(path, fallback = "./src/images/equipe/avatar/bryan.jpg") {
+    if (!path) return fallback;
+    if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("./")) {
+        return path;
+    }
+    return `${API_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
 // ---------- Formulário: Recuperar senha ----------

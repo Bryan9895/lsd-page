@@ -98,6 +98,7 @@
     height: 220px;
     overflow: hidden;
     background: #14284F;
+    z-index: 1;
 }
 
 .perfil-capa img {
@@ -136,11 +137,14 @@
     align-items: flex-end;
     gap: 22px;
     flex-wrap: wrap;
+    position: relative;
+    z-index: 3;
 }
 
 .perfil-avatar-wrap {
     margin-top: -60px;
     flex-shrink: 0;
+    z-index: 4;
 }
 
 .perfil-avatar {
@@ -230,6 +234,12 @@
     gap: 20px;
     position: sticky;
     top: 90px;
+}
+
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .card-lateral {
@@ -487,29 +497,49 @@
     border-radius: 12px;
 }
 
+/* Post-it / Card do Kanban */
 .post-it {
     position: relative;
-    border-radius: 6px;
-    padding: 14px 14px 12px;
-    box-shadow: 0 6px 14px rgba(20, 40, 79, .14);
+    border-radius: 8px;
+    padding: 12px 14px;
+    box-shadow: 0 6px 14px rgba(20, 40, 79, .12);
     cursor: grab;
     transition: transform .18s ease, box-shadow .18s ease;
 }
 
 .post-it:hover {
-    box-shadow: 0 14px 26px rgba(20, 40, 79, .2);
+    box-shadow: 0 14px 26px rgba(20, 40, 79, .18);
     transform: translateY(-2px);
 }
 
 .post-it:active { cursor: grabbing; }
 .post-it.dragging { opacity: .35; }
 
+.post-it-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.tag-prioridade {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 12px;
+    letter-spacing: .3px;
+}
+
+.tag-prioridade.prio-alta { background: rgba(224, 83, 83, .25); color: #a81c1c; }
+.tag-prioridade.prio-media { background: rgba(232, 160, 32, .28); color: #8a5800; }
+.tag-prioridade.prio-baixa { background: rgba(63, 179, 127, .25); color: #166b44; }
+
 .post-it h3 {
     font-size: 13.5px;
     font-weight: 700;
     color: #2a2a2a;
     margin: 0 0 5px;
-    padding-right: 44px;
     line-height: 1.3;
 }
 
@@ -520,6 +550,64 @@
     margin: 0;
 }
 
+.post-it-rodape {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(20, 40, 79, .08);
+    font-size: 11px;
+}
+
+.post-it-data {
+    color: #55627a;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+}
+
+.post-it-user {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, .75);
+    padding: 3px 8px 3px 4px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 11px;
+    color: #14284F;
+    box-shadow: 0 2px 5px rgba(0,0,0,.05);
+}
+
+.post-it-user img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.btn-assumir {
+    border: none;
+    background: rgba(20, 40, 79, .1);
+    color: #14284F;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background .2s ease, color .2s ease;
+}
+
+.btn-assumir:hover {
+    background: #14284F;
+    color: #fff;
+}
+
 .post-it.cor-amarelo { background: #FFE9A8; }
 .post-it.cor-azul   { background: #CFE3FF; }
 .post-it.cor-rosa   { background: #FFD9E0; }
@@ -527,11 +615,8 @@
 .post-it.cor-lilas  { background: #E6DBFF; }
 
 .post-it-acoes {
-    position: absolute;
-    top: 9px;
-    right: 9px;
     display: flex;
-    gap: 6px;
+    gap: 4px;
     opacity: 0;
     transition: opacity .2s ease;
 }
@@ -544,7 +629,7 @@
     height: 24px;
     border-radius: 50%;
     border: none;
-    background: rgba(255, 255, 255, .75);
+    background: rgba(255, 255, 255, .85);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -657,7 +742,6 @@
 
 .post-card-autor { font-size: 13.5px; font-weight: 700; color: #14284F; line-height: 1.35; }
 .post-card-meta { font-size: 11.5px; color: #8891a6; }
-.post-card-meta .ponto { margin: 0 5px; }
 
 .post-card-texto {
     font-size: 13.5px;
@@ -735,7 +819,7 @@
     border-radius: 18px;
     padding: 30px;
     width: 100%;
-    max-width: 430px;
+    max-width: 450px;
     position: relative;
     box-shadow: 0 30px 60px rgba(0, 0, 0, .3);
     animation: modalEntrar .25s ease;
@@ -769,10 +853,11 @@
     font-size: 13px;
     font-weight: 600;
     color: #14284F;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 #formCard input[type="text"],
+#formCard input[type="date"],
 #formCard textarea,
 #formCard select {
     width: 100%;
@@ -781,7 +866,7 @@
     border-radius: 8px;
     border: 1px solid rgba(20, 40, 79, .18);
     font-family: inherit;
-    font-size: 14px;
+    font-size: 13.5px;
     color: #222;
 }
 
@@ -792,7 +877,7 @@
     border-color: #E8A020;
 }
 
-#formCard textarea { resize: vertical; min-height: 70px; }
+#formCard textarea { resize: vertical; min-height: 65px; }
 
 .modal-linha { display: flex; gap: 14px; }
 .modal-linha label { flex: 1; }
@@ -801,7 +886,7 @@
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    margin-top: 6px;
+    margin-top: 10px;
 }
 
 .btn-cancelar {
@@ -849,23 +934,141 @@
 
 .modal-confirm p i { color: #e0a12f; margin-right: 6px; }
 
+/* =========================================
+   PAINEL DE ADMINISTRADOR
+   ========================================= */
+
+.admin-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 20px rgba(20, 40, 79, .06);
+}
+
+.admin-card h2 {
+    font-size: 18px;
+    color: #14284F;
+    margin: 0 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tabela-responsive {
+    overflow-x: auto;
+}
+
+.tabela-admin {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13.5px;
+}
+
+.tabela-admin th,
+.tabela-admin td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #ECEFF5;
+    vertical-align: middle;
+}
+
+.tabela-admin th {
+    background: #F4F6F9;
+    color: #14284F;
+    font-weight: 700;
+}
+
+.membro-celula {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.membro-celula img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.membro-celula div {
+    display: flex;
+    flex-direction: column;
+}
+
+.membro-celula small {
+    color: #8891a6;
+    font-size: 11px;
+}
+
+.badge-cargo {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.badge-admin { background: rgba(232, 160, 32, .2); color: #8a5800; }
+.badge-membro { background: rgba(20, 40, 79, .08); color: #14284F; }
+
+.acoes-admin-flex {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-adm {
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background .2s ease, transform .1s ease;
+    font-family: inherit;
+}
+
+.btn-adm:active { transform: scale(.96); }
+
+.btn-adm-adv { background: rgba(230, 126, 34, .15); color: #d35400; }
+.btn-adm-adv:hover { background: #e67e22; color: #fff; }
+
+.btn-adm-cargo { background: rgba(41, 128, 185, .15); color: #2980b9; }
+.btn-adm-cargo:hover { background: #2980b9; color: #fff; }
+
+.btn-adm-del { background: rgba(192, 57, 43, .15); color: #c0392b; }
+.btn-adm-del:hover { background: #c0392b; color: #fff; }
+
+/* Estado desativado para ações administrativas */
+.btn-adm:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: auto;
+}
+
+.btn-adm:disabled:hover {
+    background: initial;
+    color: initial;
+}
+
 /* ---------- Responsivo ---------- */
 
 @media (max-width: 1180px) {
-    .dash-grid {
-        grid-template-columns: 240px 1fr;
-    }
+    .dash-grid { grid-template-columns: 240px 1fr; }
     .dash-col-direita { display: none; }
 }
 
 @media (max-width: 900px) {
     .dash-grid { grid-template-columns: 1fr; }
-    .dash-col-esquerda {
+    .dash-col-esquerda.sidebar-left {
         position: static;
-        flex-direction: row;
-        overflow-x: auto;
+        flex-direction: column;
+        overflow: visible;
     }
-    .dash-col-esquerda .card-lateral { min-width: 240px; flex-shrink: 0; }
+    .dash-col-esquerda.sidebar-left .card-lateral { min-width: auto; }
     .kanban-board { grid-template-columns: 1fr; }
     .dash-busca { display: none; }
 }
@@ -882,25 +1085,4 @@
     .btn-editar-capa { right: 14px; bottom: 14px; padding: 7px 14px; font-size: 12px; }
     .modal-linha { flex-direction: column; gap: 0; }
     .post-criador { flex-direction: column; }
-}
-
-/* Ajustes adicionais: sidebar-left e z-indexs para avatar/capa */
-.sidebar-left {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.perfil-capa { z-index: 1; }
-.perfil-info-barra { position: relative; z-index: 3; }
-.perfil-avatar-wrap { z-index: 4; }
-
-@media (max-width: 900px) {
-    /* Garante que a sidebar esquerda mantenha coluna em telas médias */
-    .dash-col-esquerda.sidebar-left {
-        position: static;
-        flex-direction: column;
-        overflow: visible;
-    }
-    .dash-col-esquerda.sidebar-left .card-lateral { min-width: auto; }
 }
