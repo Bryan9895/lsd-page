@@ -2,7 +2,7 @@
 <html lang="pt-BR">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <meta name="description" content="Painel do membro — LSD Laboratório de Sistemas e Dados">
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -17,7 +17,7 @@
         <header class="dash-nav">
             <div class="dash-nav-logo">
                 <img src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
-                <span>LSD <strong>Painel</strong></span>
+                <span class="dash-logo-texto">LSD <strong>Painel</strong></span>
             </div>
 
             <div class="dash-busca">
@@ -36,8 +36,8 @@
                     <i class="fas fa-moon" aria-hidden="true"></i>
                     <span>Escuro</span>
                 </button>
-                <a href="index.html"><i class="fas fa-arrow-left"></i> Site</a>
-                <a href="entrar-login.html" id="logoutLink"><i class="fas fa-right-from-bracket"></i> Sair</a>
+                <a href="index.html" class="dash-nav-link" aria-label="Voltar ao site"><i class="fas fa-arrow-left"></i><span>Site</span></a>
+                <a href="entrar-login.html" id="logoutLink" class="dash-nav-link dash-nav-sair" aria-label="Sair da conta"><i class="fas fa-right-from-bracket"></i><span>Sair</span></a>
             </div>
         </header>
 

@@ -4220,3 +4220,516 @@ html.tema-escuro .membro-card-identidade h3 {
 html.tema-escuro .membro-card-identidade p {
     color: #8B949E;
 }
+
+/* ============================================================
+   UI/UX 2026 — RESPONSIVO MOBILE-FIRST + DARK MODE REFINADO
+   ============================================================ */
+
+:root {
+    --dash-bg: #F5F7FA;
+    --dash-surface: #FFFFFF;
+    --dash-surface-soft: #F8FAFC;
+    --dash-surface-raised: #FFFFFF;
+    --dash-border: #DDE3EA;
+    --dash-border-strong: #CBD4DF;
+    --dash-text: #17233B;
+    --dash-text-soft: #5E6B80;
+    --dash-text-muted: #8994A7;
+    --dash-nav-bg: #14284F;
+    --dash-accent: #E8A020;
+    --dash-accent-hover: #F0B13D;
+    --dash-focus: rgba(232, 160, 32, .32);
+    --dash-shadow: 0 10px 30px rgba(20, 40, 79, .08);
+    --dash-radius: 16px;
+}
+
+html.tema-escuro {
+    --dash-bg: #0B0F14;
+    --dash-surface: #11161D;
+    --dash-surface-soft: #151B23;
+    --dash-surface-raised: #171E27;
+    --dash-border: #27313D;
+    --dash-border-strong: #344150;
+    --dash-text: #EAF0F6;
+    --dash-text-soft: #A7B2C1;
+    --dash-text-muted: #7F8B9A;
+    --dash-nav-bg: #090D12;
+    --dash-accent: #F2B84B;
+    --dash-accent-hover: #FFC861;
+    --dash-focus: rgba(242, 184, 75, .35);
+    --dash-shadow: 0 12px 34px rgba(0, 0, 0, .30);
+}
+
+.dash-body {
+    background: var(--dash-bg);
+    color: var(--dash-text);
+    transition: background-color .2s ease, color .2s ease;
+}
+
+/* Navbar mais previsível e confortável para uso diário */
+.dash-nav {
+    min-height: 66px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-left: max(4%, env(safe-area-inset-left));
+    padding-right: max(4%, env(safe-area-inset-right));
+    background: var(--dash-nav-bg);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    gap: 18px;
+}
+
+.dash-nav-logo { min-width: max-content; }
+.dash-nav-logo img { width: 34px; height: 34px; }
+.dash-nav-links { gap: 8px; }
+.dash-nav-links a { margin-left: 0; }
+
+.dash-nav-link,
+.btn-tema-dashboard {
+    min-height: 40px;
+    border-radius: 10px;
+}
+
+.dash-nav-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 10px;
+}
+
+.dash-nav-link:hover,
+.dash-nav-link:focus-visible,
+.btn-tema-dashboard:focus-visible {
+    background: rgba(255,255,255,.10);
+    outline: 3px solid rgba(232,160,32,.22);
+    outline-offset: 1px;
+}
+
+.dash-busca input {
+    min-height: 42px;
+    border-color: rgba(255,255,255,.16);
+    background: rgba(255,255,255,.07);
+}
+
+.dash-busca input:focus {
+    background: rgba(255,255,255,.11);
+    box-shadow: 0 0 0 3px rgba(232,160,32,.18);
+}
+
+/* Superfícies no dark mode: menos preto puro e contraste mais confortável */
+html.tema-escuro .dash-body { background: var(--dash-bg); color: var(--dash-text); }
+html.tema-escuro .dash-nav { background: var(--dash-nav-bg); border-bottom-color: var(--dash-border); }
+
+html.tema-escuro .card-lateral,
+html.tema-escuro .abas-nav,
+html.tema-escuro .post-criador,
+html.tema-escuro .post-card,
+html.tema-escuro .membro-card-publico,
+html.tema-escuro .admin-card,
+html.tema-escuro .admin-painel,
+html.tema-escuro .painel-admin-card,
+html.tema-escuro .modal-card,
+html.tema-escuro .feed-vazio,
+html.tema-escuro .destaques-card,
+html.tema-escuro .ux-dialog {
+    background: var(--dash-surface);
+    color: var(--dash-text);
+    border-color: var(--dash-border);
+    box-shadow: var(--dash-shadow);
+}
+
+html.tema-escuro .kanban-coluna,
+html.tema-escuro .comentarios-area,
+html.tema-escuro .comentario-balao,
+html.tema-escuro .post-anexo,
+html.tema-escuro .codigo-bloco,
+html.tema-escuro .tecnologias-seletor,
+html.tema-escuro .post-anexo-box,
+html.tema-escuro .arquivo-selecionado-post {
+    background: var(--dash-surface-soft);
+    border-color: var(--dash-border);
+    color: var(--dash-text-soft);
+}
+
+html.tema-escuro .perfil-nome-funcao h1,
+html.tema-escuro .card-lateral h3,
+html.tema-escuro .progresso-mini-item strong,
+html.tema-escuro .kanban-coluna-header h2,
+html.tema-escuro .post-card-autor,
+html.tema-escuro .modal-card h2,
+html.tema-escuro .modal-card h3,
+html.tema-escuro .membro-destaque-nome {
+    color: var(--dash-text);
+}
+
+html.tema-escuro .perfil-nome-funcao p,
+html.tema-escuro .lista-info li,
+html.tema-escuro .progresso-mini-pct,
+html.tema-escuro .post-card-texto,
+html.tema-escuro .post-card-meta,
+html.tema-escuro .modal-subtitulo,
+html.tema-escuro .campo-ajuda,
+html.tema-escuro .conquista-dashboard-selo span {
+    color: var(--dash-text-soft);
+}
+
+html.tema-escuro input,
+html.tema-escuro textarea,
+html.tema-escuro select,
+html.tema-escuro .post-criador textarea,
+html.tema-escuro .membros-busca input,
+html.tema-escuro #formEditarPerfil input,
+html.tema-escuro #formEditarPerfil textarea {
+    background: #0D1218;
+    color: var(--dash-text);
+    border-color: var(--dash-border-strong);
+}
+
+html.tema-escuro input:focus,
+html.tema-escuro textarea:focus,
+html.tema-escuro select:focus {
+    border-color: var(--dash-accent);
+    box-shadow: 0 0 0 3px var(--dash-focus);
+}
+
+html.tema-escuro .btn-secundario,
+html.tema-escuro .btn-ver-perfil,
+html.tema-escuro .membro-voltar {
+    background: #1A222C;
+    color: var(--dash-text);
+    border-color: var(--dash-border-strong);
+}
+
+html.tema-escuro .btn-secundario:hover,
+html.tema-escuro .btn-ver-perfil:hover,
+html.tema-escuro .membro-voltar:hover { background: #222C38; }
+
+/* Modal: correção crítica de rolagem em telas pequenas */
+.modal-overlay {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.modal-card {
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+}
+
+.modal-perfil-card {
+    max-width: 620px;
+}
+
+.modal-acoes {
+    position: sticky;
+    bottom: -30px;
+    z-index: 4;
+    margin: 18px -30px -30px;
+    padding: 14px 30px max(18px, env(safe-area-inset-bottom));
+    background: #FFFFFF;
+    border-top: 1px solid rgba(20,40,79,.10);
+    box-shadow: 0 -10px 22px rgba(20,40,79,.05);
+}
+
+html.tema-escuro .modal-acoes {
+    background: var(--dash-surface);
+    border-top-color: var(--dash-border);
+    box-shadow: 0 -12px 24px rgba(0,0,0,.22);
+}
+
+/* Conteúdo principal: largura e espaçamento fluidos */
+.dash-grid {
+    width: min(100%, 1440px);
+    padding-inline: clamp(16px, 3vw, 48px);
+    gap: clamp(16px, 2vw, 24px);
+}
+
+.card-lateral,
+.post-card,
+.post-criador,
+.abas-nav,
+.kanban-coluna {
+    border: 1px solid transparent;
+}
+
+html.tema-escuro .card-lateral,
+html.tema-escuro .post-card,
+html.tema-escuro .post-criador,
+html.tema-escuro .abas-nav,
+html.tema-escuro .kanban-coluna { border-color: var(--dash-border); }
+
+/* Tablets */
+@media (max-width: 980px) {
+    .dash-nav {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        row-gap: 10px;
+    }
+
+    .dash-busca {
+        display: flex;
+        max-width: none;
+        width: 100%;
+        margin: 0;
+    }
+
+    .dash-grid {
+        grid-template-columns: 1fr;
+        padding-top: 20px;
+    }
+
+    .dash-col-esquerda.sidebar-left {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .dash-col-esquerda.sidebar-left .conquistas-dashboard-card,
+    .dash-col-esquerda.sidebar-left .advertencias-card {
+        grid-column: 1 / -1;
+    }
+
+    .kanban-board {
+        grid-template-columns: repeat(3, minmax(280px, 1fr));
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+        padding-bottom: 8px;
+    }
+
+    .kanban-coluna {
+        min-width: 280px;
+        scroll-snap-align: start;
+    }
+}
+
+/* Mobile: navegação compacta, abas roláveis e controles fáceis de tocar */
+@media (max-width: 700px) {
+    .dash-nav {
+        grid-template-columns: 1fr auto;
+        padding: max(10px, env(safe-area-inset-top)) 14px 10px;
+        gap: 10px;
+        min-height: auto;
+    }
+
+    .dash-nav-logo { grid-column: 1; }
+    .dash-nav-links { grid-column: 2; gap: 4px; }
+    .dash-busca {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .dash-busca input {
+        min-height: 44px;
+        font-size: 16px; /* evita zoom automático do iOS */
+    }
+
+    .dash-nav-link,
+    .btn-tema-dashboard {
+        width: 42px;
+        height: 42px;
+        min-height: 42px;
+        padding: 0;
+        border-radius: 11px;
+    }
+
+    .dash-nav-link span,
+    .btn-tema-dashboard span { display: none; }
+
+    .dash-nav-link i,
+    .btn-tema-dashboard i { font-size: 15px; }
+
+    .perfil-capa { height: 132px; }
+    .btn-editar-capa { min-height: 40px; }
+
+    .perfil-info-barra {
+        padding-inline: 16px;
+        padding-bottom: 18px;
+    }
+
+    .perfil-avatar { width: 88px; height: 88px; }
+    .perfil-avatar-wrap { margin-top: -42px; }
+    .perfil-nome-funcao h1 { font-size: 20px; }
+
+    .perfil-acoes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+        gap: 8px;
+        padding-top: 2px;
+    }
+
+    .perfil-acoes button {
+        min-height: 44px;
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    .dash-grid {
+        padding: 14px 12px calc(36px + env(safe-area-inset-bottom));
+    }
+
+    .dash-col-esquerda.sidebar-left {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .card-lateral { padding: 16px; border-radius: 14px; }
+
+    .abas-nav {
+        position: sticky;
+        top: 118px;
+        z-index: 35;
+        display: flex;
+        overflow-x: auto;
+        gap: 6px;
+        padding: 6px;
+        margin: 0 -2px 16px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .abas-nav::-webkit-scrollbar { display: none; }
+    .aba-btn {
+        flex: 0 0 auto;
+        min-height: 42px;
+        padding: 10px 13px;
+        white-space: nowrap;
+        font-size: 12px;
+    }
+
+    .kanban-topo {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .kanban-topo .btn-principal { width: 100%; justify-content: center; min-height: 44px; }
+
+    .kanban-board {
+        grid-template-columns: repeat(3, minmax(86vw, 1fr));
+        gap: 12px;
+        margin-inline: -12px;
+        padding-inline: 12px;
+        scroll-padding-inline: 12px;
+    }
+
+    .kanban-coluna { min-width: 86vw; }
+
+    .post-card,
+    .post-criador { padding: 14px; border-radius: 14px; }
+
+    .post-card-acoes { gap: 2px; }
+    .post-card-acoes button { min-height: 42px; padding-inline: 6px; }
+
+    .conquistas-dashboard-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px 6px;
+    }
+
+    .conquista-dashboard-selo img { width: 48px; height: 48px; }
+
+    /* Editar perfil vira bottom-sheet rolável e com Salvar sempre acessível */
+    #modalEditarPerfil.modal-overlay,
+    #modalEditarCapa.modal-overlay,
+    #modalOverlay.modal-overlay {
+        align-items: flex-end;
+        justify-content: center;
+        padding: 8px 0 0;
+    }
+
+    .modal-card,
+    .modal-perfil-card,
+    .modal-capa-card {
+        width: 100%;
+        max-width: none;
+        max-height: calc(100dvh - max(8px, env(safe-area-inset-top)));
+        margin: 0;
+        border-radius: 20px 20px 0 0;
+        padding: 22px 16px 0;
+    }
+
+    .modal-card h2 { padding-right: 34px; font-size: 18px; }
+    .modal-subtitulo { margin-bottom: 16px; }
+
+    .modal-fechar {
+        top: 12px;
+        right: 14px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(20,40,79,.07);
+    }
+
+    html.tema-escuro .modal-fechar { background: #202832; }
+
+    .modal-linha { flex-direction: column; gap: 0; }
+
+    #formCard input,
+    #formCard textarea,
+    #formCard select,
+    #formEditarPerfil input[type="text"],
+    #formEditarPerfil input[type="url"],
+    #formEditarPerfil textarea {
+        min-height: 44px;
+        font-size: 16px; /* melhor toque + evita zoom no iPhone */
+    }
+
+    #formEditarPerfil textarea { min-height: 100px; }
+
+    .tecnologias-seletor {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 8px;
+    }
+
+    .tecnologias-seletor label {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        padding: 9px 10px;
+    }
+
+    .modal-acoes {
+        bottom: 0;
+        margin: 18px -16px 0;
+        padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .modal-acoes button {
+        min-height: 46px;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 430px) {
+    .dash-logo-texto strong { display: none; }
+    .dash-nav-logo { gap: 8px; }
+    .dash-nav-logo img { width: 31px; height: 31px; }
+
+    .perfil-acoes { grid-template-columns: 1fr; }
+    .conquistas-dashboard-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .tecnologias-seletor { grid-template-columns: 1fr; }
+
+    .modal-acoes { grid-template-columns: 1fr; }
+    .modal-acoes .btn-salvar { order: -1; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .post-it-acoes { opacity: 1; }
+    .btn-principal:hover,
+    .post-it:hover,
+    .conquista-dashboard-selo:hover img { transform: none; }
+
+    button,
+    a,
+    input[type="checkbox"],
+    input[type="radio"] { touch-action: manipulation; }
+}

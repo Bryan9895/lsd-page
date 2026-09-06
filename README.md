@@ -1759,3 +1759,14 @@ Caso o sistema seja destinado exclusivamente ao laboratório, esta seção pode 
 **Status:** Em desenvolvimento
 
 **Administrador principal configurado:** `bryan.william10@aluno.ifce.edu.br`
+
+
+---
+
+## Responsividade e UI/UX
+
+A revisão mobile-first do Dashboard, melhorias da navbar, refinamento do modo escuro e correção dos modais em telas pequenas estão documentados em:
+
+```text
+docs/alteracoes/README_RESPONSIVIDADE_UIUX.md
+```
