@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+
+.venv/
+venv/
+backend/venv/
+
+
+# Banco local
+*.db
+*.sqlite3
+
+
+# Uploads
+backend/uploads/*
+
+!backend/uploads/default-avatar.png
+!backend/uploads/default-capa.jpg
+
+
+# Ambiente
+.env
+
+
+# Editor
+.vscode/
+
+
+# Sistema
+.DS_Store
+
+# Backups locais/temporários
+backend/backups/
+*.sqlite3
+.env

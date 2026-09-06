@@ -1,0 +1,38 @@
+"""
+Template WSGI para PythonAnywhere — LSD v2.3.2
+
+No painel Web > WSGI configuration file, adapte os valores abaixo.
+Não envie sua SECRET_KEY real para GitHub.
+"""
+
+import os
+import sys
+
+USERNAME = "SEU_USUARIO_PYTHONANYWHERE"
+PROJECT_HOME = f"/home/{USERNAME}/Site_LSD"
+
+if PROJECT_HOME not in sys.path:
+    sys.path.insert(0, PROJECT_HOME)
+
+# Produção temporária
+os.environ["APP_ENV"] = "production"
+
+# TROQUE por uma chave aleatória longa antes de publicar.
+os.environ["SECRET_KEY"] = "COLOQUE_AQUI_UMA_CHAVE_FORTE_E_ALEATORIA"
+
+# Código de cadastro da equipe.
+os.environ["LSD_ACCESS_CODE"] = "00001"
+
+# Administrador principal.
+os.environ["ADMIN_EMAIL"] = "bryan.william10@aluno.ifce.edu.br"
+
+# Backup automático.
+os.environ["BACKUP_RETENTION"] = "5"
+os.environ["BACKUP_TIMEZONE"] = "America/Fortaleza"
+
+# Banco e uploads permanecem no filesystem persistente do PythonAnywhere.
+os.environ["DATABASE_PATH"] = f"{PROJECT_HOME}/backend/lsd_database.db"
+os.environ["UPLOAD_FOLDER"] = f"{PROJECT_HOME}/backend/uploads"
+os.environ["BACKUP_FOLDER"] = f"{PROJECT_HOME}/backend/backups"
+
+from backend.app import app as application

@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Painel do membro — LSD Laboratório de Sistemas e Dados">
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+        <link rel="stylesheet" href="./src/css/styles.css">
+        <link rel="stylesheet" href="./src/css/dashboard.css">
+        <title>Painel do Membro — LSD</title>
+    </head>
+
+    <body class="dash-body">
+
+        <!-- ===== NAV TOPO ===== -->
+        <header class="dash-nav">
+            <div class="dash-nav-logo">
+                <img src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
+                <span>LSD <strong>Painel</strong></span>
+            </div>
+
+            <div class="dash-busca">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Buscar no LSD..." aria-label="Buscar no LSD">
+            </div>
+
+            <div class="dash-nav-links">
+                <button
+                    type="button"
+                    class="btn-tema-dashboard"
+                    id="btnTemaDashboard"
+                    aria-label="Ativar modo escuro"
+                    title="Alternar tema claro/escuro"
+                >
+                    <i class="fas fa-moon" aria-hidden="true"></i>
+                    <span>Escuro</span>
+                </button>
+                <a href="index.html"><i class="fas fa-arrow-left"></i> Site</a>
+                <a href="entrar-login.html" id="logoutLink"><i class="fas fa-right-from-bracket"></i> Sair</a>
+            </div>
+        </header>
+
+        <!-- ===== HEADER DE PERFIL ===== -->
+        <section class="perfil-header">
+            <div class="perfil-capa">
+                <img src="./src/images/lab/lsd_panorama.JPG" alt="Capa — Laboratório LSD">
+                <button type="button" class="btn-editar-capa" id="btnEditarCapa"><i class="fas fa-camera"></i> Editar Capa</button>
+            </div>
+
+            <div class="perfil-info-barra">
+                <div class="perfil-avatar-wrap">
+                    <img class="perfil-avatar" src="./src/images/equipe/avatar/default-avatar.png" alt="Avatar do membro">
+                </div>
+
+                <div class="perfil-nome-funcao">
+                    <h1 id="perfilNome">Bryan William</h1>
+                    <p id="perfilFuncao">Desenvolvedor Full Stack · Pesquisador LSD</p>
+                </div>
+
+                <div class="perfil-acoes">
+                    <button type="button" class="btn-secundario" id="btnNovoCardHeader"><i class="fas fa-plus"></i> Novo Card</button>
+                    <button type="button" class="btn-principal" id="btnEditarPerfil"><i class="fas fa-pen"></i> Editar Perfil</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== GRID PRINCIPAL ===== -->
+        <main class="dash-grid">
+
+            <!-- Coluna esquerda -->
+            <aside class="dash-col dash-col-esquerda sidebar-left">
+                <div class="card-lateral">
+                    <h3>Sobre</h3>
+                    <ul class="lista-info">
+                        <li><i class="fas fa-envelope"></i> Carregando...</li>
+                    </ul>
+                </div>
+
+                <div class="card-lateral">
+                    <h3>Progresso no Quadro</h3>
+                    <div class="progresso-mini">
+                        <div class="progresso-mini-item">
+                            <strong id="miniTotal">0</strong>
+                            <span>Total</span>
+                        </div>
+                        <div class="progresso-mini-item">
+                            <strong id="miniAndamento">0</strong>
+                            <span>Andamento</span>
+                        </div>
+                        <div class="progresso-mini-item">
+                            <strong id="miniConcluido">0</strong>
+                            <span>Concluídos</span>
+                        </div>
+                    </div>
+                    <div class="barra-progresso">
+                        <div class="barra-progresso-fill" id="miniBarra" style="width:0%"></div>
+                    </div>
+                    <span class="progresso-mini-pct"><span id="miniPct">0</span>% concluído</span>
+                </div>
+
+                <section class="card-lateral conquistas-dashboard-card" aria-labelledby="conquistasDashboardTitulo">
+                    <div class="conquistas-dashboard-topo">
+                        <h3 id="conquistasDashboardTitulo">
+                            <i class="fas fa-medal"></i>
+                            Minhas Conquistas
+                        </h3>
+                        <span class="conquistas-dashboard-contador" id="conquistasDashboardContador">0/9</span>
+                    </div>
+                    <div class="conquistas-dashboard-grid" id="conquistasDashboardGrid">
+                        <div class="conquistas-dashboard-vazio">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                            Carregando...
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Advertências recebidas pelo membro logado -->
+                <section
+                    class="card-lateral advertencias-card"
+                    id="advertenciasCard"
+                    aria-labelledby="advertenciasTitulo"
+                    hidden
+                >
+                    <div class="advertencias-card-topo">
+                        <div>
+                            <span class="advertencias-eyebrow">COMUNICADO DA ADMINISTRAÇÃO</span>
+                            <h3 id="advertenciasTitulo">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                Advertências
+                            </h3>
+                        </div>
+                        <span class="advertencias-contador" id="advertenciasContador" aria-label="Quantidade de advertências">0</span>
+                    </div>
+
+                    <div class="advertencias-lista" id="advertenciasLista" aria-live="polite"></div>
+                </section>
+            </aside>
+
+            <!-- Coluna central -->
+            <section class="dash-col dash-col-central">
+
+                <div class="abas-nav dash-tabs" role="tablist">
+                    <button type="button" class="aba-btn ativa" data-aba="kanban" role="tab">
+                        <i class="fas fa-table-columns"></i> Quadro Kanban
+                    </button>
+                    <button type="button" class="aba-btn" data-aba="comunidade" role="tab">
+                        <i class="fas fa-people-group"></i> Feed da Comunidade
+                    </button>
+                    <button type="button" class="aba-btn" data-aba="membros" role="tab">
+                        <i class="fas fa-address-book"></i> Membros
+                    </button>
+                    <button type="button" class="aba-btn" data-aba="admin" id="btnAbaAdmin" role="tab" style="display: none;">
+                        <i class="fas fa-user-shield"></i> Painel Admin
+                    </button>
+                </div>
+
+                <!-- Aba 1: Quadro Kanban -->
+                <div class="aba-conteudo ativa" id="aba-kanban" role="tabpanel">
+                    <div class="kanban-topo">
+                        <p class="kanban-legenda">Arraste os cards entre as colunas ou assuma uma tarefa diretamente.</p>
+                        <button type="button" class="btn-principal" id="btnNovoCard"><i class="fas fa-plus"></i> Novo card</button>
+                    </div>
+
+                    <div class="kanban-board">
+                        <section class="kanban-coluna" data-status="afazer">
+                            <header class="kanban-coluna-header">
+                                <span class="kanban-dot afazer"></span>
+                                <h2>A Fazer</h2>
+                                <span class="kanban-contador" id="contador-afazer">0</span>
+                            </header>
+                            <div class="kanban-lista" id="lista-afazer" data-status="afazer"></div>
+                        </section>
+
+                        <section class="kanban-coluna" data-status="andamento">
+                            <header class="kanban-coluna-header">
+                                <span class="kanban-dot andamento"></span>
+                                <h2>Em Andamento</h2>
+                                <span class="kanban-contador" id="contador-andamento">0</span>
+                            </header>
+                            <div class="kanban-lista" id="lista-andamento" data-status="andamento"></div>
+                        </section>
+
+                        <section class="kanban-coluna" data-status="concluido">
+                            <header class="kanban-coluna-header">
+                                <span class="kanban-dot concluido"></span>
+                                <h2>Concluído</h2>
+                                <span class="kanban-contador" id="contador-concluido">0</span>
+                            </header>
+                            <div class="kanban-lista" id="lista-concluido" data-status="concluido"></div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Aba 2: Feed da Comunidade -->
+                <div class="aba-conteudo" id="aba-comunidade" role="tabpanel" hidden>
+                    <form id="formPost" class="post-criador">
+                        <img class="post-criador-avatar" id="avatarCriadorPost" src="./src/images/equipe/avatar/default-avatar.png" alt="Você">
+                        <div class="post-criador-corpo">
+                            <textarea id="novoPostTexto" name="conteudo" placeholder="Compartilhe uma atualização com o LSD..." maxlength="2000"></textarea>
+
+                            <input
+                                type="file"
+                                id="inputFotoPost"
+                                name="arquivo"
+                                accept="image/*,.pdf,.txt,.md,.csv,.json,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
+                                style="display:none;"
+                            >
+
+                            <div id="arquivoSelecionadoPost" class="arquivo-selecionado-post" hidden></div>
+
+                            <div id="painelCodigoPost" class="painel-codigo-post" hidden>
+                                <div class="painel-codigo-topo">
+                                    <label for="codigoLinguagemPost">Linguagem</label>
+                                    <select id="codigoLinguagemPost" name="codigo_linguagem">
+                                        <option value="texto">Texto</option>
+                                        <option value="python">Python</option>
+                                        <option value="javascript">JavaScript</option>
+                                        <option value="html">HTML</option>
+                                        <option value="css">CSS</option>
+                                        <option value="java">Java</option>
+                                        <option value="c">C</option>
+                                        <option value="cpp">C++</option>
+                                        <option value="sql">SQL</option>
+                                        <option value="bash">Bash</option>
+                                    </select>
+                                </div>
+                                <textarea id="codigoSnippetPost" name="codigo_snippet" maxlength="12000" placeholder="Cole ou escreva seu código aqui..."></textarea>
+                            </div>
+
+                            <div class="post-criador-acoes">
+                                <div class="post-criador-anexos">
+                                    <button type="button" id="btnAnexarFoto" title="Adicionar arquivo">
+                                        <i class="fas fa-paperclip"></i> Arquivo
+                                    </button>
+                                    <button type="button" id="btnAdicionarCodigo" title="Adicionar código">
+                                        <i class="fas fa-code"></i> Código
+                                    </button>
+                                </div>
+                                <button type="submit" class="btn-principal" id="btnPublicarPost">Publicar</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="feed-lista" id="feedLista"></div>
+                </div>
+
+                <!-- Aba: Diretório e perfil dos membros -->
+                <div class="aba-conteudo" id="aba-membros" role="tabpanel" hidden>
+                    <section id="membrosDiretorioView" class="membros-diretorio-view">
+                        <div class="membros-topo">
+                            <div>
+                                <span class="membros-eyebrow">COMUNIDADE LSD</span>
+                                <h2>Perfis dos membros</h2>
+                                <p>Conheça a equipe, suas tecnologias, funções e tarefas assumidas no quadro.</p>
+                            </div>
+                            <div class="membros-busca-wrap">
+                                <i class="fas fa-search"></i>
+                                <input id="buscaMembros" type="search" placeholder="Buscar membro..." autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="membros-grid" id="membrosGrid">
+                            <div class="membros-loading"><i class="fas fa-circle-notch fa-spin"></i> Carregando membros...</div>
+                        </div>
+                    </section>
+
+                    <section id="membroPerfilView" class="membro-perfil-view" hidden>
+                        <button type="button" class="membro-voltar" id="btnVoltarMembros">
+                            <i class="fas fa-arrow-left"></i> Voltar para membros
+                        </button>
+                        <div id="membroPerfilConteudo"></div>
+                    </section>
+                </div>
+
+                <!-- Aba 3: Painel Admin -->
+                <div class="aba-conteudo" id="aba-admin" role="tabpanel" hidden>
+                    <div class="admin-card">
+                        <h2><i class="fas fa-users-gear"></i> Gerenciamento de Membros</h2>
+                        <p class="admin-card-legenda">
+                            Gerencie cargos, permissões e advertências. As advertências ficam registradas e aparecem para o membro abaixo do Progresso no Quadro.
+                        </p>
+                        <div class="tabela-responsive">
+                            <table class="tabela-admin">
+                                <thead>
+                                    <tr>
+                                        <th>Membro</th>
+                                        <th>Email</th>
+                                        <th>Cargo</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaMembrosCorpo"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="admin-card admin-backup-card">
+                        <div class="admin-backup-topo">
+                            <div>
+                                <h2><i class="fas fa-database"></i> Backups temporários</h2>
+                                <p class="admin-card-legenda">
+                                    O servidor cria automaticamente um snapshot diário do banco e dos uploads.
+                                    Você também pode criar e baixar um backup manual antes de alterações importantes.
+                                </p>
+                            </div>
+
+                            <button type="button" class="btn-principal" id="btnCriarBackup">
+                                <i class="fas fa-floppy-disk"></i>
+                                Criar backup agora
+                            </button>
+                        </div>
+
+                        <div class="backup-resumo" id="backupResumo">
+                            Carregando informações de backup...
+                        </div>
+
+                        <div class="backup-lista" id="backupLista"></div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Coluna direita -->
+            <aside class="dash-col dash-col-direita">
+                <div class="card-lateral perfil-pontos-box" style="margin-bottom: 16px;">
+                    <h3><i class="fas fa-trophy" style="color: #E8A020;"></i> Pontuação</h3>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
+                        <span style="font-size: 0.9rem; color: #555;">Pontos acumulados:</span>
+                        <strong id="userPontosDisplay" style="font-size: 1.1rem; color: #14284F;">0 pts</strong>
+                    </div>
+                </div>
+
+                <div class="card-lateral destaques-card">
+                    <h3><i class="fas fa-fire" style="color: #e74c3c;"></i> Membros em Destaque</h3>
+                    <ul class="lista-membros lista-destaques" id="listaMembrosDestaque" style="margin-top: 12px; padding: 0; list-style: none;"></ul>
+                </div>
+            </aside>
+
+        </main>
+
+        <!-- ===== Modal: Criar/Editar Card ===== -->
+        <div class="modal-overlay" id="modalOverlay" hidden>
+            <div class="modal-card">
+                <button type="button" class="modal-fechar" id="modalFechar">&times;</button>
+                <h2 id="modalTitulo">Novo card</h2>
+
+                <form id="formCard">
+                    <label for="cardTitulo">Título
+                        <input type="text" id="cardTitulo" maxlength="60" placeholder="Nome do projeto ou tarefa" required>
+                    </label>
+
+                    <label for="cardDescricao">Descrição
+                        <textarea id="cardDescricao" maxlength="220" placeholder="Detalhes do andamento..."></textarea>
+                    </label>
+
+                    <div class="modal-linha">
+                        <label for="cardStatus">Coluna
+                            <select id="cardStatus">
+                                <option value="afazer">A Fazer</option>
+                                <option value="andamento">Em Andamento</option>
+                                <option value="concluido">Concluído</option>
+                            </select>
+                        </label>
+
+                        <label for="cardCor">Cor
+                            <select id="cardCor">
+                                <option value="amarelo">Amarelo</option>
+                                <option value="azul">Azul</option>
+                                <option value="rosa">Rosa</option>
+                                <option value="verde">Verde</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <label for="cardPrioridade">Prioridade
+                        <select id="cardPrioridade">
+                            <option value="baixa">Baixa</option>
+                            <option value="media" selected>Média</option>
+                            <option value="alta">Alta</option>
+                        </select>
+                    </label>
+
+                    <label for="cardResponsavel">Responsável
+                        <select id="cardResponsavel">
+                            <option value="">Ninguém (Não atribuído)</option>
+                            <option value="logado">Assumir por mim</option>
+                        </select>
+                    </label>
+
+                    <div class="modal-acoes">
+                        <button type="button" class="btn-cancelar" id="modalCancelar">Cancelar</button>
+                        <button type="submit" class="btn-salvar">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== Modal: Editar Capa ===== -->
+        <div class="modal-overlay" id="modalEditarCapa" hidden>
+            <div class="modal-card modal-capa-card">
+                <button type="button" class="modal-fechar" data-modal-cancel>&times;</button>
+                <h2><i class="fas fa-image"></i> Editar Capa</h2>
+                <p class="modal-subtitulo">Escolha uma imagem de destaque para o topo do seu perfil.</p>
+
+                <form id="formEditarCapa">
+                    <div class="capa-preview-wrap" id="capaPreviewWrap">
+                        <img id="capaPreviewImg" src="./src/images/lab/lsd_panorama.JPG" alt="Pré-visualização da capa">
+                        <div class="capa-preview-overlay">
+                            <i class="fas fa-camera"></i>
+                            <span>Trocar imagem</span>
+                        </div>
+                    </div>
+
+                    <label class="upload-dropzone" for="inputCapa" id="capaDropzone">
+                        <i class="fas fa-cloud-arrow-up"></i>
+                        <span class="upload-dropzone-titulo">Clique para escolher ou arraste a imagem aqui</span>
+                        <span class="upload-dropzone-legenda" id="capaNomeArquivo">PNG ou JPG · recomendado 1600×500px</span>
+                    </label>
+                    <input type="file" accept="image/*" id="inputCapa" name="capa" required hidden>
+
+                    <div class="modal-acoes">
+                        <button type="button" class="btn-cancelar" data-modal-cancel>Cancelar</button>
+                        <button type="submit" class="btn-salvar"><i class="fas fa-check"></i> Salvar Capa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== Modal: Editar Perfil ===== -->
+        <div class="modal-overlay" id="modalEditarPerfil" hidden>
+            <div class="modal-card modal-perfil-card">
+                <button type="button" class="modal-fechar" data-modal-cancel>&times;</button>
+                <h2><i class="fas fa-user-pen"></i> Editar Perfil</h2>
+                <p class="modal-subtitulo">Atualize suas informações públicas no painel do LSD.</p>
+
+                <form id="formEditarPerfil">
+
+                    <div class="perfil-form-avatar">
+                        <label class="avatar-preview-wrap" for="inputAvatar" id="avatarDropzone">
+                            <img id="avatarPreviewImg" src="./src/images/equipe/avatar/default-avatar.png" alt="Pré-visualização do avatar">
+                            <div class="avatar-preview-overlay">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                        </label>
+                        <input type="file" accept="image/*" id="inputAvatar" name="avatar" hidden>
+                        <span class="perfil-form-avatar-legenda" id="avatarNomeArquivo">Clique na foto para alterar o avatar</span>
+                    </div>
+
+                    <div class="form-secao-titulo">Informações principais</div>
+                    <div class="modal-linha">
+                        <label for="perfilNomeInput">Nome
+                            <input type="text" id="perfilNomeInput" name="nome" maxlength="80" placeholder="Seu nome completo">
+                        </label>
+                        <label for="perfilFuncaoInput">Função
+                            <input type="text" id="perfilFuncaoInput" name="funcao" maxlength="80" placeholder="Ex: Desenvolvedor Full Stack">
+                        </label>
+                    </div>
+
+                    <label for="perfilBioInput">Bio
+                        <textarea id="perfilBioInput" name="bio" maxlength="500" placeholder="Conte um pouco sobre você"></textarea>
+                        <span class="input-contador" id="bioContador">0/500</span>
+                    </label>
+
+                    <label for="perfilLocalizacaoInput"><i class="fas fa-location-dot campo-icone"></i> Localização
+                        <input type="text" id="perfilLocalizacaoInput" name="localizacao" maxlength="100" placeholder="Cidade, Estado">
+                    </label>
+
+                    <div class="form-secao-titulo">Redes sociais</div>
+                    <div class="modal-linha">
+                        <label for="perfilGithubInput"><i class="fab fa-github campo-icone"></i> GitHub
+                            <input type="url" id="perfilGithubInput" name="github" maxlength="150" placeholder="https://github.com/usuario">
+                        </label>
+                        <label for="perfilInstagramInput"><i class="fab fa-instagram campo-icone"></i> Instagram
+                            <input type="url" id="perfilInstagramInput" name="instagram" maxlength="150" placeholder="https://instagram.com/usuario">
+                        </label>
+                    </div>
+
+                    <div class="form-secao-titulo">Linguagens e tecnologias</div>
+                    <p class="campo-ajuda">Selecione as tecnologias que você utiliza. Elas aparecerão no seu perfil público.</p>
+                    <div class="tecnologias-seletor" id="tecnologiasSeletor">
+                        <label><input type="checkbox" name="linguagens" value="JavaScript"> JavaScript</label>
+                        <label><input type="checkbox" name="linguagens" value="TypeScript"> TypeScript</label>
+                        <label><input type="checkbox" name="linguagens" value="HTML"> HTML</label>
+                        <label><input type="checkbox" name="linguagens" value="CSS"> CSS</label>
+                        <label><input type="checkbox" name="linguagens" value="Python"> Python</label>
+                        <label><input type="checkbox" name="linguagens" value="Java"> Java</label>
+                        <label><input type="checkbox" name="linguagens" value="C"> C</label>
+                        <label><input type="checkbox" name="linguagens" value="C++"> C++</label>
+                        <label><input type="checkbox" name="linguagens" value="C#"> C#</label>
+                        <label><input type="checkbox" name="linguagens" value="PHP"> PHP</label>
+                        <label><input type="checkbox" name="linguagens" value="SQL"> SQL</label>
+                        <label><input type="checkbox" name="linguagens" value="MySQL"> MySQL</label>
+                        <label><input type="checkbox" name="linguagens" value="Git"> Git</label>
+                        <label><input type="checkbox" name="linguagens" value="Docker"> Docker</label>
+                        <label><input type="checkbox" name="linguagens" value="Godot"> Godot</label>
+                    </div>
+
+                    <div class="modal-acoes">
+                        <button type="button" class="btn-cancelar" data-modal-cancel>Cancelar</button>
+                        <button type="submit" class="btn-salvar"><i class="fas fa-check"></i> Salvar Perfil</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== Modal: Confirmar Exclusão ===== -->
+        <div class="modal-overlay" id="confirmOverlay" hidden>
+            <div class="modal-card modal-confirm">
+                <p><i class="fas fa-triangle-exclamation"></i> Tem certeza que quer excluir este card?</p>
+                <div class="modal-acoes">
+                    <button class="btn-cancelar" id="confirmCancelar">Cancelar</button>
+                    <button class="btn-excluir" id="confirmExcluir">Excluir</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="./src/js/dashboard.js"></script>
+        <script src="./src/js/editar-perfil-capa.js"></script>
+    </body>
+</html>
