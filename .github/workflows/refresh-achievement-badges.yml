@@ -1,0 +1,181 @@
+name: Atualizar conquistas criativas
+
+on:
+  push:
+    paths:
+      - ".github/workflows/refresh-achievement-badges.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-achievements:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Atualizar catálogo e criar novos selos
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+          app_path = root / 'backend' / 'app.py'
+          text = app_path.read_text(encoding='utf-8')
+
+          replacements = {
+              '"nome": "Bem Vindo!"': '"nome": "Cheguei, e agora?"',
+              '"nome": "100 pontos"': '"nome": "Primeiras Faíscas"',
+              '"nome": "300 pontos"': '"nome": "Pegando Ritmo"',
+              '"nome": "500 pontos"': '"nome": "Sem Freio!"',
+              '"nome": "1000 pontos"': '"nome": "Isso Já É Poder"',
+              '"nome": "Comentarista"': '"nome": "Só Mais Um Comentário..."',
+              '"nome": "Criador de Cards"': '"nome": "A Fábrica Não Para"',
+              '"nome": "Preguiçoso"': '"nome": "Volto Já..."',
+              '"nome": "Sempre em confusão"': '"nome": "Era Só Um Aviso..."',
+              '"/src/images/conquistas/bem_vindo.png"': '"/src/images/conquistas/bem_vindo.svg"',
+              '"/src/images/conquistas/100_pontos.png"': '"/src/images/conquistas/100_pontos.svg"',
+              '"/src/images/conquistas/300_pontos.png"': '"/src/images/conquistas/300_pontos.svg"',
+              '"/src/images/conquistas/500_pontos.png"': '"/src/images/conquistas/500_pontos.svg"',
+              '"/src/images/conquistas/1000_pontos.png"': '"/src/images/conquistas/1000_pontos.svg"',
+              '"/src/images/conquistas/comentarista.png"': '"/src/images/conquistas/comentarista.svg"',
+              '"/src/images/conquistas/criador_cards.png"': '"/src/images/conquistas/criador_cards.svg"',
+              '"/src/images/conquistas/preguicoso.png"': '"/src/images/conquistas/preguicoso.svg"',
+              '"/src/images/conquistas/sempre_confusao.png"': '"/src/images/conquistas/sempre_confusao.svg"',
+          }
+
+          missing = [old for old in replacements if old not in text]
+          if missing:
+              raise SystemExit('Trechos esperados não encontrados em backend/app.py: ' + ', '.join(missing))
+
+          for old, new in replacements.items():
+              text = text.replace(old, new)
+          app_path.write_text(text, encoding='utf-8')
+
+          docs_path = root / 'docs' / 'alteracoes' / 'README_SISTEMA_CONQUISTAS.md'
+          docs = docs_path.read_text(encoding='utf-8')
+          doc_replacements = {
+              '| Bem Vindo! |': '| Cheguei, e agora? |',
+              '| 100 pontos |': '| Primeiras Faíscas |',
+              '| 300 pontos |': '| Pegando Ritmo |',
+              '| 500 pontos |': '| Sem Freio! |',
+              '| 1000 pontos |': '| Isso Já É Poder |',
+              '| Comentarista |': '| Só Mais Um Comentário... |',
+              '| Criador de Cards |': '| A Fábrica Não Para |',
+              '| Preguiçoso |': '| Volto Já... |',
+              '| Sempre em confusão |': '| Era Só Um Aviso... |',
+              '"nome": "100 pontos"': '"nome": "Primeiras Faíscas"',
+              '100 pontos   → 100 pontos': 'Primeiras Faíscas → 100 pontos',
+              '300 pontos   → 100 + 300 pontos': 'Pegando Ritmo → 100 + 300 pontos',
+              '500 pontos   → 100 + 300 + 500 pontos': 'Sem Freio! → 100 + 300 + 500 pontos',
+              '1000 pontos  → todas as conquistas de pontuação': 'Isso Já É Poder → todas as conquistas de pontuação',
+              '# Comentarista': '# Só Mais Um Comentário...',
+              '# Criador de Cards': '# A Fábrica Não Para',
+              '# Preguiçoso': '# Volto Já...',
+              '# Sempre em confusão': '# Era Só Um Aviso...',
+              'bem_vindo.png': 'bem_vindo.svg',
+              '100_pontos.png': '100_pontos.svg',
+              '300_pontos.png': '300_pontos.svg',
+              '500_pontos.png': '500_pontos.svg',
+              '1000_pontos.png': '1000_pontos.svg',
+              'comentarista.png': 'comentarista.svg',
+              'criador_cards.png': 'criador_cards.svg',
+              'preguicoso.png': 'preguicoso.svg',
+              'sempre_confusao.png': 'sempre_confusao.svg',
+          }
+          for old, new in doc_replacements.items():
+              docs = docs.replace(old, new)
+          docs += "\n\n## Identidade visual V2\n\nOs selos foram redesenhados em SVG com medalhões próprios, símbolos mais expressivos e nomes em tom de achievement de jogo. Os códigos internos das conquistas foram preservados para não quebrar desbloqueios existentes no banco de dados.\n"
+          docs_path.write_text(docs, encoding='utf-8')
+
+          out = root / 'src' / 'images' / 'conquistas'
+          out.mkdir(parents=True, exist_ok=True)
+
+          def svg_badge(accent1, accent2, icon, spark=''):
+              return f'''<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img">
+          <defs>
+            <radialGradient id="bg" cx="35%" cy="25%" r="80%"><stop offset="0" stop-color="#243449"/><stop offset="1" stop-color="#0a111b"/></radialGradient>
+            <linearGradient id="ring" x1="18" y1="16" x2="112" y2="116"><stop stop-color="{accent1}"/><stop offset="1" stop-color="{accent2}"/></linearGradient>
+            <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".45"/></filter>
+            <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <circle cx="64" cy="64" r="58" fill="#08101a" opacity=".42" filter="url(#shadow)"/>
+          <circle cx="64" cy="64" r="54" fill="url(#bg)" stroke="url(#ring)" stroke-width="7"/>
+          <circle cx="64" cy="64" r="43" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>
+          <g filter="url(#glow)">{icon}</g>
+          {spark}
+          </svg>'''
+
+          icons = {
+            'bem_vindo.svg': svg_badge('#62d6ff','#6676ff', '''
+              <path d="M40 36h37a6 6 0 0 1 6 6v44a6 6 0 0 1-6 6H40z" fill="#102338" stroke="#b8efff" stroke-width="4"/>
+              <path d="M45 43l24-8v55l-24-7z" fill="#65d8ff" stroke="#d9f8ff" stroke-width="3"/>
+              <circle cx="62" cy="64" r="3.2" fill="#082037"/>
+              <path d="M84 55h13m-6-6 6 6-6 6" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            ''', '<circle cx="96" cy="31" r="4" fill="#fff" opacity=".9"/>'),
+
+            '100_pontos.svg': svg_badge('#47e6c1','#2e9cff', '''
+              <path d="M70 25 43 68h19l-5 34 29-47H67z" fill="#8fffe6" stroke="#eafffb" stroke-width="3" stroke-linejoin="round"/>
+              <circle cx="39" cy="39" r="5" fill="#fff" opacity=".85"/>
+            '''),
+
+            '300_pontos.svg': svg_badge('#ffe36d','#ff9e36', '''
+              <path d="M64 25c5 15-8 18-3 31 4-7 11-10 15-21 18 16 24 31 16 47-6 13-17 21-29 21S38 95 34 82c-5-17 7-29 18-40 0 10 3 15 8 18-2-15 8-22 4-35z" fill="#ffb93f" stroke="#fff1a6" stroke-width="3"/>
+              <path d="M63 62c8 9 10 15 7 23-2 6-7 10-13 10s-11-4-12-10c-2-8 4-14 10-20 0 7 3 10 8 13 2-5 2-10 0-16z" fill="#fff4aa"/>
+            '''),
+
+            '500_pontos.svg': svg_badge('#ff7b68','#ff375f', '''
+              <path d="M27 67c13-25 31-37 55-36l-9 15c11 2 21 8 28 18-9-1-17 1-24 5l9 14c-23 7-43 2-59-16z" fill="#ff665f" stroke="#ffd0c7" stroke-width="3" stroke-linejoin="round"/>
+              <circle cx="55" cy="57" r="5" fill="#fff"/><path d="M33 70h-9m13 11-8 5m12 5-5 8" stroke="#ffd6cf" stroke-width="4" stroke-linecap="round"/>
+            '''),
+
+            '1000_pontos.svg': svg_badge('#d58cff','#7868ff', '''
+              <path d="M64 24l11 25 27 3-20 18 6 27-24-14-24 14 6-27-20-18 27-3z" fill="#a484ff" stroke="#f1e7ff" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M64 39v35m0 0 11-12m-11 12L53 62" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            ''', '<circle cx="95" cy="31" r="5" fill="#fff" opacity=".75"/><circle cx="31" cy="91" r="3" fill="#fff" opacity=".55"/>'),
+
+            'comentarista.svg': svg_badge('#bb84ff','#6659ff', '''
+              <path d="M33 40h62a9 9 0 0 1 9 9v31a9 9 0 0 1-9 9H65L48 101l4-12H33a9 9 0 0 1-9-9V49a9 9 0 0 1 9-9z" fill="#6d58d9" stroke="#e7dcff" stroke-width="3"/>
+              <circle cx="46" cy="65" r="5" fill="#fff"/><circle cx="64" cy="65" r="5" fill="#fff"/><circle cx="82" cy="65" r="5" fill="#fff"/>
+            ''', '<path d="M92 29l3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z" fill="#fff" opacity=".8"/>'),
+
+            'criador_cards.svg': svg_badge('#6df7b5','#2bc46f', '''
+              <rect x="31" y="28" width="61" height="72" rx="9" fill="#17362c" stroke="#caffdf" stroke-width="3"/>
+              <rect x="42" y="21" width="39" height="15" rx="6" fill="#62e7a2" stroke="#e6fff0" stroke-width="3"/>
+              <path d="M43 55h8l4 5 9-11M43 77h8l4 5 9-11M70 56h12M70 78h12" fill="none" stroke="#dffff0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            ''', '<path d="M92 36h13M98.5 29.5v13" stroke="#fff" stroke-width="4" stroke-linecap="round"/>'),
+
+            'preguicoso.svg': svg_badge('#75d7ff','#3674ff', '''
+              <path d="M36 73c7-20 20-31 39-31 16 0 28 9 34 25-9-5-17-4-25 2-11 8-28 12-48 4z" fill="#73b9ff" stroke="#d7efff" stroke-width="3"/>
+              <path d="M41 75c12 7 28 8 43 2 8-3 15-3 22 1-5 14-18 24-35 24-16 0-27-9-30-27z" fill="#284a8b"/>
+              <path d="M50 58c6 4 12 4 18 0M76 57c5 3 10 3 15 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+              <text x="82" y="39" fill="#fff" font-family="Arial,sans-serif" font-size="20" font-weight="700">Z</text>
+              <text x="97" y="27" fill="#fff" opacity=".75" font-family="Arial,sans-serif" font-size="13" font-weight="700">Z</text>
+            '''),
+
+            'sempre_confusao.svg': svg_badge('#ff706c','#ff2f47', '''
+              <path d="M64 25 106 98H22z" fill="#e54a4e" stroke="#ffd4d2" stroke-width="4" stroke-linejoin="round"/>
+              <path d="M64 47v25" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+              <circle cx="64" cy="85" r="5" fill="#fff"/>
+              <path d="M27 32l9 8m-3-15 5 2M101 32l-9 8m3-15-5 2" stroke="#ffbebc" stroke-width="4" stroke-linecap="round"/>
+            ''', '<circle cx="101" cy="92" r="15" fill="#ff3449" stroke="#fff" stroke-width="3"/><text x="101" y="98" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="18" font-weight="800">3</text>'),
+          }
+
+          for filename, content in icons.items():
+              (out / filename).write_text(content, encoding='utf-8')
+          PY
+
+      - name: Commit das conquistas
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/app.py docs/alteracoes/README_SISTEMA_CONQUISTAS.md src/images/conquistas/*.svg
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração necessária."
+            exit 0
+          fi
+          git commit -m "feat: renovar conquistas com nomes e selos criativos"
+          git push
