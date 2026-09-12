@@ -1,6 +1,6 @@
 # LSD — Laboratório de Sistemas e Dados
 
-![Version](https://img.shields.io/badge/version-2.3.2-blue)
+![Version](https://img.shields.io/badge/version-2.5.4-blue)
 ![Python](https://img.shields.io/badge/Python-Flask-3776AB)
 ![JavaScript](https://img.shields.io/badge/JavaScript-Frontend-F7DF1E)
 ![Database](https://img.shields.io/badge/Database-SQLite-003B57)
@@ -8,41 +8,37 @@
 
 Plataforma web interna do **LSD — Laboratório de Sistemas e Dados**, desenvolvida para centralizar atividades da equipe em um único ambiente.
 
-A versão **2.3.2** prepara o projeto para uma hospedagem temporária gratuita no PythonAnywhere, mantendo SQLite e uploads persistentes, adicionando configuração de produção, frontend e backend no mesmo domínio, backups automáticos diários e gerenciamento de backups pelo Painel Admin.
+A versão **2.5.4** reúne melhorias de usabilidade no dashboard e recuperação de senha por e-mail, mantendo os recursos de colaboração, administração e backups.
 
 ---
 
-# Documentação das alterações recentes
+# Versão atual — 2.5.4
 
-As alterações mais recentes do Dashboard possuem documentação separada, mantendo o mesmo padrão técnico deste README:
+Atualizações recentes integradas pelos [PRs #6](https://github.com/Bryan9895/lsd-page/pull/6) e [#7](https://github.com/Bryan9895/lsd-page/pull/7):
 
-```text
-docs/alteracoes/README_BANCO_INSTANCE.md
-docs/alteracoes/README_PERFIS_MEMBROS.md
-docs/alteracoes/README_TEMA_CLARO_ESCURO.md
-docs/alteracoes/README_SISTEMA_CONQUISTAS.md
-```
+| Área | Atualização |
+|---|---|
+| Edição de perfil | Modal com corpo rolável, botão Salvar fora da rolagem, controle de foco e fechamento por Escape. |
+| Navegação | Aba inicial aplicada antes das requisições, evitando retorno ao Kanban durante o carregamento. |
+| Mobile e navbar | Pontuação e destaques visíveis em telas menores; abas acompanham a altura real da navbar; busca sem funcionamento removida. |
+| Modo escuro | Tema aplicado no início da página e cores da pontuação adaptadas ao tema. |
+| Avatar e capa | Áreas de arrastar e soltar isoladas, evitando alterar os dois campos com o mesmo arquivo. |
+| Recuperação de senha | Solicitação pela API, envio SMTP com TLS e página para cadastrar nova senha. Links de uso único expiram em 30 minutos. |
+| Proteção da recuperação | Limites persistentes por IP/e-mail e invalidação dos links e sessões anteriores após a troca de senha. |
 
-Esses arquivos detalham respectivamente a nova localização do SQLite, os perfis públicos dos membros, a alternância de tema e o sistema de conquistas.
+**Para ativar os e-mails:** configure `PUBLIC_BASE_URL` e as variáveis `MAIL_*` no servidor e recarregue a aplicação. O arquivo `.env` não é carregado automaticamente. Siga o [guia de recuperação de senha](docs/alteracoes/README_RECUPERACAO_SENHA.md).
 
----
+**Validação:** seis testes automatizados de recuperação passaram com banco temporário e SMTP simulado. O envio real depende da configuração do servidor; a validação visual mobile permanece pendente. Usuários com tokens anteriores à atualização precisarão fazer login novamente.
 
-# Versão atual
+## Documentação complementar
 
-## v2.3.2
-
-Esta versão segue o padrão **Semantic Versioning (SemVer)**:
-
-```text
-MAJOR.MINOR.PATCH
-  2  .  3  .  2
-```
-
-- **MAJOR**: mudanças incompatíveis ou grandes reestruturações.
-- **MINOR**: novas funcionalidades compatíveis com a versão anterior.
-- **PATCH**: correções de bugs sem introduzir funcionalidades incompatíveis.
-
-A versão `2.3.2` representa uma atualização **PATCH** da linha `2.3.x`: ela não muda o modelo funcional do produto, mas adiciona infraestrutura de implantação temporária, segurança de configuração e rotinas de backup para permitir uso real antes do servidor definitivo.
+- [Recuperação de senha e configuração SMTP](docs/alteracoes/README_RECUPERACAO_SENHA.md)
+- [Responsividade e UI/UX](docs/alteracoes/README_RESPONSIVIDADE_UIUX.md)
+- [Tema claro e escuro](docs/alteracoes/README_TEMA_CLARO_ESCURO.md)
+- [Perfis de membros](docs/alteracoes/README_PERFIS_MEMBROS.md)
+- [Sistema de conquistas](docs/alteracoes/README_SISTEMA_CONQUISTAS.md)
+- [Banco de dados](docs/alteracoes/README_BANCO_INSTANCE.md)
+- [Implantação no PythonAnywhere](DEPLOY_PYTHONANYWHERE.md)
 
 ---
 
@@ -192,7 +188,9 @@ Funcionalidades:
 - validação de token;
 - expiração de sessão;
 - proteção de rotas privadas;
-- bloqueio de acesso ao dashboard sem autenticação.
+- bloqueio de acesso ao dashboard sem autenticação;
+- recuperação de senha por e-mail, com configuração SMTP;
+- invalidação de sessões após redefinir a senha.
 
 O token é enviado ao backend no formato:
 
@@ -1246,6 +1244,8 @@ Resultado esperado no Linux:
 POST /api/register
 POST /api/cadastro
 POST /api/login
+POST /api/recuperar-senha
+POST /api/redefinir-senha
 GET  /api/me
 ```
 
@@ -1318,7 +1318,7 @@ Também podem existir rotas de compatibilidade para versões anteriores do front
 
 # Versionamento
 
-O projeto segue **Semantic Versioning 2.0.0**.
+O projeto adota o formato **MAJOR.MINOR.PATCH**; a política para as próximas versões está descrita abaixo.
 
 Formato:
 
@@ -1332,7 +1332,7 @@ Exemplos:
 2.1.0 → novas funcionalidades
 2.1.1 → correção pequena
 2.2.0 → novo conjunto de funcionalidades
-3.0.0 → mudança incompatível ou grande reestruturação
+3.0.0 → mudança incompatível na API pública
 ```
 
 ---
@@ -1351,6 +1351,36 @@ Security
 Deprecated
 Removed
 ```
+
+---
+
+## [2.5.4] — 2026-09-12
+
+### Added
+
+- recuperação de senha por SMTP e página de redefinição;
+- links de uso único com validade de 30 minutos;
+- guia de configuração do envio e seis testes automatizados.
+
+### Fixed
+
+- rolagem e acessibilidade do modal de perfil;
+- restauração tardia da aba durante o carregamento;
+- conteúdo lateral oculto no mobile e posicionamento das abas;
+- aplicação inicial do tema e cores da pontuação;
+- interferência entre uploads de avatar e capa.
+
+### Security
+
+- limites persistentes de tentativas por IP/e-mail;
+- invalidação de links e sessões anteriores após a troca de senha;
+- credenciais SMTP por ambiente e transporte com TLS.
+
+### Notes
+
+- envio real e validação visual mobile pendentes;
+- envio SMTP síncrono, sem fila ou reenvio automático; diferenças de tempo ainda podem permitir inferências sobre contas;
+- implantação exige configuração SMTP no servidor e novo login para sessões antigas.
 
 ---
 
@@ -1566,94 +1596,19 @@ Removed
 
 ---
 
-# Histórico de versões
+# Política de versionamento
 
-## 2.2.x
+Versão atual: **2.5.4**. As entradas anteriores do changelog preservam o histórico já documentado.
 
-Linha atual de desenvolvimento.
+Para as próximas versões:
 
-```text
-2.2.0 — Sistema de advertências e gestão disciplinar integrada
-```
+| Tipo de alteração | Exemplo |
+|---|---|
+| Correção compatível | `2.5.4 → 2.5.5` |
+| Nova funcionalidade compatível | `2.5.4 → 2.6.0` |
+| Mudança incompatível na API pública | `2.x.x → 3.0.0` |
 
-Próximos patches dessa linha deverão ser utilizados apenas para correções:
-
-```text
-2.2.1
-2.2.2
-2.2.3
-```
-
-Exemplo:
-
-```text
-2.2.1 — correção de exibição de advertências
-2.2.2 — ajuste visual mobile
-2.2.3 — correção de sincronização administrativa
-```
-
-### Histórico anterior
-
-```text
-2.1.0 — Feed, administração, segurança e grande melhoria de UI/UX
-```
-
----
-
-## Próxima versão MINOR sugerida
-
-### 2.3.0
-
-Possíveis funcionalidades:
-
-- edição de posts;
-- respostas a comentários;
-- notificações;
-- pesquisa de membros;
-- pesquisa no feed;
-- paginação ou scroll infinito;
-- menções com `@usuario`;
-- sistema de projetos;
-- histórico de atividades;
-- upload múltiplo;
-- previews de anexos;
-- painel com métricas;
-- melhorias mobile.
-
----
-
-## Próxima versão MAJOR sugerida
-
-### 3.0.0
-
-Pode ser reservada para mudanças maiores, por exemplo:
-
-- migração de SQLite para PostgreSQL;
-- autenticação baseada em refresh token;
-- frontend em React/Vue/Svelte;
-- API REST totalmente versionada;
-- arquitetura modular do Flask;
-- Docker;
-- deploy em produção;
-- armazenamento de arquivos em cloud;
-- permissões baseadas em funções e cargos.
-
----
-
-# Política de atualização de versão
-
-Use esta referência:
-
-| Tipo de mudança | Versão atual | Próxima versão |
-|---|---:|---:|
-| Correção de bug | `2.2.0` | `2.2.1` |
-| Outra correção | `2.2.1` | `2.2.2` |
-| Nova funcionalidade compatível | `2.2.x` | `2.3.0` |
-| Grande mudança incompatível | `2.x.x` | `3.0.0` |
-
-Nunca aumente a versão apenas pela quantidade de commits.
-
-A versão deve representar o impacto das mudanças no software.
+Novas funcionalidades devem incrementar MINOR; PATCH é reservado a correções compatíveis. Quantidade de commits e tamanho de uma refatoração não determinam a versão por si só.
 
 ---
 
@@ -1688,54 +1643,6 @@ Ctrl + Shift + R
 
 ---
 
-# Estado da versão 2.2.0
-
-```text
-Autenticação              ✅
-Código de acesso          ✅
-Perfis                    ✅
-Avatar e capa             ✅
-Kanban                    ✅
-Responsáveis              ✅
-Pontuação                 ✅
-Ranking                   ✅
-Feed compartilhado        ✅
-Imagens no feed           ✅
-Arquivos no feed          ✅
-Código no feed            ✅
-Comentários               ✅
-Curtidas                  ✅
-Painel Admin              ✅
-Advertências              ✅
-Histórico disciplinar     ✅
-Ciência da advertência    ✅
-Proteção administrativa  ✅
-Persistência da aba       ✅
-Atualização parcial UI    ✅
-SQLite                    ✅
-```
-
----
-
-# Observações
-
-O projeto continua em desenvolvimento.
-
-A versão `2.2.0` representa a evolução do projeto para incluir também gestão disciplinar e comunicação administrativa, mantendo as melhorias de colaboração e UI/UX da linha `2.1.x`. As principais áreas atuais são:
-
-```text
-Comunidade
-Colaboração
-Administração
-Segurança
-Persistência
-UI/UX
-```
-
-A partir desta versão, recomenda-se manter todas as futuras alterações documentadas no changelog e respeitar o padrão SemVer.
-
----
-
 # Licença
 
 Defina aqui a licença adotada pelo projeto.
@@ -1754,7 +1661,7 @@ Caso o sistema seja destinado exclusivamente ao laboratório, esta seção pode 
 
 # LSD — Laboratório de Sistemas e Dados
 
-**Versão atual:** `2.3.2`
+**Versão atual:** `2.5.4`
 
 **Status:** Em desenvolvimento
 
