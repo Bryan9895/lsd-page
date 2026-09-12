@@ -284,17 +284,56 @@ if (formRecuperar) {
         const botao = formRecuperar.querySelector(".btn-auth");
         alternarCarregando(botao, true);
 
-        // Simulando resposta de envio do link de recuperação
-        setTimeout(() => {
-            alternarCarregando(botao, false);
-            const btnTexto = formRecuperar.querySelector(".btn-auth-texto");
-            if (btnTexto) btnTexto.textContent = "Link enviado";
+        const { ok, dados } = await requisitarAPI("/api/recuperar-senha", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+        alternarCarregando(botao, false);
+        const mensagem = document.getElementById("recuperar-mensagem");
+        mensagem.className = "auth-mensagem ativa " + (ok ? "sucesso" : "erro");
+        mensagem.textContent = dados.message || "Não foi possível solicitar o link.";
+    });
+}
 
-            mostrarMensagem(
-                "recuperar-mensagem",
-                "sucesso",
-                '<i class="fas fa-circle-check"></i>&nbsp; Se este e-mail estiver cadastrado, um link de redefinição foi enviado.'
-            );
-        }, 700);
+const formRedefinir = document.getElementById("form-redefinir");
+if (formRedefinir) {
+    let resetToken = new URLSearchParams(window.location.hash.slice(1)).get("token") || "";
+    history.replaceState(null, "", window.location.pathname);
+    const mensagem = document.getElementById("redefinir-mensagem");
+    const botao = formRedefinir.querySelector(".btn-auth");
+    const informar = (texto, sucesso = false) => {
+        mensagem.className = "auth-mensagem ativa " + (sucesso ? "sucesso" : "erro");
+        mensagem.textContent = texto;
+    };
+    if (!/^[A-Za-z0-9_-]{43}$/.test(resetToken)) {
+        informar("Link inválido ou ausente. Solicite um novo link de recuperação.");
+        botao.disabled = true;
+    }
+    formRedefinir.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const senha = document.getElementById("senha").value;
+        if (senha.length < 8 || senha.length > 128) {
+            informar("A senha deve ter entre 8 e 128 caracteres.");
+            return;
+        }
+        if (senha !== document.getElementById("confirmar-senha").value) {
+            informar("As senhas não coincidem.");
+            return;
+        }
+        alternarCarregando(botao, true);
+        const { ok, dados } = await requisitarAPI("/api/redefinir-senha", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: resetToken, senha })
+        });
+        alternarCarregando(botao, false);
+        informar(dados.message || "Não foi possível alterar a senha.", ok);
+        if (ok) {
+            resetToken = "";
+            localStorage.removeItem(TOKEN_KEY);
+            formRedefinir.reset();
+            botao.disabled = true;
+        }
     });
 }
