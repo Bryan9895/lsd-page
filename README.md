@@ -1,6 +1,6 @@
 # LSD — Laboratório de Sistemas e Dados
 
-![Version](https://img.shields.io/badge/version-2.5.7-blue)
+![Version](https://img.shields.io/badge/version-2.6.0-blue)
 ![Python](https://img.shields.io/badge/Python-Flask-3776AB)
 ![JavaScript](https://img.shields.io/badge/JavaScript-Frontend-F7DF1E)
 ![Database](https://img.shields.io/badge/Database-SQLite-003B57)
@@ -8,13 +8,26 @@
 
 Plataforma web interna do **LSD — Laboratório de Sistemas e Dados**, desenvolvida para centralizar atividades da equipe em um único ambiente.
 
-A versão **2.5.7** aprimora o sistema de conquistas com selos vetoriais circulares, nomes visíveis no perfil público, detalhes interativos inspirados no GitHub e um seletor compacto de reações no feed.
+A versão **2.6.0** adiciona um portfólio completo de projetos, conectando projetos, membros, líderes, documentação e administração em uma experiência responsiva.
 
 ---
 
-# Versão atual — 2.5.7
+# Versão atual — 2.6.0
 
-## Novidades da 2.5.7
+## Novidades da 2.6.0
+
+| Área | Atualização |
+|---|---|
+| Portfólio | Nova página pública com busca, filtros, cards e detalhes de cada projeto. |
+| Projeto ↔ membro | Projetos aparecem no perfil público; participantes do projeto levam ao perfil correspondente. |
+| Administração | Administradores cadastram e editam nome, descrição, logo, status, orientador, líder, equipe, tags e links. |
+| Documentação | Líderes e administradores podem anexar e remover documentos do projeto. |
+| Banco | Novas tabelas relacionais criadas de forma compatível, sem apagar dados existentes. |
+| Qualidade | API validada com permissões, URLs seguras, limites de entrada e testes automatizados. |
+
+Detalhes: [Portfólio de projetos](docs/alteracoes/README_PORTFOLIO_PROJETOS.md).
+
+## Atualizações da 2.5.7
 
 | Área | Atualização |
 |---|---|
@@ -58,6 +71,7 @@ Passo a passo: [testar no notebook e migrar para o servidor](docs/alteracoes/REA
 - [Tema claro e escuro](docs/alteracoes/README_TEMA_CLARO_ESCURO.md)
 - [Perfis de membros](docs/alteracoes/README_PERFIS_MEMBROS.md)
 - [Sistema de conquistas](docs/alteracoes/README_SISTEMA_CONQUISTAS.md)
+- [Portfólio de projetos](docs/alteracoes/README_PORTFOLIO_PROJETOS.md)
 - [Banco de dados](docs/alteracoes/README_BANCO_INSTANCE.md)
 - [Implantação no PythonAnywhere](DEPLOY_PYTHONANYWHERE.md)
 
@@ -1619,7 +1633,7 @@ Removed
 
 # Política de versionamento
 
-Versão atual: **2.5.4**. As entradas anteriores do changelog preservam o histórico já documentado.
+Versão atual: **2.6.0**. As entradas anteriores do changelog preservam o histórico já documentado.
 
 Para as próximas versões:
 
@@ -1682,7 +1696,7 @@ Caso o sistema seja destinado exclusivamente ao laboratório, esta seção pode 
 
 # LSD — Laboratório de Sistemas e Dados
 
-**Versão atual:** `2.5.4`
+**Versão atual:** `2.6.0`
 
 **Status:** Em desenvolvimento
 

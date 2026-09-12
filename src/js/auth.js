@@ -10,6 +10,15 @@ const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.ho
     : window.location.origin; 
 
 const TOKEN_KEY = "token_lsd";
+const REDIRECT_KEY = "lsd_redirect_after_login";
+
+function destinoAposAutenticacao() {
+    const destino = sessionStorage.getItem(REDIRECT_KEY) || "dashboard.html";
+    sessionStorage.removeItem(REDIRECT_KEY);
+    return /^dashboard\.html(?:\?[a-zA-Z0-9_=&%-]*)?$/.test(destino)
+        ? destino
+        : "dashboard.html";
+}
 
 // ---------- Utilitários de Interface ----------
 
@@ -170,7 +179,7 @@ if (formLogin) {
 
         if (ok && dados.token) {
             localStorage.setItem(TOKEN_KEY, dados.token);
-            window.location.href = "dashboard.html";
+            window.location.href = destinoAposAutenticacao();
         } else {
             const mensagemErro = dados.message || dados.erro || "E-mail ou senha incorretos.";
             mostrarMensagem("login-mensagem", "erro", mensagemErro);
@@ -255,7 +264,7 @@ if (formCadastro) {
             );
 
             setTimeout(() => {
-                window.location.href = "dashboard.html";
+                window.location.href = destinoAposAutenticacao();
             }, 1500);
         } else {
             const mensagemErro = dados.message || dados.erro || "Erro ao criar conta.";

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Portfólio dos projetos de pesquisa, desenvolvimento e inovação do Laboratório de Sistemas e Dados do IFCE Campus Maranguape.">
+    <meta name="theme-color" content="#08152d">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./src/css/projetos.css">
+    <title>Projetos — LSD</title>
+</head>
+<body>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+    <header class="portfolio-header">
+        <nav class="portfolio-nav" aria-label="Navegação principal">
+            <a class="portfolio-logo" href="index.html" aria-label="LSD — página inicial">
+                <img src="./src/images/LOGO_LSD.svg" alt="">
+                <span>LSD <strong>Projetos</strong></span>
+            </a>
+
+            <div class="portfolio-nav-links">
+                <a href="index.html"><i class="fas fa-house" aria-hidden="true"></i><span>Início</span></a>
+                <a href="projetos.html" class="ativo" aria-current="page"><i class="fas fa-diagram-project" aria-hidden="true"></i><span>Projetos</span></a>
+                <a href="dashboard.html"><i class="fas fa-user-group" aria-hidden="true"></i><span>Perfis</span></a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="conteudo">
+        <section class="portfolio-hero" id="portfolioHero">
+            <div class="hero-orbita hero-orbita-um" aria-hidden="true"></div>
+            <div class="hero-orbita hero-orbita-dois" aria-hidden="true"></div>
+            <div class="portfolio-container portfolio-hero-grid">
+                <div class="portfolio-hero-copy">
+                    <span class="portfolio-eyebrow"><i class="fas fa-flask" aria-hidden="true"></i> Laboratório de Sistemas e Dados</span>
+                    <h1>Ideias que viram <em>soluções reais.</em></h1>
+                    <p>Conheça os projetos desenvolvidos pelos membros do LSD, as tecnologias utilizadas e as pessoas por trás de cada resultado.</p>
+                    <a class="hero-cta" href="#catalogo">Explorar portfólio <i class="fas fa-arrow-down" aria-hidden="true"></i></a>
+                </div>
+
+                <dl class="portfolio-estatisticas" aria-label="Resumo do portfólio">
+                    <div><dt id="statTotal">—</dt><dd>projetos</dd></div>
+                    <div><dt id="statAtivos">—</dt><dd>em atividade</dd></div>
+                    <div><dt id="statMembros">—</dt><dd>participantes</dd></div>
+                </dl>
+            </div>
+        </section>
+
+        <section class="portfolio-catalogo" id="catalogo" aria-labelledby="catalogoTitulo">
+            <div class="portfolio-container">
+                <div class="catalogo-topo">
+                    <div>
+                        <span class="secao-eyebrow">PORTFÓLIO LSD</span>
+                        <h2 id="catalogoTitulo">Nossos projetos</h2>
+                        <p>Acompanhe iniciativas em pesquisa, software, inteligência artificial e acessibilidade.</p>
+                    </div>
+
+                    <label class="projeto-busca" for="buscaProjetos">
+                        <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                        <span class="sr-only">Buscar projeto</span>
+                        <input id="buscaProjetos" type="search" placeholder="Buscar por nome ou tecnologia" autocomplete="off">
+                    </label>
+                </div>
+
+                <div class="projeto-filtros" role="group" aria-label="Filtrar projetos por status">
+                    <button type="button" class="ativo" data-filtro-status="todos" aria-pressed="true">Todos</button>
+                    <button type="button" data-filtro-status="em_desenvolvimento" aria-pressed="false">Em desenvolvimento</button>
+                    <button type="button" data-filtro-status="em_producao" aria-pressed="false">Em produção</button>
+                    <button type="button" data-filtro-status="concluido" aria-pressed="false">Concluídos</button>
+                </div>
+
+                <p class="resultado-contador" id="resultadoContador" aria-live="polite"></p>
+
+                <div class="projetos-grid" id="projetosGrid" aria-live="polite" aria-busy="true">
+                    <div class="projeto-skeleton"></div>
+                    <div class="projeto-skeleton"></div>
+                    <div class="projeto-skeleton"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="projeto-detalhe" id="projetoDetalhe" hidden aria-live="polite">
+            <div class="portfolio-container">
+                <button class="detalhe-voltar" id="btnVoltarProjetos" type="button">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> Voltar ao portfólio
+                </button>
+                <div id="projetoDetalheConteudo"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="portfolio-footer">
+        <div class="portfolio-container">
+            <div>
+                <img src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
+                <p>Laboratório de Sistemas e Dados</p>
+            </div>
+            <p>Instituto Federal do Ceará — Campus Maranguape</p>
+        </div>
+    </footer>
+
+    <div class="portfolio-toast" id="portfolioToast" role="status" aria-live="polite"></div>
+    <script src="./src/js/projetos.js" defer></script>
+</body>
+</html>
