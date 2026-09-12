@@ -11,44 +11,6 @@
                 "tema-escuro",
                 localStorage.getItem("lsd_dashboard_tema") === "escuro"
             );
-                <div class="card-lateral perfil-pontos-box" style="margin-bottom: 16px;">
-                    <h3><i class="fas fa-trophy" style="color: #E8A020;"></i> Pontuação</h3>
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
-                        <span class="pontos-legenda">Pontos acumulados:</span>
-                        <strong id="userPontosDisplay">0 pts</strong>
-                    </div>
-                </div>
-
-                <section class="card-lateral progresso-perfil-card" aria-labelledby="progressoPerfilTitulo">
-                    <div class="progresso-perfil-topo">
-                        <h3 id="progressoPerfilTitulo"><i class="fas fa-chart-line"></i> Nível do perfil</h3>
-                        <strong id="perfilNivel" class="nivel-raridade-comum">Nível 1</strong>
-                    </div>
-                    <div class="nivel-barra"><span id="nivelBarraFill"></span></div>
-                    <div class="nivel-legenda">
-                        <span id="nivelPontos">0 pontos</span>
-                        <span id="nivelRaridade">Comum</span>
-                        <span id="nivelStreak"><i class="fas fa-fire"></i> 0 dias</span>
-                    </div>
-                </section>
-
-                <section class="card-lateral notificacoes-card" aria-labelledby="notificacoesTitulo">
-                    <div class="notificacoes-topo">
-                        <h3 id="notificacoesTitulo"><i class="fas fa-bell"></i> Notificações</h3>
-                        <span id="notificacoesContador">0</span>
-                    </div>
-                    <div id="notificacoesLista" class="notificacoes-lista">
-                        <span class="estado-lateral">Carregando...</span>
-                    </div>
-                </section>
-
-                <section class="card-lateral atividades-card" aria-labelledby="atividadesTitulo">
-                    <h3 id="atividadesTitulo"><i class="fas fa-clock-rotate-left"></i> Atividades recentes</h3>
-                    <div id="atividadesLista" class="atividades-lista">
-                        <span class="estado-lateral">Carregando...</span>
-                    </div>
-                </section>
-
         } catch (_) { /* O painel continua disponível sem armazenamento. */ }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
