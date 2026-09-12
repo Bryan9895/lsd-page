@@ -73,6 +73,8 @@
                 <i class="fas fa-moon" aria-hidden="true"></i>
                 <span>Escuro</span>
             </button>
+            <a href="projetos.html" class="dash-nav-link" aria-label="Portfólio de projetos"><i
+                    class="fas fa-diagram-project"></i><span>Projetos</span></a>
             <a href="index.html" class="dash-nav-link" aria-label="Voltar ao site"><i
                     class="fas fa-arrow-left"></i><span>Site</span></a>
             <a href="entrar-login.html" id="logoutLink" class="dash-nav-link dash-nav-sair"
@@ -343,6 +345,26 @@
 
             <!-- Aba 3: Painel Admin -->
             <div class="aba-conteudo" id="aba-admin" role="tabpanel" hidden>
+                <div class="admin-card admin-projetos-card">
+                    <div class="admin-projetos-topo">
+                        <div>
+                            <h2><i class="fas fa-diagram-project"></i> Gerenciamento de Projetos</h2>
+                            <p class="admin-card-legenda">
+                                Publique projetos no portfólio, vincule equipe e líder, defina o status e mantenha os links atualizados.
+                            </p>
+                        </div>
+                        <button type="button" class="btn-principal" id="btnNovoProjetoAdmin">
+                            <i class="fas fa-plus"></i> Novo projeto
+                        </button>
+                    </div>
+
+                    <div class="admin-projetos-lista" id="adminProjetosLista">
+                        <div class="admin-projetos-loading">
+                            <i class="fas fa-circle-notch fa-spin"></i> Carregando projetos...
+                        </div>
+                    </div>
+                </div>
+
                 <div class="admin-card">
                     <h2><i class="fas fa-users-gear"></i> Gerenciamento de Membros</h2>
                     <p class="admin-card-legenda">
@@ -428,6 +450,81 @@
         </aside>
 
     </main>
+
+    <!-- ===== Modal: Criar/Editar Projeto ===== -->
+    <div class="modal-overlay" id="modalProjetoAdmin" hidden>
+        <div class="modal-card modal-projeto-admin-card" role="dialog" aria-modal="true" aria-labelledby="modalProjetoTitulo">
+            <button type="button" class="modal-fechar" id="modalProjetoFechar" aria-label="Fechar modal">&times;</button>
+            <h2 id="modalProjetoTitulo"><i class="fas fa-diagram-project"></i> Novo projeto</h2>
+            <p class="modal-subtitulo">As informações serão exibidas publicamente no portfólio do LSD.</p>
+
+            <form id="formProjetoAdmin">
+                <input type="hidden" id="projetoAdminId">
+
+                <div class="projeto-form-grid">
+                    <label for="projetoNome">Nome do projeto
+                        <input id="projetoNome" maxlength="120" minlength="3" required placeholder="Ex.: Sistema de Monitoramento">
+                    </label>
+
+                    <label for="projetoStatus">Status atual
+                        <select id="projetoStatus" required>
+                            <option value="em_desenvolvimento">Em desenvolvimento</option>
+                            <option value="em_producao">Em produção</option>
+                            <option value="concluido">Concluído</option>
+                        </select>
+                    </label>
+                </div>
+
+                <label for="projetoDescricao">Descrição
+                    <textarea id="projetoDescricao" maxlength="5000" minlength="10" rows="5" required
+                        placeholder="Apresente o objetivo, o problema resolvido e o impacto do projeto."></textarea>
+                </label>
+
+                <div class="projeto-form-grid">
+                    <label for="projetoOrientador">Professor orientador
+                        <input id="projetoOrientador" maxlength="120" placeholder="Nome do professor">
+                    </label>
+
+                    <label for="projetoLider">Líder do projeto
+                        <select id="projetoLider">
+                            <option value="">A definir</option>
+                        </select>
+                    </label>
+                </div>
+
+                <label for="projetoTecnologias">Linguagens e tags
+                    <input id="projetoTecnologias" maxlength="600" placeholder="Python, Flask, OpenCV, IA">
+                    <small>Separe por vírgulas. Máximo de 15 itens.</small>
+                </label>
+
+                <div class="projeto-form-grid">
+                    <label for="projetoRepositorio">Link do repositório
+                        <input id="projetoRepositorio" type="url" maxlength="500" placeholder="https://github.com/organizacao/projeto">
+                    </label>
+
+                    <label for="projetoSite">Link do projeto em produção
+                        <input id="projetoSite" type="url" maxlength="500" placeholder="http://lsd.maranguape.ifce.edu.br:8000/">
+                    </label>
+                </div>
+
+                <label for="projetoLogo">Logo ou imagem do projeto
+                    <input id="projetoLogo" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                    <small id="projetoLogoAtual">Obrigatória ao criar um novo projeto.</small>
+                </label>
+
+                <fieldset class="projeto-membros-fieldset">
+                    <legend>Membros participantes</legend>
+                    <p>O líder selecionado será incluído automaticamente na equipe.</p>
+                    <div class="projeto-membros-opcoes" id="projetoMembrosOpcoes"></div>
+                </fieldset>
+
+                <div class="modal-acoes">
+                    <button type="button" class="btn-cancelar" id="modalProjetoCancelar">Cancelar</button>
+                    <button type="submit" class="btn-salvar" id="btnSalvarProjeto">Salvar projeto</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- ===== Modal: Criar/Editar Card ===== -->
     <div class="modal-overlay" id="modalOverlay" hidden>

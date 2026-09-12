@@ -4,10 +4,13 @@ import json
 import sqlite3
 import threading
 import zipfile
+import re
+import unicodedata
 from collections import Counter
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from functools import wraps
+from urllib.parse import urlparse
 
 import jwt
 from dotenv import load_dotenv
@@ -28,6 +31,7 @@ from flask import (
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_migrate import Migrate
+from sqlalchemy.orm import selectinload
 
 from werkzeug.security import (
     generate_password_hash,
@@ -639,6 +643,166 @@ class User(db.Model):
                     else None
                 )
 
+        }
+
+
+# ============================================================
+# MODELOS DE PROJETOS
+# ============================================================
+
+class AppSetting(db.Model):
+    """Marcadores internos para rotinas de inicialização executadas uma vez."""
+
+    __tablename__ = "app_settings"
+
+    chave = db.Column(db.String(100), primary_key=True)
+    valor = db.Column(db.String(500), nullable=False, default="")
+
+
+projeto_membros = db.Table(
+    "projeto_membros",
+    db.Column(
+        "projeto_id",
+        db.Integer,
+        db.ForeignKey("projetos.id", ondelete="CASCADE"),
+        primary_key=True
+    ),
+    db.Column(
+        "user_id",
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+)
+
+
+class Project(db.Model):
+    """Portfólio institucional e equipe vinculada a um projeto do LSD."""
+
+    __tablename__ = "projetos"
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(120), nullable=False, unique=True)
+    slug = db.Column(db.String(140), nullable=False, unique=True, index=True)
+    descricao = db.Column(db.Text, nullable=False)
+    logo_url = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(30), nullable=False, default="em_desenvolvimento", index=True)
+    professor_orientador = db.Column(db.String(120), nullable=False, default="")
+    lider_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
+    repositorio_url = db.Column(db.String(500), nullable=False, default="")
+    site_url = db.Column(db.String(500), nullable=False, default="")
+    tecnologias = db.Column(db.Text, nullable=False, default="[]")
+    data_criacao = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    data_atualizacao = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    lider = db.relationship(
+        "User",
+        foreign_keys=[lider_id],
+        backref=db.backref("projetos_liderados", lazy=True)
+    )
+    membros = db.relationship(
+        "User",
+        secondary=projeto_membros,
+        backref=db.backref("projetos", lazy=True),
+        order_by="User.nome.asc()"
+    )
+    documentos = db.relationship(
+        "ProjectDocument",
+        back_populates="projeto",
+        cascade="all, delete-orphan",
+        order_by="ProjectDocument.data_criacao.desc()"
+    )
+
+    def tecnologias_lista(self):
+        try:
+            valor = json.loads(self.tecnologias or "[]")
+            if isinstance(valor, list):
+                return [str(item).strip() for item in valor if str(item).strip()]
+        except (TypeError, ValueError, json.JSONDecodeError):
+            pass
+        return []
+
+    @staticmethod
+    def membro_resumo(membro, lider_id=None):
+        if not membro:
+            return None
+        return {
+            "id": membro.id,
+            "nome": membro.nome,
+            "funcao": membro.funcao or "Membro LSD",
+            "foto": membro.foto,
+            "is_lider": membro.id == lider_id
+        }
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nome": self.nome,
+            "slug": self.slug,
+            "descricao": self.descricao,
+            "logo_url": self.logo_url,
+            "status": self.status,
+            "professor_orientador": self.professor_orientador or "",
+            "lider_id": self.lider_id,
+            "lider": self.membro_resumo(self.lider, self.lider_id),
+            "membros": [
+                self.membro_resumo(membro, self.lider_id)
+                for membro in self.membros
+            ],
+            "repositorio_url": self.repositorio_url or "",
+            "site_url": self.site_url or "",
+            "tecnologias": self.tecnologias_lista(),
+            "documentos": [documento.to_dict() for documento in self.documentos],
+            "data_criacao": (
+                self.data_criacao.isoformat() if self.data_criacao else None
+            ),
+            "data_atualizacao": (
+                self.data_atualizacao.isoformat() if self.data_atualizacao else None
+            )
+        }
+
+
+class ProjectDocument(db.Model):
+    """Documento anexado pelo líder do projeto ou pela administração."""
+
+    __tablename__ = "projeto_documentos"
+
+    id = db.Column(db.Integer, primary_key=True)
+    projeto_id = db.Column(
+        db.Integer,
+        db.ForeignKey("projetos.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    enviado_por_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    titulo = db.Column(db.String(160), nullable=False)
+    arquivo_url = db.Column(db.String(255), nullable=False)
+    arquivo_nome = db.Column(db.String(255), nullable=False)
+    arquivo_mime = db.Column(db.String(120), nullable=False)
+    data_criacao = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    projeto = db.relationship("Project", back_populates="documentos")
+    enviado_por = db.relationship("User")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "titulo": self.titulo,
+            "arquivo_url": self.arquivo_url,
+            "arquivo_nome": self.arquivo_nome,
+            "arquivo_mime": self.arquivo_mime,
+            "enviado_por": {
+                "id": self.enviado_por.id,
+                "nome": self.enviado_por.nome
+            } if self.enviado_por else None,
+            "data_criacao": (
+                self.data_criacao.isoformat() if self.data_criacao else None
+            )
         }
 
 
@@ -1924,6 +2088,211 @@ def garantir_admin_principal():
         )
 
 
+# ============================================================
+# UTILITÁRIOS DE PROJETOS
+# ============================================================
+
+PROJECT_STATUSES = {
+    "em_desenvolvimento",
+    "em_producao",
+    "concluido"
+}
+
+
+def gerar_slug_projeto(nome):
+    base = unicodedata.normalize("NFKD", str(nome or ""))
+    base = base.encode("ascii", "ignore").decode("ascii").lower()
+    base = re.sub(r"[^a-z0-9]+", "-", base).strip("-")
+    return base or "projeto"
+
+
+def gerar_slug_projeto_unico(nome, projeto_id=None):
+    base = gerar_slug_projeto(nome)
+    slug = base
+    contador = 2
+
+    while True:
+        consulta = Project.query.filter_by(slug=slug)
+        if projeto_id is not None:
+            consulta = consulta.filter(Project.id != projeto_id)
+        if not consulta.first():
+            return slug
+        slug = f"{base}-{contador}"
+        contador += 1
+
+
+def url_http_valida(valor, permitir_vazio=True):
+    valor = str(valor or "").strip()
+    if not valor:
+        return permitir_vazio
+    if any(caractere.isspace() for caractere in valor):
+        return False
+
+    try:
+        partes = urlparse(valor)
+        # Acessar hostname/port também detecta IPv6 e portas malformadas.
+        hostname = partes.hostname
+        _ = partes.port
+        return (
+            partes.scheme in {"http", "https"}
+            and bool(partes.netloc)
+            and bool(hostname)
+            and not partes.username
+            and not partes.password
+        )
+    except (TypeError, ValueError):
+        return False
+
+
+def lista_entrada(valor):
+    """Aceita lista JSON, lista Python ou texto separado por vírgulas."""
+    if valor is None:
+        return []
+
+    if isinstance(valor, list):
+        return valor
+
+    if isinstance(valor, str):
+        texto = valor.strip()
+        if not texto:
+            return []
+        try:
+            convertido = json.loads(texto)
+            if isinstance(convertido, list):
+                return convertido
+        except (TypeError, ValueError, json.JSONDecodeError):
+            pass
+        return texto.split(",")
+
+    return []
+
+
+def dados_requisicao():
+    if request.is_json:
+        dados = request.get_json(silent=True)
+        return dados if isinstance(dados, dict) else {}
+    return request.form.to_dict()
+
+
+def atualizar_contagem_projetos(user_ids):
+    ids = {int(user_id) for user_id in user_ids if user_id is not None}
+    for user_id in ids:
+        usuario = db.session.get(User, user_id)
+        if not usuario:
+            continue
+        usuario.projetos_ativos = sum(
+            1
+            for projeto in usuario.projetos
+            if projeto.status != "concluido"
+        )
+
+
+def validar_dados_projeto(dados, projeto=None):
+    """Valida e normaliza o payload sem aplicar alterações no banco."""
+    parcial = projeto is not None
+    normalizado = {}
+
+    if not parcial or "nome" in dados:
+        nome = str(dados.get("nome", "")).strip()
+        if not 3 <= len(nome) <= 120:
+            raise ValueError("O nome do projeto deve ter entre 3 e 120 caracteres.")
+        normalizado["nome"] = nome
+
+    if not parcial or "descricao" in dados:
+        descricao = str(dados.get("descricao", "")).strip()
+        if not 10 <= len(descricao) <= 5000:
+            raise ValueError("A descrição deve ter entre 10 e 5000 caracteres.")
+        normalizado["descricao"] = descricao
+
+    if not parcial or "status" in dados:
+        status = str(dados.get("status", "em_desenvolvimento")).strip()
+        if status not in PROJECT_STATUSES:
+            raise ValueError("Status de projeto inválido.")
+        normalizado["status"] = status
+
+    for campo, limite in (
+        ("professor_orientador", 120),
+        ("repositorio_url", 500),
+        ("site_url", 500)
+    ):
+        if not parcial or campo in dados:
+            valor = str(dados.get(campo, "")).strip()
+            if len(valor) > limite:
+                raise ValueError(f"O campo {campo} excede o limite permitido.")
+            normalizado[campo] = valor
+
+    for campo in ("repositorio_url", "site_url"):
+        if campo in normalizado and not url_http_valida(normalizado[campo]):
+            raise ValueError(f"Informe uma URL HTTP ou HTTPS válida em {campo}.")
+
+    if not parcial or "tecnologias" in dados:
+        tecnologias = []
+        for item in lista_entrada(dados.get("tecnologias")):
+            tecnologia = str(item).strip()
+            if tecnologia and tecnologia.casefold() not in {
+                existente.casefold() for existente in tecnologias
+            }:
+                tecnologias.append(tecnologia)
+        if len(tecnologias) > 15 or any(len(item) > 40 for item in tecnologias):
+            raise ValueError("Use no máximo 15 tecnologias, com até 40 caracteres cada.")
+        normalizado["tecnologias"] = tecnologias
+
+    if not parcial or "membro_ids" in dados:
+        try:
+            membro_ids = {
+                int(item)
+                for item in lista_entrada(dados.get("membro_ids"))
+                if str(item).strip()
+            }
+        except (TypeError, ValueError):
+            raise ValueError("A lista de membros contém um identificador inválido.")
+
+        membros = User.query.filter(User.id.in_(membro_ids)).all() if membro_ids else []
+        if len(membros) != len(membro_ids):
+            raise ValueError("Um ou mais membros selecionados não existem.")
+        normalizado["membros"] = membros
+
+    if not parcial or "lider_id" in dados:
+        lider_valor = dados.get("lider_id")
+        if lider_valor in (None, "", "null"):
+            normalizado["lider"] = None
+        else:
+            try:
+                lider = db.session.get(User, int(lider_valor))
+            except (TypeError, ValueError):
+                lider = None
+            if not lider:
+                raise ValueError("O líder selecionado não existe.")
+            normalizado["lider"] = lider
+
+    return normalizado
+
+
+def aplicar_dados_projeto(projeto, normalizado):
+    for campo in (
+        "nome",
+        "descricao",
+        "status",
+        "professor_orientador",
+        "repositorio_url",
+        "site_url"
+    ):
+        if campo in normalizado:
+            setattr(projeto, campo, normalizado[campo])
+
+    if "nome" in normalizado:
+        projeto.slug = gerar_slug_projeto_unico(normalizado["nome"], projeto.id)
+    if "tecnologias" in normalizado:
+        projeto.tecnologias = json.dumps(normalizado["tecnologias"], ensure_ascii=False)
+    if "membros" in normalizado:
+        projeto.membros = normalizado["membros"]
+    if "lider" in normalizado:
+        projeto.lider = normalizado["lider"]
+
+    if projeto.lider and projeto.lider not in projeto.membros:
+        projeto.membros.append(projeto.lider)
+
+
 
 # ============================================================
 # BACKUPS AUTOMÁTICOS
@@ -2179,15 +2548,12 @@ def garantir_backup_diario():
         if os.path.exists(
             BACKUP_MARKER_PATH
         ):
-            ultimo = (
-                open(
-                    BACKUP_MARKER_PATH,
-                    "r",
-                    encoding="utf-8"
-                )
-                .read()
-                .strip()
-            )
+            with open(
+                BACKUP_MARKER_PATH,
+                "r",
+                encoding="utf-8"
+            ) as arquivo:
+                ultimo = arquivo.read().strip()
 
             if ultimo == hoje:
                 return None
@@ -2295,6 +2661,7 @@ def paginas_frontend(pagina):
 
     paginas = {
         "index.html",
+        "projetos.html",
         "dashboard.html",
         "entrar-login.html",
         "login.html",
@@ -4652,6 +5019,354 @@ def listar_membros(
 
 
 # ============================================================
+# PORTFÓLIO DE PROJETOS
+# ============================================================
+
+@app.route("/api/projetos", methods=["GET"])
+def listar_projetos():
+    consulta = Project.query.options(
+        selectinload(Project.lider),
+        selectinload(Project.membros),
+        selectinload(Project.documentos).selectinload(ProjectDocument.enviado_por)
+    )
+    status = str(request.args.get("status", "")).strip()
+
+    if status:
+        if status not in PROJECT_STATUSES:
+            return jsonify({
+                "success": False,
+                "message": "Status de projeto inválido."
+            }), 400
+        consulta = consulta.filter_by(status=status)
+
+    projetos = consulta.order_by(Project.data_atualizacao.desc(), Project.nome.asc()).all()
+
+    return jsonify({
+        "success": True,
+        "total": len(projetos),
+        "projetos": [projeto.to_dict() for projeto in projetos]
+    }), 200
+
+
+@app.route("/api/projetos/<int:projeto_id>", methods=["GET"])
+def detalhes_projeto(projeto_id):
+    projeto = db.session.get(Project, projeto_id)
+    if not projeto:
+        return jsonify({
+            "success": False,
+            "message": "Projeto não encontrado."
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "projeto": projeto.to_dict()
+    }), 200
+
+
+@app.route("/api/projetos/slug/<string:slug>", methods=["GET"])
+def detalhes_projeto_slug(slug):
+    projeto = Project.query.filter_by(slug=slug).first()
+    if not projeto:
+        return jsonify({
+            "success": False,
+            "message": "Projeto não encontrado."
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "projeto": projeto.to_dict()
+    }), 200
+
+
+@app.route("/api/admin/projetos", methods=["GET"])
+@admin_required
+def listar_projetos_admin(current_user):
+    projetos = Project.query.options(
+        selectinload(Project.lider),
+        selectinload(Project.membros),
+        selectinload(Project.documentos).selectinload(ProjectDocument.enviado_por)
+    ).order_by(Project.nome.asc()).all()
+    return jsonify({
+        "success": True,
+        "projetos": [projeto.to_dict() for projeto in projetos]
+    }), 200
+
+
+@app.route("/api/admin/projetos", methods=["POST"])
+@admin_required
+def criar_projeto(current_user):
+    dados = dados_requisicao()
+
+    try:
+        normalizado = validar_dados_projeto(dados)
+
+        if Project.query.filter(
+            db.func.lower(Project.nome) == normalizado["nome"].lower()
+        ).first():
+            return jsonify({
+                "success": False,
+                "message": "Já existe um projeto com esse nome."
+            }), 409
+
+        logo_file = request.files.get("logo")
+        logo_url = str(dados.get("logo_url", "")).strip()
+
+        if logo_file and logo_file.filename:
+            logo_url = salvar_arquivo(logo_file)
+        elif not (
+            logo_url.startswith("/src/")
+            or logo_url.startswith("/uploads/")
+            or url_http_valida(logo_url, permitir_vazio=False)
+        ):
+            raise ValueError("Envie uma imagem de logo válida para o projeto.")
+
+        projeto = Project(
+            nome=normalizado["nome"],
+            slug=gerar_slug_projeto_unico(normalizado["nome"]),
+            descricao=normalizado["descricao"],
+            logo_url=logo_url,
+            status=normalizado["status"],
+            professor_orientador=normalizado["professor_orientador"],
+            repositorio_url=normalizado["repositorio_url"],
+            site_url=normalizado["site_url"],
+            tecnologias=json.dumps(normalizado["tecnologias"], ensure_ascii=False)
+        )
+        projeto.membros = normalizado["membros"]
+        projeto.lider = normalizado["lider"]
+        if projeto.lider and projeto.lider not in projeto.membros:
+            projeto.membros.append(projeto.lider)
+
+        db.session.add(projeto)
+        db.session.flush()
+        atualizar_contagem_projetos(membro.id for membro in projeto.membros)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Projeto criado com sucesso.",
+            "projeto": projeto.to_dict()
+        }), 201
+
+    except ValueError as erro:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": str(erro)
+        }), 400
+    except Exception as erro:
+        db.session.rollback()
+        print("ERRO CRIAR PROJETO:", repr(erro))
+        return jsonify({
+            "success": False,
+            "message": "Não foi possível criar o projeto."
+        }), 500
+
+
+@app.route("/api/admin/projetos/<int:projeto_id>", methods=["PUT"])
+@admin_required
+def atualizar_projeto(current_user, projeto_id):
+    projeto = db.session.get(Project, projeto_id)
+    if not projeto:
+        return jsonify({
+            "success": False,
+            "message": "Projeto não encontrado."
+        }), 404
+
+    dados = dados_requisicao()
+    membros_anteriores = {membro.id for membro in projeto.membros}
+
+    try:
+        normalizado = validar_dados_projeto(dados, projeto)
+
+        if "nome" in normalizado:
+            duplicado = Project.query.filter(
+                db.func.lower(Project.nome) == normalizado["nome"].lower(),
+                Project.id != projeto.id
+            ).first()
+            if duplicado:
+                return jsonify({
+                    "success": False,
+                    "message": "Já existe um projeto com esse nome."
+                }), 409
+
+        aplicar_dados_projeto(projeto, normalizado)
+
+        logo_file = request.files.get("logo")
+        if logo_file and logo_file.filename:
+            projeto.logo_url = salvar_arquivo(logo_file)
+        elif "logo_url" in dados:
+            logo_url = str(dados.get("logo_url", "")).strip()
+            if not (
+                logo_url.startswith("/src/")
+                or logo_url.startswith("/uploads/")
+                or url_http_valida(logo_url, permitir_vazio=False)
+            ):
+                raise ValueError("Informe uma imagem de logo válida.")
+            projeto.logo_url = logo_url
+
+        db.session.flush()
+        membros_atuais = {membro.id for membro in projeto.membros}
+        atualizar_contagem_projetos(membros_anteriores | membros_atuais)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Projeto atualizado com sucesso.",
+            "projeto": projeto.to_dict()
+        }), 200
+
+    except ValueError as erro:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": str(erro)
+        }), 400
+    except Exception as erro:
+        db.session.rollback()
+        print("ERRO ATUALIZAR PROJETO:", repr(erro))
+        return jsonify({
+            "success": False,
+            "message": "Não foi possível atualizar o projeto."
+        }), 500
+
+
+@app.route("/api/admin/projetos/<int:projeto_id>", methods=["DELETE"])
+@admin_required
+def excluir_projeto(current_user, projeto_id):
+    projeto = db.session.get(Project, projeto_id)
+    if not projeto:
+        return jsonify({
+            "success": False,
+            "message": "Projeto não encontrado."
+        }), 404
+
+    membros_ids = {membro.id for membro in projeto.membros}
+
+    try:
+        projeto.membros = []
+        db.session.flush()
+        atualizar_contagem_projetos(membros_ids)
+        db.session.delete(projeto)
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": "Projeto excluído com sucesso."
+        }), 200
+    except Exception as erro:
+        db.session.rollback()
+        print("ERRO EXCLUIR PROJETO:", repr(erro))
+        return jsonify({
+            "success": False,
+            "message": "Não foi possível excluir o projeto."
+        }), 500
+
+
+def pode_gerenciar_documentos_projeto(usuario, projeto):
+    return bool(usuario.is_admin or projeto.lider_id == usuario.id)
+
+
+@app.route("/api/projetos/<int:projeto_id>/documentos", methods=["POST"])
+@token_required
+def anexar_documento_projeto(current_user, projeto_id):
+    projeto = db.session.get(Project, projeto_id)
+    if not projeto:
+        return jsonify({
+            "success": False,
+            "message": "Projeto não encontrado."
+        }), 404
+
+    if not pode_gerenciar_documentos_projeto(current_user, projeto):
+        return jsonify({
+            "success": False,
+            "message": "Somente o líder do projeto ou um administrador pode anexar documentos."
+        }), 403
+
+    arquivo = request.files.get("documento") or request.files.get("arquivo")
+    titulo = str(request.form.get("titulo", "")).strip()
+
+    if not arquivo or not arquivo.filename:
+        return jsonify({
+            "success": False,
+            "message": "Selecione um documento para enviar."
+        }), 400
+
+    try:
+        arquivo_url, arquivo_nome, arquivo_mime = salvar_anexo(arquivo)
+        if not titulo:
+            titulo = os.path.splitext(arquivo_nome)[0]
+        if len(titulo) > 160:
+            raise ValueError("O título do documento deve ter até 160 caracteres.")
+
+        documento = ProjectDocument(
+            projeto_id=projeto.id,
+            enviado_por_id=current_user.id,
+            titulo=titulo,
+            arquivo_url=arquivo_url,
+            arquivo_nome=arquivo_nome,
+            arquivo_mime=arquivo_mime
+        )
+        db.session.add(documento)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Documento anexado com sucesso.",
+            "documento": documento.to_dict()
+        }), 201
+
+    except ValueError as erro:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": str(erro)
+        }), 400
+    except Exception as erro:
+        db.session.rollback()
+        print("ERRO ANEXAR DOCUMENTO:", repr(erro))
+        return jsonify({
+            "success": False,
+            "message": "Não foi possível anexar o documento."
+        }), 500
+
+
+@app.route(
+    "/api/projetos/<int:projeto_id>/documentos/<int:documento_id>",
+    methods=["DELETE"]
+)
+@token_required
+def excluir_documento_projeto(current_user, projeto_id, documento_id):
+    projeto = db.session.get(Project, projeto_id)
+    documento = db.session.get(ProjectDocument, documento_id)
+
+    if not projeto or not documento or documento.projeto_id != projeto.id:
+        return jsonify({
+            "success": False,
+            "message": "Documento não encontrado."
+        }), 404
+
+    if not pode_gerenciar_documentos_projeto(current_user, projeto):
+        return jsonify({
+            "success": False,
+            "message": "Somente o líder do projeto ou um administrador pode remover documentos."
+        }), 403
+
+    try:
+        db.session.delete(documento)
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": "Documento removido."
+        }), 200
+    except Exception as erro:
+        db.session.rollback()
+        print("ERRO EXCLUIR DOCUMENTO:", repr(erro))
+        return jsonify({
+            "success": False,
+            "message": "Não foi possível remover o documento."
+        }), 500
+
+
+# ============================================================
 # PERFIL PÚBLICO DE MEMBRO
 # ============================================================
 
@@ -4698,14 +5413,20 @@ def perfil_publico_membro(current_user, user_id):
         )
         conquistas_serializadas.append(dados_conquista)
 
-    # Projetos terão modelo próprio futuramente. Mantemos o contrato da API
-    # desde já para o frontend não precisar ser refeito quando isso chegar.
+    projetos_membro = Project.query.options(
+        selectinload(Project.lider),
+        selectinload(Project.membros),
+        selectinload(Project.documentos).selectinload(ProjectDocument.enviado_por)
+    ).filter(
+        Project.membros.any(User.id == membro.id)
+    ).order_by(Project.nome.asc()).all()
+
     return jsonify({
         "success": True,
         "membro": membro.to_dict(),
         "cards": [card.to_dict() for card in cards_membro],
         "conquistas": conquistas_serializadas,
-        "projetos": []
+        "projetos": [projeto.to_dict() for projeto in projetos_membro]
     }), 200
 
 
@@ -5583,6 +6304,28 @@ def excluir_membro(
 
 
         # ====================================================
+        # PROJETOS
+        # ====================================================
+
+        # Remove o vínculo da equipe sem apagar o portfólio.
+        for projeto in list(membro.projetos):
+            projeto.membros.remove(membro)
+
+        # Um projeto permanece publicado quando seu líder sai;
+        # a administração poderá selecionar um novo líder.
+        Project.query.filter_by(lider_id=membro.id).update(
+            {"lider_id": None},
+            synchronize_session=False
+        )
+
+        # Preserva documentos publicados, apenas removendo a autoria.
+        ProjectDocument.query.filter_by(enviado_por_id=membro.id).update(
+            {"enviado_por_id": None},
+            synchronize_session=False
+        )
+
+
+        # ====================================================
         # USUÁRIO
         # ====================================================
 
@@ -6004,6 +6747,89 @@ def garantir_schema_admin():
 
 
 # ============================================================
+# CATÁLOGO INICIAL DE PROJETOS
+# ============================================================
+
+def garantir_projetos_iniciais():
+    """Importa uma única vez os seis projetos já exibidos no index.html."""
+    marcador = "portfolio_projetos_index_v1"
+    if db.session.get(AppSetting, marcador):
+        return
+
+    projetos_iniciais = (
+        {
+            "nome": "FioCruz",
+            "descricao": "Monitoramento de mosquitos modificados para apoiar o combate à transmissão da dengue.",
+            "logo_url": "/src/images/fiocruz.jpeg",
+            "status": "em_desenvolvimento",
+            "tecnologias": ["OpenCV", "Visão computacional"]
+        },
+        {
+            "nome": "Racismo Algorítmico",
+            "descricao": "Pesquisa sobre o impacto do racismo em algoritmos e sistemas de inteligência artificial.",
+            "logo_url": "/src/images/Racismo algoriticmo.jpg",
+            "status": "concluido",
+            "tecnologias": ["Pesquisa", "Inteligência artificial"]
+        },
+        {
+            "nome": "TTNet",
+            "descricao": "Análise de partidas de tênis de mesa com técnicas de visão computacional.",
+            "logo_url": "/src/images/ttnet.jpeg",
+            "status": "em_producao",
+            "site_url": "http://lsd.maranguape.ifce.edu.br:8001/",
+            "tecnologias": ["Python", "IA", "Visão computacional"]
+        },
+        {
+            "nome": "Simulados Enem",
+            "descricao": "Plataforma para inscrições, notas e premiações dos simulados do ENEM.",
+            "logo_url": "/src/images/Simulado_Enem.jpeg",
+            "status": "em_producao",
+            "site_url": "http://lsd.maranguape.ifce.edu.br:8000/",
+            "tecnologias": ["Plataforma web"]
+        },
+        {
+            "nome": "Lupa Digital",
+            "descricao": "Solução de acessibilidade baseada em processamento de imagem e visão computacional.",
+            "logo_url": "/src/images/lupadigital.jpeg",
+            "status": "em_desenvolvimento",
+            "tecnologias": ["OpenCV", "Acessibilidade"]
+        },
+        {
+            "nome": "Corrige AI",
+            "descricao": "Correção assistida de redações com um modelo de inteligência artificial treinado.",
+            "logo_url": "/src/images/corrigeai.jpeg",
+            "status": "em_desenvolvimento",
+            "site_url": "http://lsd.maranguape.ifce.edu.br:8080/",
+            "tecnologias": ["IA", "Processamento de linguagem natural"]
+        }
+    )
+
+    for dados in projetos_iniciais:
+        slug = gerar_slug_projeto(dados["nome"])
+        if Project.query.filter_by(slug=slug).first():
+            continue
+
+        projeto = Project(
+            nome=dados["nome"],
+            slug=gerar_slug_projeto_unico(dados["nome"]),
+            descricao=dados["descricao"],
+            logo_url=dados["logo_url"],
+            status=dados["status"],
+            professor_orientador="",
+            repositorio_url="",
+            site_url=dados.get("site_url", ""),
+            tecnologias=json.dumps(dados["tecnologias"], ensure_ascii=False)
+        )
+        db.session.add(projeto)
+
+    db.session.add(AppSetting(chave=marcador, valor=datetime.utcnow().isoformat()))
+    db.session.commit()
+
+    atualizar_contagem_projetos(usuario.id for usuario in User.query.all())
+    db.session.commit()
+
+
+# ============================================================
 # INICIALIZAÇÃO
 # ============================================================
 
@@ -6019,6 +6845,7 @@ def inicializar_aplicacao():
         garantir_schema_admin()
         garantir_schema_feed()
         garantir_schema_perfis()
+        garantir_projetos_iniciais()
         garantir_catalogo_conquistas()
         garantir_admin_principal()
 
@@ -6036,7 +6863,7 @@ if __name__ == "__main__":
     )
 
     print(
-        "LSD v2.3.2"
+        "LSD v2.6.0"
     )
 
     print(
