@@ -2751,6 +2751,51 @@ body.dialog-aberto {
     gap: 10px;
 }
 
+.admin-comunicado-form {
+    display: grid;
+    gap: 8px;
+    max-width: 780px;
+}
+
+.admin-comunicado-form input,
+.admin-comunicado-form textarea {
+    width: 100%;
+    border: 1px solid #DDE2EA;
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: #263149;
+    background: #FFFFFF;
+    font: inherit;
+    resize: vertical;
+}
+
+.admin-comunicado-form label {
+    margin-top: 6px;
+    color: #536079;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-comunicado-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+#comunicadoStatus {
+    color: #667085;
+    font-size: 12px;
+}
+
+@media (max-width: 600px) {
+    .admin-comunicado-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
 .advertencia-admin-item-topo > div {
     display: flex;
     flex-direction: column;

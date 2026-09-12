@@ -12,9 +12,9 @@ import jwt
 from dotenv import load_dotenv
 
 if __package__:
-    from .password_reset import register_password_reset, password_stamp
+    from .password_reset import register_password_reset, password_stamp, send_announcement_email
 else:
-    from password_reset import register_password_reset, password_stamp
+    from password_reset import register_password_reset, password_stamp, send_announcement_email
 
 from flask import (
     Flask,
@@ -4506,6 +4506,82 @@ def listar_membros_admin(
             in membros
         ]
 
+    }), 200
+
+
+@app.route(
+    "/api/admin/comunicados",
+    methods=["POST"]
+)
+@admin_required
+def enviar_comunicado_admin(
+    current_user
+):
+    data = request.get_json(silent=True) or {}
+    assunto = data.get("assunto")
+    mensagem = data.get("mensagem")
+
+    if not isinstance(assunto, str) or not isinstance(mensagem, str):
+        return jsonify({
+            "success": False,
+            "message": "Informe um assunto e uma mensagem válidos."
+        }), 400
+
+    assunto = assunto.strip()
+    mensagem = mensagem.strip()
+
+    if not 3 <= len(assunto) <= 160:
+        return jsonify({
+            "success": False,
+            "message": "O assunto deve possuir entre 3 e 160 caracteres."
+        }), 400
+
+    if not 10 <= len(mensagem) <= 10000:
+        return jsonify({
+            "success": False,
+            "message": "A mensagem deve possuir entre 10 e 10000 caracteres."
+        }), 400
+
+    destinatarios = sorted({
+        membro.email.strip().lower()
+        for membro in User.query.with_entities(User.email).all()
+        if isinstance(membro.email, str) and membro.email.strip()
+    })
+
+    if not destinatarios:
+        return jsonify({
+            "success": False,
+            "message": "Não há e-mails cadastrados para receber o comunicado."
+        }), 400
+
+    config = app.config
+    if config["MAIL_BACKEND"] not in ("console", "smtp") or not config["MAIL_FROM"]:
+        return jsonify({
+            "success": False,
+            "message": "O serviço de e-mail não está configurado."
+        }), 503
+
+    if config["MAIL_BACKEND"] == "smtp" and not all(
+        config[name] for name in ("MAIL_HOST", "MAIL_USERNAME", "MAIL_PASSWORD")
+    ):
+        return jsonify({
+            "success": False,
+            "message": "O serviço de e-mail não está configurado."
+        }), 503
+
+    try:
+        send_announcement_email(config, destinatarios, assunto, mensagem)
+    except Exception:
+        app.logger.error("Falha no envio de comunicado; verifique SMTP no servidor.")
+        return jsonify({
+            "success": False,
+            "message": "Não foi possível enviar o comunicado."
+        }), 502
+
+    return jsonify({
+        "success": True,
+        "message": "Comunicado enviado com sucesso.",
+        "destinatarios": len(destinatarios)
     }), 200
 
 

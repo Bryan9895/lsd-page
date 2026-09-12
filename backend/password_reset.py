@@ -47,6 +47,30 @@ def send_reset_email(config, recipient, link):
         smtp.send_message(message)
 
 
+def send_announcement_email(config, recipients, subject, body):
+    message = EmailMessage()
+    message['Subject'] = subject
+    message['From'] = config['MAIL_FROM']
+    message['To'] = config['MAIL_FROM']
+    message['Bcc'] = ', '.join(recipients)
+    message.set_content(body)
+    if config['MAIL_BACKEND'] == 'console':
+        if config['APP_ENV'] != 'development':
+            raise ValueError('Console de e-mail disponível apenas em desenvolvimento.')
+        print('\n[COMUNICADO LOCAL — NÃO ENVIADO]\n' + message.get_content(), flush=True)
+        return
+    context = ssl.create_default_context()
+    transport = smtplib.SMTP_SSL if config['MAIL_SECURITY'] == 'ssl' else smtplib.SMTP
+    options = {'timeout': 10}
+    if config['MAIL_SECURITY'] == 'ssl':
+        options['context'] = context
+    with transport(config['MAIL_HOST'], config['MAIL_PORT'], **options) as smtp:
+        if config['MAIL_SECURITY'] == 'starttls':
+            smtp.starttls(context=context)
+        smtp.login(config['MAIL_USERNAME'], config['MAIL_PASSWORD'])
+        smtp.send_message(message)
+
+
 def register_password_reset(app, db, User):
     for name in ('MAIL_HOST', 'MAIL_USERNAME', 'MAIL_PASSWORD', 'MAIL_FROM', 'PUBLIC_BASE_URL'):
         app.config[name] = os.getenv(name, '').strip()

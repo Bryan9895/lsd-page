@@ -21,6 +21,7 @@ backend/uploads/*
 
 # Ambiente
 .env
+.env.example
 
 
 # Editor

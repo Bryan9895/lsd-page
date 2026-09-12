@@ -4275,6 +4275,48 @@ function inicializarEventosAdmin() {
 }
 
 
+function inicializarComunicadoAdmin() {
+    const formulario = document.getElementById("formComunicadoAdmin");
+    if (!formulario) return;
+
+    const botao = document.getElementById("btnEnviarComunicado");
+    const status = document.getElementById("comunicadoStatus");
+
+    formulario.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        const assunto = document.getElementById("comunicadoAssunto")?.value.trim() || "";
+        const mensagem = document.getElementById("comunicadoMensagem")?.value.trim() || "";
+
+        if (assunto.length < 3 || mensagem.length < 10) {
+            if (status) status.textContent = "Informe um assunto e uma mensagem válidos.";
+            return;
+        }
+
+        const original = botao.innerHTML;
+        botao.disabled = true;
+        botao.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Enviando...`;
+        if (status) status.textContent = "";
+
+        const resposta = await chamarAPI("/api/admin/comunicados", {
+            method: "POST",
+            body: JSON.stringify({ assunto, mensagem })
+        });
+
+        botao.disabled = false;
+        botao.innerHTML = original;
+
+        if (!resposta.ok || !resposta.dados?.success) {
+            if (status) status.textContent = resposta.dados?.message || "Não foi possível enviar o comunicado.";
+            return;
+        }
+
+        formulario.reset();
+        if (status) status.textContent = `${resposta.dados.destinatarios} destinatário(s) processado(s).`;
+        mostrarToast("Comunicado enviado com sucesso.", "sucesso");
+    });
+}
+
+
 // ============================================================
 // LOGOUT
 // ============================================================
@@ -4328,6 +4370,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     inicializarEventosFeed();
     inicializarEventosMembros();
     inicializarEventosAdmin();
+    inicializarComunicadoAdmin();
     inicializarEventosAdvertencias();
     inicializarEventosBackups();
 

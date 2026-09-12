@@ -320,6 +320,25 @@
 
                         <div class="backup-lista" id="backupLista"></div>
                     </div>
+
+                    <div class="admin-card admin-comunicado-card">
+                        <h2><i class="fas fa-bullhorn"></i> Comunicado</h2>
+                        <p class="admin-card-legenda">
+                            Envie uma mensagem para todos os e-mails cadastrados no sistema.
+                        </p>
+                        <form id="formComunicadoAdmin" class="admin-comunicado-form">
+                            <label for="comunicadoAssunto">Assunto</label>
+                            <input id="comunicadoAssunto" maxlength="160" required placeholder="Assunto do comunicado">
+                            <label for="comunicadoMensagem">Mensagem</label>
+                            <textarea id="comunicadoMensagem" maxlength="10000" rows="8" required placeholder="Escreva o comunicado..."></textarea>
+                            <div class="admin-comunicado-footer">
+                                <span id="comunicadoStatus" role="status" aria-live="polite"></span>
+                                <button type="submit" class="btn-principal" id="btnEnviarComunicado">
+                                    <i class="fas fa-paper-plane"></i> Enviar comunicado
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
             </section>

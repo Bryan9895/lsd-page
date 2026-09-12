@@ -132,5 +132,44 @@ class PasswordResetTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 SEND_RESET_EMAIL(app.config, 'member@example.com', 'http://example.com')
 
+    def test_admin_announcement_uses_unique_bcc_recipients(self):
+        admin = User(nome='Admin', email='admin@example.com',
+                     senha_hash=generate_password_hash('admin-password'), is_admin=True)
+        duplicate = User(nome='Duplicado', email='MEMBER@example.com',
+                         senha_hash=generate_password_hash('other-password'))
+        db.session.add_all([admin, duplicate])
+        db.session.commit()
+
+        member_token = self.client.post('/api/login', json={
+            'email': 'member@example.com', 'senha': 'old-password'
+        }).json['token']
+        self.assertEqual(self.client.post(
+            '/api/admin/comunicados',
+            headers={'Authorization': 'Bearer ' + member_token},
+            json={'assunto': 'Aviso', 'mensagem': 'Mensagem para a equipe.'}
+        ).status_code, 403)
+
+        admin_token = self.client.post('/api/login', json={
+            'email': 'admin@example.com', 'senha': 'admin-password'
+        }).json['token']
+        with patch('backend.app.send_announcement_email') as send:
+            response = self.client.post(
+                '/api/admin/comunicados',
+                headers={'Authorization': 'Bearer ' + admin_token},
+                json={'assunto': 'Aviso', 'mensagem': 'Mensagem para a equipe.'}
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['destinatarios'], 2)
+        recipients = send.call_args.args[1]
+        self.assertEqual(recipients, ['admin@example.com', 'member@example.com'])
+
+        invalid = self.client.post(
+            '/api/admin/comunicados',
+            headers={'Authorization': 'Bearer ' + admin_token},
+            json={'assunto': 'Oi', 'mensagem': 'curta'}
+        )
+        self.assertEqual(invalid.status_code, 400)
+
 if __name__ == '__main__':
     unittest.main()
