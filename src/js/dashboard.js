@@ -12,12 +12,6 @@ const API_BASE =
 const TOKEN_KEY = "token_lsd";
 const TEMA_STORAGE_KEY = "lsd_dashboard_tema";
 
-// Aplica o tema salvo antes de terminar de montar a página, reduzindo o
-// clarão do modo claro ao abrir o dashboard.
-if (localStorage.getItem(TEMA_STORAGE_KEY) === "escuro") {
-    document.documentElement.classList.add("tema-escuro");
-}
-
 let usuarioAtual = null;
 let cards = [];
 let excluindoId = null;
@@ -795,6 +789,7 @@ function inicializarModaisEAbas() {
                 async (evento) => {
 
                     evento.preventDefault();
+                    if (document.documentElement.classList.contains("dashboard-inicializando")) return;
 
                     const abaAlvo = botao.dataset.aba;
 
@@ -4324,6 +4319,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
+    inicializarLayoutDashboard();
     inicializarTemaDashboard();
     inicializarLogout();
     inicializarModaisEAbas();
@@ -4335,56 +4331,131 @@ document.addEventListener("DOMContentLoaded", async () => {
     inicializarEventosAdvertencias();
     inicializarEventosBackups();
 
-    // Perfil primeiro: define permissões e informações do usuário.
-    await carregarPerfil();
+    try {
+        // Perfil primeiro: define permissões e informações do usuário.
+        await carregarPerfil();
 
-    // Dados globais que aparecem nas laterais e em formulários.
-    await Promise.allSettled([
-        carregarDestaques(),
-        carregarResponsaveisCards(),
-        carregarAdvertencias(),
-        carregarConquistasDashboard()
-    ]);
+        let abaInicial = sessionStorage.getItem(ABA_STORAGE_KEY) || "kanban";
 
-    let abaInicial = sessionStorage.getItem(ABA_STORAGE_KEY) || "kanban";
+        if (!ABAS_VALIDAS.has(abaInicial)) {
+            abaInicial = "kanban";
+        }
 
-    if (!ABAS_VALIDAS.has(abaInicial)) {
-        abaInicial = "kanban";
-    }
+        if (abaInicial === "admin" && !usuarioAtual?.is_admin) {
+            abaInicial = "kanban";
+        }
 
-    if (abaInicial === "admin" && !usuarioAtual?.is_admin) {
-        abaInicial = "kanban";
-    }
+        // Mostra a aba antes das requisições; respostas tardias não mudam a navegação.
+        await trocarAba(abaInicial, { salvar: false, carregar: false });
+        document.documentElement.classList.remove("dashboard-inicializando");
 
-    // Carrega somente a aba que o usuário realmente vai ver.
-    if (abaInicial === "kanban") {
-        await carregarCards();
-    } else if (abaInicial === "comunidade") {
-        await carregarPosts({ mostrarLoading: true });
-        feedCarregado = true;
-    } else if (abaInicial === "membros") {
-        await carregarDiretorioMembros();
-        membrosCarregados = true;
-    } else if (abaInicial === "admin") {
+        // Dados globais que aparecem nas laterais e em formulários.
         await Promise.allSettled([
-            carregarMembros({ mostrarLoading: true }),
-            carregarBackups({ mostrarLoading: true })
+            carregarDestaques(),
+            carregarResponsaveisCards(),
+            carregarAdvertencias(),
+            carregarConquistasDashboard()
         ]);
-        adminCarregado = true;
+
+        // Carrega somente a aba que o usuário realmente vai ver.
+        if (abaInicial === "kanban") {
+            await carregarCards();
+        } else if (abaInicial === "comunidade") {
+            await carregarPosts({ mostrarLoading: true });
+            feedCarregado = true;
+        } else if (abaInicial === "membros") {
+            await carregarDiretorioMembros();
+            membrosCarregados = true;
+        } else if (abaInicial === "admin") {
+            await Promise.allSettled([
+                carregarMembros({ mostrarLoading: true }),
+                carregarBackups({ mostrarLoading: true })
+            ]);
+            adminCarregado = true;
+        }
+
+        // Ao voltar para a aba do navegador, verifica se a administração
+        // enviou uma nova advertência enquanto o membro estava ausente.
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                carregarAdvertencias({ silencioso: true });
+            }
+        });
+
+    } catch (erro) {
+        console.error("Falha ao iniciar o dashboard", erro);
+        mostrarToast("Não foi possível carregar o painel. Tente atualizar a página.", "erro");
+    } finally {
+        document.documentElement.classList.remove("dashboard-inicializando");
+    }
+});
+
+
+// Altura real da navegação e ciclo de foco do modal de perfil.
+function inicializarLayoutDashboard() {
+    const nav = document.querySelector(".dash-nav");
+    const medirNav = () => document.documentElement.style.setProperty(
+        "--dash-nav-height", nav.getBoundingClientRect().height + "px"
+    );
+    if (nav) {
+        medirNav();
+        new ResizeObserver(medirNav).observe(nav);
     }
 
-    await trocarAba(abaInicial, {
-        salvar: false,
-        carregar: false
+    const overlay = document.getElementById("modalEditarPerfil");
+    const dialog = overlay?.querySelector('[role="dialog"]');
+    if (!dialog) return;
+    let focoAnterior = null;
+    let aberto = false;
+    const sincronizar = () => {
+        if (aberto === !overlay.hidden) return;
+        aberto = !overlay.hidden;
+        document.body.classList.toggle("perfil-modal-aberto", aberto);
+        for (const filho of document.body.children) {
+            if (filho === overlay || filho.tagName === "SCRIPT") continue;
+            if (aberto) {
+                filho.dataset.perfilInertAnterior = String(filho.inert);
+                filho.inert = true;
+            } else if ("perfilInertAnterior" in filho.dataset) {
+                filho.inert = filho.dataset.perfilInertAnterior === "true";
+                delete filho.dataset.perfilInertAnterior;
+            }
+        }
+        if (aberto) {
+            focoAnterior = document.activeElement;
+            dialog.querySelector(".perfil-form-corpo").scrollTop = 0;
+            dialog.focus({ preventScroll: true });
+        } else {
+            focoAnterior?.focus({ preventScroll: true });
+        }
+    };
+    new MutationObserver(sincronizar).observe(overlay, {
+        attributes: true, attributeFilter: ["hidden"]
     });
-
-    // Ao voltar para a aba do navegador, verifica se a administração
-    // enviou uma nova advertência enquanto o membro estava ausente.
-    document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
-            carregarAdvertencias({ silencioso: true });
+    document.addEventListener("keydown", (evento) => {
+        if (overlay.hidden) return;
+        if (evento.key === "Escape") {
+            evento.preventDefault();
+            overlay.hidden = true;
+        } else if (evento.key === "Tab") {
+            const elementos = [...dialog.querySelectorAll(
+                'button, input, textarea, select, a[href], [tabindex="0"]'
+            )].filter((el) => !el.disabled && el.getClientRects().length);
+            const primeiro = elementos[0], ultimo = elementos[elementos.length - 1];
+            if (evento.shiftKey && (document.activeElement === primeiro || document.activeElement === dialog)) {
+                evento.preventDefault(); ultimo?.focus();
+            } else if (!evento.shiftKey && document.activeElement === ultimo) {
+                evento.preventDefault(); primeiro?.focus();
+            }
         }
     });
-
-    document.documentElement.classList.remove("dashboard-inicializando");
-});
+    const ajustarViewport = () => {
+        const viewport = window.visualViewport;
+        overlay.style.setProperty("--perfil-viewport-height", (viewport?.height || window.innerHeight) + "px");
+        overlay.style.setProperty("--perfil-viewport-top", (viewport?.offsetTop || 0) + "px");
+    };
+    ajustarViewport();
+    window.visualViewport?.addEventListener("resize", ajustarViewport);
+    window.visualViewport?.addEventListener("scroll", ajustarViewport);
+    window.addEventListener("resize", ajustarViewport);
+}
