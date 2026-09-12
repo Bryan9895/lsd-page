@@ -7,45 +7,53 @@
     <meta name="theme-color" content="#08152d">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./src/css/styles.css">
+    <link rel="stylesheet" href="./src/css/responsivo.css">
     <link rel="stylesheet" href="./src/css/projetos.css">
     <title>Projetos — LSD</title>
 </head>
-<body>
+<body class="portfolio-page">
     <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+    <div class="background-blobs" aria-hidden="true"><div class="blob blob1"></div><div class="blob blob2"></div></div>
 
-    <header class="portfolio-header">
-        <nav class="portfolio-nav" aria-label="Navegação principal">
-            <a class="portfolio-logo" href="index.html" aria-label="LSD — página inicial">
-                <img src="./src/images/LOGO_LSD.svg" alt="">
-                <span>LSD <strong>Projetos</strong></span>
+    <header>
+        <nav class="scrolled" aria-label="Navegação principal">
+            <a class="Logo-LSD" href="index.html" aria-label="LSD — página inicial">
+                <img class="logo-lsd-img" src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
+                <span class="logo-subtexto"><span>Sistemas</span><span>&amp;</span><span>Dados</span></span>
             </a>
-
-            <div class="portfolio-nav-links">
-                <a href="index.html"><i class="fas fa-house" aria-hidden="true"></i><span>Início</span></a>
-                <a href="projetos.html" class="ativo" aria-current="page"><i class="fas fa-diagram-project" aria-hidden="true"></i><span>Projetos</span></a>
-                <a href="dashboard.html"><i class="fas fa-user-group" aria-hidden="true"></i><span>Perfis</span></a>
+            <div class="nav-right">
+                <div class="options-nav"><ul>
+                    <li><a href="index.html#sobre">Sobre</a></li>
+                    <li><a class="nav-ativo" href="projetos.html" aria-current="page">Projetos</a></li>
+                    <li><a href="index.html#equipe">Equipe</a></li>
+                    <li><a href="index.html#redes">Redes</a></li>
+                    <li><a href="dashboard.html">Perfil</a></li>
+                </ul></div>
+                <div id="area-usuario"><a href="login.html" class="btn-entrar">Entrar</a></div>
             </div>
         </nav>
     </header>
 
     <main id="conteudo">
         <section class="portfolio-hero" id="portfolioHero">
-            <div class="hero-orbita hero-orbita-um" aria-hidden="true"></div>
-            <div class="hero-orbita hero-orbita-dois" aria-hidden="true"></div>
+            <div class="portfolio-orbitas" aria-hidden="true">
+                <span class="orbita orbita-maior"><img src="./src/images/Planeta2.png" alt=""></span>
+                <span class="orbita orbita-menor"><img src="./src/images/Planeta2.png" alt=""></span>
+            </div>
             <div class="portfolio-container portfolio-hero-grid">
                 <div class="portfolio-hero-copy">
-                    <span class="portfolio-eyebrow"><i class="fas fa-flask" aria-hidden="true"></i> Laboratório de Sistemas e Dados</span>
-                    <h1>Ideias que viram <em>soluções reais.</em></h1>
-                    <p>Conheça os projetos desenvolvidos pelos membros do LSD, as tecnologias utilizadas e as pessoas por trás de cada resultado.</p>
-                    <a class="hero-cta" href="#catalogo">Explorar portfólio <i class="fas fa-arrow-down" aria-hidden="true"></i></a>
+                    <span class="portfolio-eyebrow">PORTFÓLIO LSD</span>
+                    <h1>Pesquisa que sai do papel e vira <span>tecnologia.</span></h1>
+                    <p>Projetos construídos por estudantes, pesquisadores e professores do Laboratório de Sistemas e Dados.</p>
+                    <a class="hero-cta" href="#catalogo">Conhecer projetos <img src="./src/images/seta.svg" alt=""></a>
                 </div>
-
                 <dl class="portfolio-estatisticas" aria-label="Resumo do portfólio">
-                    <div><dt id="statTotal">—</dt><dd>projetos</dd></div>
-                    <div><dt id="statAtivos">—</dt><dd>em atividade</dd></div>
-                    <div><dt id="statMembros">—</dt><dd>participantes</dd></div>
+                    <div><dt id="statTotal">—</dt><dd>Projetos</dd></div>
+                    <div><dt id="statMembros">—</dt><dd>Participantes</dd></div>
+                    <div><dt id="statDocumentos">—</dt><dd>Documentos</dd></div>
                 </dl>
             </div>
         </section>
@@ -53,55 +61,48 @@
         <section class="portfolio-catalogo" id="catalogo" aria-labelledby="catalogoTitulo">
             <div class="portfolio-container">
                 <div class="catalogo-topo">
-                    <div>
-                        <span class="secao-eyebrow">PORTFÓLIO LSD</span>
-                        <h2 id="catalogoTitulo">Nossos projetos</h2>
-                        <p>Acompanhe iniciativas em pesquisa, software, inteligência artificial e acessibilidade.</p>
+                    <div class="catalogo-titulo"><span class="secao-eyebrow">O QUE ESTAMOS CRIANDO</span><h2 id="catalogoTitulo">Nossos projetos</h2><p>Conheça cada iniciativa, sua equipe, tecnologias, documentação e repositório.</p></div>
+                    <div class="catalogo-ferramentas">
+                        <label class="projeto-busca" for="buscaProjetos"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><span class="sr-only">Buscar projeto</span><input id="buscaProjetos" type="search" placeholder="Buscar projeto ou tecnologia" autocomplete="off"></label>
+                        <button class="btn-adicionar-projeto" id="btnNovoProjetoAdmin" type="button" hidden><i class="fas fa-plus" aria-hidden="true"></i> Novo projeto</button>
                     </div>
-
-                    <label class="projeto-busca" for="buscaProjetos">
-                        <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
-                        <span class="sr-only">Buscar projeto</span>
-                        <input id="buscaProjetos" type="search" placeholder="Buscar por nome ou tecnologia" autocomplete="off">
-                    </label>
                 </div>
-
-                <div class="projeto-filtros" role="group" aria-label="Filtrar projetos por status">
-                    <button type="button" class="ativo" data-filtro-status="todos" aria-pressed="true">Todos</button>
-                    <button type="button" data-filtro-status="em_desenvolvimento" aria-pressed="false">Em desenvolvimento</button>
-                    <button type="button" data-filtro-status="em_producao" aria-pressed="false">Em produção</button>
-                    <button type="button" data-filtro-status="concluido" aria-pressed="false">Concluídos</button>
-                </div>
-
                 <p class="resultado-contador" id="resultadoContador" aria-live="polite"></p>
-
-                <div class="projetos-grid" id="projetosGrid" aria-live="polite" aria-busy="true">
-                    <div class="projeto-skeleton"></div>
-                    <div class="projeto-skeleton"></div>
-                    <div class="projeto-skeleton"></div>
-                </div>
+                <div class="projetos-grid" id="projetosGrid" aria-live="polite" aria-busy="true"><div class="projeto-skeleton"></div><div class="projeto-skeleton"></div><div class="projeto-skeleton"></div></div>
             </div>
         </section>
 
         <section class="projeto-detalhe" id="projetoDetalhe" hidden aria-live="polite">
-            <div class="portfolio-container">
-                <button class="detalhe-voltar" id="btnVoltarProjetos" type="button">
-                    <i class="fas fa-arrow-left" aria-hidden="true"></i> Voltar ao portfólio
-                </button>
-                <div id="projetoDetalheConteudo"></div>
-            </div>
+            <div class="portfolio-container"><button class="detalhe-voltar" id="btnVoltarProjetos" type="button"><i class="fas fa-arrow-left" aria-hidden="true"></i> Voltar aos projetos</button><div id="projetoDetalheConteudo"></div></div>
         </section>
     </main>
 
-    <footer class="portfolio-footer">
-        <div class="portfolio-container">
-            <div>
-                <img src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
-                <p>Laboratório de Sistemas e Dados</p>
-            </div>
-            <p>Instituto Federal do Ceará — Campus Maranguape</p>
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-logo"><img src="./src/images/LOGO_LSD.svg" alt="Logo LSD"><p>Laboratório de Sistemas e Dados</p></div>
+            <div class="footer-links"><h4>Navegação</h4><ul><li><a href="index.html#sobre">Sobre</a></li><li><a href="projetos.html">Projetos</a></li><li><a href="index.html#equipe">Equipe</a></li><li><a href="index.html#redes">Redes</a></li></ul></div>
+            <div class="footer-contato"><h4>Contato</h4><p>Instituto Federal do Ceará</p><p>Campus Maranguape</p></div>
+            <div class="footer-pinguim"><img src="./src/images/Pinguin.PNG" alt="Pinguim do LSD"></div>
         </div>
+        <div class="footer-copy"><p>© 2026 LSD - Laboratório de Sistemas e Dados</p><p class="creditos">Desenvolvido por <a href="https://github.com/Keniche46" target="_blank" rel="noopener noreferrer">Heitor Martins</a>, <a href="https://github.com/Bryan9895" target="_blank" rel="noopener noreferrer">Bryan William</a> e <a href="https://github.com/Gabriel-msv" target="_blank" rel="noopener noreferrer">Mário Gabriel</a></p></div>
     </footer>
+
+    <div class="portfolio-modal-overlay" id="modalProjetoAdmin" hidden>
+        <section class="portfolio-modal" role="dialog" aria-modal="true" aria-labelledby="modalProjetoTitulo">
+            <div class="portfolio-modal-topo"><div><span class="secao-eyebrow">GESTÃO DO PORTFÓLIO</span><h2 id="modalProjetoTitulo">Novo projeto</h2></div><button id="modalProjetoFechar" type="button" aria-label="Fechar"><i class="fas fa-xmark" aria-hidden="true"></i></button></div>
+            <form id="formProjetoAdmin">
+                <input type="hidden" id="projetoAdminId">
+                <div class="projeto-form-grid"><label>Nome do projeto <input id="projetoNome" type="text" maxlength="160" required></label><label>Tag de andamento <select id="projetoStatus" required><option value="em_desenvolvimento">Em desenvolvimento</option><option value="em_producao">Em produção</option><option value="concluido">Concluído</option></select></label></div>
+                <label>Descrição <textarea id="projetoDescricao" maxlength="3000" required></textarea></label>
+                <div class="projeto-form-grid"><label>Professor orientador <input id="projetoOrientador" type="text" maxlength="160" required></label><label>Líder do projeto <select id="projetoLider"><option value="">A definir</option></select></label></div>
+                <label>Tecnologias e tags <input id="projetoTecnologias" type="text" placeholder="Python, Flask, JavaScript"><small>Separe os itens por vírgulas.</small></label>
+                <div class="projeto-form-grid"><label>Link do repositório <input id="projetoRepositorio" type="url" placeholder="https://github.com/..."></label><label>Link do projeto <input id="projetoSite" type="url" placeholder="https://..."></label></div>
+                <label>Logo do projeto <input id="projetoLogo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"><small id="projetoLogoAtual">Obrigatória ao criar um novo projeto.</small></label>
+                <fieldset class="projeto-membros-fieldset"><legend>Membros vinculados</legend><p>O líder selecionado será incluído automaticamente.</p><div class="projeto-membros-opcoes" id="projetoMembrosOpcoes"></div></fieldset>
+                <div class="portfolio-modal-acoes"><button class="btn-modal-secundario" id="modalProjetoCancelar" type="button">Cancelar</button><button class="btn-modal-principal" id="btnSalvarProjeto" type="submit"><i class="fas fa-check" aria-hidden="true"></i> Salvar projeto</button></div>
+            </form>
+        </section>
+    </div>
 
     <div class="portfolio-toast" id="portfolioToast" role="status" aria-live="polite"></div>
     <script src="./src/js/projetos.js" defer></script>

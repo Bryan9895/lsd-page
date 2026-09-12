@@ -4,12 +4,12 @@ Esta atualização cria uma área pública para apresentar os projetos do Labora
 
 ## Entregas
 
-- página responsiva `projetos.html`, com busca, filtros por status e visão detalhada;
+- página responsiva `projetos.html`, com busca, fases apresentadas como tags e visão detalhada alinhada ao `index.html`;
 - importação automática dos seis projetos que já existiam no `index.html`;
 - cards da página inicial direcionando ao respectivo portfólio;
 - vínculos bidirecionais: perfil do membro → projeto e projeto → perfil do membro;
 - exibição de descrição, logo, status, professor orientador, líder, equipe, tecnologias, repositório, site e documentação;
-- criação, edição e exclusão de projetos no Painel Admin;
+- criação, edição e exclusão no próprio portfólio, com controles visíveis somente para administradores;
 - seleção de líder e de vários membros no formulário administrativo;
 - upload e remoção de documentos pelo líder do projeto ou por administradores;
 - atualização automática de `users.projetos_ativos` conforme os vínculos e o status;
@@ -56,6 +56,8 @@ Todas as rotas de escrita exigem JWT em `Authorization: Bearer <token>`.
 
 ## Status aceitos
 
+Na interface, o status é apresentado como uma tag do projeto e não como uma seção ou filtro do portfólio.
+
 - `em_desenvolvimento` — projeto em implementação ou pesquisa;
 - `em_producao` — solução disponível para uso;
 - `concluido` — projeto finalizado.
@@ -86,6 +88,7 @@ A suíte cobre:
 - rejeição de URL com protocolo inseguro;
 - atualização da contagem ao concluir um projeto;
 - filtro público de status e exclusão administrativa.
+- presença da gestão no portfólio, ausência dela no dashboard e uso do status como tag.
 
 Execute:
 

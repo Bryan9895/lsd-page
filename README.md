@@ -18,9 +18,9 @@ A versão **2.6.0** adiciona um portfólio completo de projetos, conectando proj
 
 | Área | Atualização |
 |---|---|
-| Portfólio | Nova página pública com busca, filtros, cards e detalhes de cada projeto. |
+| Portfólio | Página pública alinhada ao visual do site principal, com busca, cards, detalhes e fases exibidas como tags. |
 | Projeto ↔ membro | Projetos aparecem no perfil público; participantes do projeto levam ao perfil correspondente. |
-| Administração | Administradores cadastram e editam nome, descrição, logo, status, orientador, líder, equipe, tags e links. |
+| Administração | A gestão fica no próprio portfólio; somente administradores veem os controles para cadastrar, editar e excluir projetos. |
 | Documentação | Líderes e administradores podem anexar e remover documentos do projeto. |
 | Banco | Novas tabelas relacionais criadas de forma compatível, sem apagar dados existentes. |
 | Qualidade | API validada com permissões, URLs seguras, limites de entrada e testes automatizados. |
