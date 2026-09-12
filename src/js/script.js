@@ -213,8 +213,8 @@ document.addEventListener("DOMContentLoaded", () => {
             // Se TEM token, o usuário está logado! 
             // Trocamos o botão de "Entrar" por um botão de "Sair"
             areaUsuario.innerHTML = `
-                <a href="#" id="btn-sair" style="color: var(--azul); font-weight: bold; text-decoration: none;">
-                    <i class="fas fa-sign-out-alt"></i> Sair
+                <a href="#" id="btn-sair" class="btn-entrar">
+                    <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Sair
                 </a>
             `;
 
