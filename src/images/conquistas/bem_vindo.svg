@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img">
+<defs>
+  <radialGradient id="bg" cx="35%" cy="25%" r="80%"><stop offset="0" stop-color="#243449"/><stop offset="1" stop-color="#0a111b"/></radialGradient>
+  <linearGradient id="ring" x1="18" y1="16" x2="112" y2="116"><stop stop-color="#62d6ff"/><stop offset="1" stop-color="#6676ff"/></linearGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".45"/></filter>
+  <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<circle cx="64" cy="64" r="58" fill="#08101a" opacity=".42" filter="url(#shadow)"/>
+<circle cx="64" cy="64" r="54" fill="url(#bg)" stroke="url(#ring)" stroke-width="7"/>
+<circle cx="64" cy="64" r="43" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>
+<g filter="url(#glow)">
+    <path d="M40 36h37a6 6 0 0 1 6 6v44a6 6 0 0 1-6 6H40z" fill="#102338" stroke="#b8efff" stroke-width="4"/>
+    <path d="M45 43l24-8v55l-24-7z" fill="#65d8ff" stroke="#d9f8ff" stroke-width="3"/>
+    <circle cx="62" cy="64" r="3.2" fill="#082037"/>
+    <path d="M84 55h13m-6-6 6 6-6 6" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+<circle cx="96" cy="31" r="4" fill="#fff" opacity=".9"/>
+</svg>

@@ -1220,65 +1220,65 @@ class Card(db.Model):
 CONQUISTAS_PADRAO = [
     {
         "codigo": "bem_vindo",
-        "nome": "Bem Vindo!",
+        "nome": "Cheguei, e agora?",
         "descricao": "Entrou na sua conta e passou a fazer parte da comunidade LSD.",
-        "icone": "/src/images/conquistas/bem_vindo.png",
+        "icone": "/src/images/conquistas/bem_vindo.svg",
         "raridade": "comum"
     },
     {
         "codigo": "100_pontos",
-        "nome": "100 pontos",
+        "nome": "Primeiras Faíscas",
         "descricao": "Alcançou 100 pontos no quadro Kanban.",
-        "icone": "/src/images/conquistas/100_pontos.png",
+        "icone": "/src/images/conquistas/100_pontos.svg",
         "raridade": "bronze"
     },
     {
         "codigo": "300_pontos",
-        "nome": "300 pontos",
+        "nome": "Pegando Ritmo",
         "descricao": "Alcançou 300 pontos no quadro Kanban.",
-        "icone": "/src/images/conquistas/300_pontos.png",
+        "icone": "/src/images/conquistas/300_pontos.svg",
         "raridade": "prata"
     },
     {
         "codigo": "500_pontos",
-        "nome": "500 pontos",
+        "nome": "Sem Freio!",
         "descricao": "Alcançou 500 pontos no quadro Kanban.",
-        "icone": "/src/images/conquistas/500_pontos.png",
+        "icone": "/src/images/conquistas/500_pontos.svg",
         "raridade": "ouro"
     },
     {
         "codigo": "1000_pontos",
-        "nome": "1000 pontos",
+        "nome": "Isso Já É Poder",
         "descricao": "Alcançou 1000 pontos no quadro Kanban.",
-        "icone": "/src/images/conquistas/1000_pontos.png",
+        "icone": "/src/images/conquistas/1000_pontos.svg",
         "raridade": "diamante"
     },
     {
         "codigo": "comentarista",
-        "nome": "Comentarista",
+        "nome": "Só Mais Um Comentário...",
         "descricao": "Publicou pelo menos 30 comentários no Feed da Comunidade.",
-        "icone": "/src/images/conquistas/comentarista.png",
+        "icone": "/src/images/conquistas/comentarista.svg",
         "raridade": "comum"
     },
     {
         "codigo": "criador_cards",
-        "nome": "Criador de Cards",
+        "nome": "A Fábrica Não Para",
         "descricao": "Criou pelo menos 30 cards no quadro Kanban.",
-        "icone": "/src/images/conquistas/criador_cards.png",
+        "icone": "/src/images/conquistas/criador_cards.svg",
         "raridade": "comum"
     },
     {
         "codigo": "preguicoso",
-        "nome": "Preguiçoso",
+        "nome": "Volto Já...",
         "descricao": "Passou 2 semanas completas sem criar um novo card.",
-        "icone": "/src/images/conquistas/preguicoso.png",
+        "icone": "/src/images/conquistas/preguicoso.svg",
         "raridade": "especial"
     },
     {
         "codigo": "sempre_confusao",
-        "nome": "Sempre em confusão",
+        "nome": "Era Só Um Aviso...",
         "descricao": "Recebeu 3 advertências da administração.",
-        "icone": "/src/images/conquistas/sempre_confusao.png",
+        "icone": "/src/images/conquistas/sempre_confusao.svg",
         "raridade": "especial"
     }
 ]

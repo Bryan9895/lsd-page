@@ -17,15 +17,15 @@ O catálogo atual possui 9 conquistas:
 
 | Conquista | Requisito |
 |---|---|
-| Bem Vindo! | Fazer parte da comunidade e possuir uma conta válida |
-| 100 pontos | Alcançar pelo menos 100 pontos |
-| 300 pontos | Alcançar pelo menos 300 pontos |
-| 500 pontos | Alcançar pelo menos 500 pontos |
-| 1000 pontos | Alcançar pelo menos 1000 pontos |
-| Comentarista | Publicar pelo menos 30 comentários |
-| Criador de Cards | Criar pelo menos 30 cards |
-| Preguiçoso | Passar 14 dias completos sem criar um novo card |
-| Sempre em confusão | Receber pelo menos 3 advertências |
+| Cheguei, e agora? | Fazer parte da comunidade e possuir uma conta válida |
+| Primeiras Faíscas | Alcançar pelo menos 100 pontos |
+| Pegando Ritmo | Alcançar pelo menos 300 pontos |
+| Sem Freio! | Alcançar pelo menos 500 pontos |
+| Isso Já É Poder | Alcançar pelo menos 1000 pontos |
+| Só Mais Um Comentário... | Publicar pelo menos 30 comentários |
+| A Fábrica Não Para | Criar pelo menos 30 cards |
+| Volto Já... | Passar 14 dias completos sem criar um novo card |
+| Era Só Um Aviso... | Receber pelo menos 3 advertências |
 
 ---
 
@@ -52,9 +52,9 @@ Exemplo:
 ```python
 {
     "codigo": "100_pontos",
-    "nome": "100 pontos",
+    "nome": "Primeiras Faíscas",
     "descricao": "Alcançou 100 pontos no quadro Kanban.",
-    "icone": "/src/images/conquistas/100_pontos.png",
+    "icone": "/src/images/conquistas/100_pontos.svg",
     "raridade": "bronze"
 }
 ```
@@ -142,17 +142,17 @@ As conquistas são cumulativas.
 Exemplo:
 
 ```text
-100 pontos   → 100 pontos
-300 pontos   → 100 + 300 pontos
-500 pontos   → 100 + 300 + 500 pontos
-1000 pontos  → todas as conquistas de pontuação
+Primeiras Faíscas → 100 pontos
+Pegando Ritmo → 100 + 300 pontos
+Sem Freio! → 100 + 300 + 500 pontos
+Isso Já É Poder → todas as conquistas de pontuação
 ```
 
 A pontuação continua sendo originada pelo sistema do Kanban.
 
 ---
 
-# Comentarista
+# Só Mais Um Comentário...
 
 É desbloqueada quando o total de comentários criados pelo usuário chega a:
 
@@ -164,7 +164,7 @@ A contagem utiliza os registros de `post_comments` associados ao membro.
 
 ---
 
-# Criador de Cards
+# A Fábrica Não Para
 
 É desbloqueada quando o usuário cria pelo menos:
 
@@ -190,7 +190,7 @@ responsavel_id
 
 ---
 
-# Preguiçoso
+# Volto Já...
 
 É desbloqueada após:
 
@@ -210,7 +210,7 @@ A conquista pode ser detectada quando o usuário volta ao sistema ou quando seu 
 
 ---
 
-# Sempre em confusão
+# Era Só Um Aviso...
 
 É desbloqueada quando o membro acumula pelo menos:
 
@@ -296,15 +296,15 @@ Os arquivos estão localizados em:
 
 ```text
 src/images/conquistas/
-├── bem_vindo.png
-├── 100_pontos.png
-├── 300_pontos.png
-├── 500_pontos.png
-├── 1000_pontos.png
-├── comentarista.png
-├── criador_cards.png
-├── preguicoso.png
-└── sempre_confusao.png
+├── bem_vindo.svg
+├── 100_pontos.svg
+├── 300_pontos.svg
+├── 500_pontos.svg
+├── 1000_pontos.svg
+├── comentarista.svg
+├── criador_cards.svg
+├── preguicoso.svg
+└── sempre_confusao.svg
 ```
 
 ---
@@ -347,3 +347,8 @@ src/images/conquistas/
 [OK] Tooltip por descrição
 [OK] Compatibilidade com banco existente
 ```
+
+
+## Identidade visual V2
+
+Os selos foram redesenhados em SVG com medalhões próprios, símbolos mais expressivos e nomes em tom de achievement de jogo. Os códigos internos das conquistas foram preservados para não quebrar desbloqueios existentes no banco de dados.
