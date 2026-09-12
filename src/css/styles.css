@@ -80,8 +80,8 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 80px;
-    padding: 0 40px;
+    height: 66px;
+    padding: 0 max(4%, 24px);
     background: transparent;
     transition: all .35s ease;
     z-index: 1000;
@@ -97,13 +97,19 @@ nav.scrolled{
 .Logo-LSD {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
+}
+
+.Logo-LSD .logo-lsd-img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
 }
 
 .logo-subtexto {
     font-weight: 800;
     color:  var(--branco);
-    font-size: 16px;
+    font-size: 13px;
     line-height: 1.1;
     display: flex;
     flex-direction: column;
@@ -112,14 +118,14 @@ nav.scrolled{
 .options-nav ul {
     list-style: none;
     display: flex;
-    gap: 35px;
+    gap: 24px;
 }
 
 .options-nav a {
     position: relative;
     text-decoration: none;
     color:  var(--branco);
-    font-size: large;
+    font-size: 14px;
     font-weight: 500;
 }
 .options-nav a:hover{
@@ -145,7 +151,7 @@ nav.scrolled{
 .nav-right {
     display: flex;
     align-items: center;
-    gap: 40px;
+    gap: 22px;
 }
 
 .btn-entrar {
@@ -154,11 +160,19 @@ nav.scrolled{
     background: var(--branco);
     color: var(--azul-escuro);
     font-weight: 700;
-    font-size: 14px;
-    padding: 10px 26px;
+    min-height: 38px;
+    font-size: 12px;
+    padding: 8px 18px;
     border-radius: 999px;
     text-decoration: none;
     transition: background .25s ease, color .25s ease, transform .25s ease;
+}
+
+.nav-account-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
 }
 
 .btn-entrar:hover {
@@ -1387,4 +1401,3 @@ nav.scrolled{
 .creditos a:hover{
     color:var(--amarelo);
 }
-

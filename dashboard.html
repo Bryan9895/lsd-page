@@ -62,24 +62,33 @@
 
     <!-- ===== NAV TOPO ===== -->
     <header class="dash-nav">
-        <div class="dash-nav-logo">
-            <img src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
-            <span class="dash-logo-texto">LSD <strong>Painel</strong></span>
-        </div>
+        <nav class="site-nav site-nav-dashboard scrolled" aria-label="Navegação principal">
+            <a class="Logo-LSD" href="index.html" aria-label="LSD — página inicial">
+                <img class="logo-lsd-img" src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
+                <span class="logo-subtexto"><span>Sistemas</span><span>&amp;</span><span>Dados</span></span>
+            </a>
 
-        <div class="dash-nav-links">
-            <button type="button" class="btn-tema-dashboard" id="btnTemaDashboard" aria-label="Ativar modo escuro"
-                title="Alternar tema claro/escuro">
-                <i class="fas fa-moon" aria-hidden="true"></i>
-                <span>Escuro</span>
-            </button>
-            <a href="projetos.html" class="dash-nav-link" aria-label="Portfólio de projetos"><i
-                    class="fas fa-diagram-project"></i><span>Projetos</span></a>
-            <a href="index.html" class="dash-nav-link" aria-label="Voltar ao site"><i
-                    class="fas fa-arrow-left"></i><span>Site</span></a>
-            <a href="entrar-login.html" id="logoutLink" class="dash-nav-link dash-nav-sair"
-                aria-label="Sair da conta"><i class="fas fa-right-from-bracket"></i><span>Sair</span></a>
-        </div>
+            <div class="nav-right">
+                <div class="options-nav">
+                    <ul>
+                        <li><a href="index.html#sobre">Sobre</a></li>
+                        <li><a href="projetos.html">Projetos</a></li>
+                        <li><a href="index.html#equipe">Equipe</a></li>
+                        <li><a href="index.html#redes">Redes</a></li>
+                        <li><a class="nav-ativo" href="dashboard.html" aria-current="page">Perfil</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-account-actions">
+                    <button type="button" class="btn-tema-dashboard" id="btnTemaDashboard" aria-label="Ativar modo escuro" title="Alternar tema claro/escuro">
+                        <i class="fas fa-moon" aria-hidden="true"></i><span>Escuro</span>
+                    </button>
+                    <a href="entrar-login.html" id="logoutLink" class="btn-entrar dash-nav-sair" aria-label="Sair da conta">
+                        <i class="fas fa-right-from-bracket" aria-hidden="true"></i><span>Sair</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
     </header>
 
     <!-- ===== HEADER DE PERFIL ===== -->
