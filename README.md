@@ -26,9 +26,19 @@ Atualizações recentes integradas pelos [PRs #6](https://github.com/Bryan9895/l
 | Recuperação de senha | Solicitação pela API, envio SMTP com TLS e página para cadastrar nova senha. Links de uso único expiram em 30 minutos. |
 | Proteção da recuperação | Limites persistentes por IP/e-mail e invalidação dos links e sessões anteriores após a troca de senha. |
 
-**Para ativar os e-mails:** configure `PUBLIC_BASE_URL` e as variáveis `MAIL_*` no servidor e recarregue a aplicação. O arquivo `.env` não é carregado automaticamente. Siga o [guia de recuperação de senha](docs/alteracoes/README_RECUPERACAO_SENHA.md).
+**Para ativar os e-mails:** configure `PUBLIC_BASE_URL` e as variáveis `MAIL_*` no servidor e recarregue a aplicação. O arquivo `.env` da raiz é carregado automaticamente; variáveis do servidor têm prioridade. Siga o [guia de recuperação de senha](docs/alteracoes/README_RECUPERACAO_SENHA.md).
 
 **Validação:** seis testes automatizados de recuperação passaram com banco temporário e SMTP simulado. O envio real depende da configuração do servidor; a validação visual mobile permanece pendente. Usuários com tokens anteriores à atualização precisarão fazer login novamente.
+
+## Configuração local e migração — atualização da linha 2.5.4
+
+- Login e recuperação aceitam o site em HTTP, incluindo `http://lsd.maranguape.ifce.edu.br`.
+- `.env` local é carregado automaticamente, sem sobrescrever variáveis do servidor.
+- `MAIL_BACKEND=console` permite testar o link no terminal, sem enviar e-mails, somente em desenvolvimento.
+- `MAIL_BACKEND=smtp` usa as credenciais de envio reais. Na migração, ajuste endereço público, ambiente, credenciais e caminhos persistentes; o código permanece o mesmo.
+- HTTP não criptografa senhas e tokens entre navegador e site. A conexão SMTP continua usando TLS.
+
+Passo a passo: [testar no notebook e migrar para o servidor](docs/alteracoes/README_RECUPERACAO_SENHA.md).
 
 ## Documentação complementar
 

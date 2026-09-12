@@ -8,7 +8,8 @@ TEMP = tempfile.TemporaryDirectory()
 os.environ.update(DATABASE_PATH=TEMP.name + '/test.db', UPLOAD_FOLDER=TEMP.name + '/uploads',
                   BACKUP_FOLDER=TEMP.name + '/backups', SECRET_KEY='test-secret-' * 8,
                   MAIL_HOST='smtp.example.com', MAIL_USERNAME='test', MAIL_PASSWORD='test',
-                  MAIL_FROM='test@example.com', PUBLIC_BASE_URL='https://lsd.example.com')
+                  MAIL_FROM='test@example.com', PUBLIC_BASE_URL='https://lsd.example.com',
+                  APP_ENV='development', MAIL_BACKEND='smtp', MAIL_SECURITY='starttls', MAIL_PORT='587')
 from backend.app import app, db, User
 from backend import password_reset
 from werkzeug.security import generate_password_hash
@@ -40,7 +41,8 @@ class PasswordResetTests(unittest.TestCase):
         old = self.client.post('/api/login', json={'email': 'member@example.com', 'senha': 'old-password'}).json['token']
         token = self.request_token()
         sibling = self.request_token()
-        self.assertEqual(self.client.get('/redefinir-senha.html').status_code, 200)
+        with self.client.get('/redefinir-senha.html') as response:
+            self.assertEqual(response.status_code, 200)
         payload = {'token': token, 'senha': 'new-password'}
         self.assertEqual(self.client.post('/api/redefinir-senha', json=payload).status_code, 200)
         self.assertEqual(self.client.post('/api/redefinir-senha', json=payload).status_code, 400)
@@ -89,6 +91,46 @@ class PasswordResetTests(unittest.TestCase):
             smtp.assert_called_once_with('smtp.example.com', 587, timeout=10)
             smtp.return_value.__enter__.return_value.starttls.assert_called_once()
             smtp.return_value.__enter__.return_value.send_message.assert_called_once()
+
+    def test_http_local_and_institutional_login_and_reset(self):
+        for environment, origin in (
+            ('development', 'http://127.0.0.1:5000'),
+            ('production', 'http://lsd.maranguape.ifce.edu.br'),
+        ):
+            with self.subTest(environment=environment), patch.dict(
+                    app.config, APP_ENV=environment, PUBLIC_BASE_URL=origin):
+                token = self.request_token()
+                self.assertTrue(self.mail.call_args.args[2].startswith(origin + '/redefinir-senha.html#token='))
+                response = self.client.post('/api/redefinir-senha', base_url=origin,
+                                            json={'token': token, 'senha': 'new-password'})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(self.client.post('/api/login', base_url=origin,
+                    json={'email': 'member@example.com', 'senha': 'new-password'}).status_code, 200)
+
+    def test_invalid_origins_do_not_send_mail(self):
+        for origin in ('', '//example.com', 'ftp://example.com', 'http://user:pass@example.com',
+                       'http://example.com/path', 'http://example.com?x=1', 'http://example.com#x',
+                       'http://[', 'http://example.com:bad', 'http://exam ple.com'):
+            with self.subTest(origin=origin), patch.dict(app.config, PUBLIC_BASE_URL=origin):
+                self.assertEqual(self.client.post('/api/recuperar-senha',
+                    json={'email': 'member@example.com'}).status_code, 503)
+        self.mail.assert_not_called()
+
+    def test_console_flow_without_smtp_credentials(self):
+        from io import StringIO
+        output = StringIO()
+        with patch.dict(app.config, MAIL_BACKEND='console', MAIL_PASSWORD='', MAIL_USERNAME='',
+                        PUBLIC_BASE_URL='http://127.0.0.1:5000'), patch('sys.stdout', output):
+            self.mail.side_effect = SEND_RESET_EMAIL
+            token = self.request_token()
+            self.assertIn('EMAIL LOCAL', output.getvalue())
+            self.assertEqual(self.client.post('/api/redefinir-senha',
+                json={'token': token, 'senha': 'new-password'}).status_code, 200)
+        with patch.dict(app.config, MAIL_BACKEND='console', APP_ENV='production'):
+            self.assertEqual(self.client.post('/api/recuperar-senha',
+                json={'email': 'member@example.com'}).status_code, 503)
+            with self.assertRaises(ValueError):
+                SEND_RESET_EMAIL(app.config, 'member@example.com', 'http://example.com')
 
 if __name__ == '__main__':
     unittest.main()

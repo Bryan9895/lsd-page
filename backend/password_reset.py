@@ -29,6 +29,12 @@ def send_reset_email(config, recipient, link):
         f'Acesse o link abaixo (válido por 30 minutos e para um único uso):\n{link}\n\n'
         'Se você não solicitou a alteração, ignore este e-mail. Sua senha não mudou.'
     )
+    if config['MAIL_BACKEND'] == 'console':
+        if config['APP_ENV'] != 'development':
+            raise ValueError('Console de e-mail disponível apenas em desenvolvimento.')
+        # Saída local intencional para testar sem conta SMTP. Não é entrega real.
+        print('\n[EMAIL LOCAL — NÃO ENVIADO]\n' + message.get_content(), flush=True)
+        return
     context = ssl.create_default_context()
     transport = smtplib.SMTP_SSL if config['MAIL_SECURITY'] == 'ssl' else smtplib.SMTP
     options = {'timeout': 10}
@@ -44,7 +50,8 @@ def send_reset_email(config, recipient, link):
 def register_password_reset(app, db, User):
     for name in ('MAIL_HOST', 'MAIL_USERNAME', 'MAIL_PASSWORD', 'MAIL_FROM', 'PUBLIC_BASE_URL'):
         app.config[name] = os.getenv(name, '').strip()
-    app.config['MAIL_SECURITY'] = os.getenv('MAIL_SECURITY', 'starttls')
+    app.config['MAIL_BACKEND'] = os.getenv('MAIL_BACKEND', 'smtp').strip().lower()
+    app.config['MAIL_SECURITY'] = os.getenv('MAIL_SECURITY', 'starttls').strip().lower()
     app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', '587'))
 
     class PasswordReset(db.Model):
@@ -76,11 +83,24 @@ def register_password_reset(app, db, User):
 
     def configured():
         config = app.config
-        url = urlsplit(config['PUBLIC_BASE_URL'])
-        return (all(config[n] for n in ('MAIL_HOST', 'MAIL_USERNAME', 'MAIL_PASSWORD', 'MAIL_FROM'))
+        raw_url = config['PUBLIC_BASE_URL']
+        try:
+            url = urlsplit(raw_url)
+            # Somente uma origem configurada pelo operador, nunca o Host da requisição.
+            valid_url = (url.scheme in ('http', 'https') and url.hostname
+                         and url.port != 0 and not url.username and not url.password
+                         and url.path in ('', '/') and not url.query and not url.fragment
+                         and not re.search(r'[\s\\]', raw_url))
+        except ValueError:
+            return False
+        if not valid_url:
+            return False
+        if config['MAIL_BACKEND'] == 'console':
+            return config['APP_ENV'] == 'development'
+        return (config['MAIL_BACKEND'] == 'smtp'
+                and all(config[n] for n in ('MAIL_HOST', 'MAIL_USERNAME', 'MAIL_PASSWORD', 'MAIL_FROM'))
                 and config['MAIL_SECURITY'] in ('ssl', 'starttls')
-                and url.scheme == 'https' and url.netloc and not url.username
-                and not url.query and not url.fragment)
+                and 1 <= config['MAIL_PORT'] <= 65535)
 
     @app.post('/api/recuperar-senha')
     def request_reset():
