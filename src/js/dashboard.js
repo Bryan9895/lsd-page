@@ -21,7 +21,6 @@ let advertencias = [];
 let backups = [];
 let membrosDiretorio = [];
 let perfilMembroAbertoId = null;
-let projetosAdmin = [];
 
 const ABA_STORAGE_KEY = "lsd_dashboard_aba";
 const ABAS_VALIDAS = new Set(["kanban", "comunidade", "membros", "admin"]);
@@ -521,7 +520,6 @@ async function trocarAba(nomeAba, { salvar = true, carregar = true } = {}) {
     if (nomeAba === "admin" && usuarioAtual?.is_admin && !adminCarregado) {
         await Promise.allSettled([
             carregarMembros({ mostrarLoading: true }),
-            carregarProjetosAdmin({ mostrarLoading: true }),
             carregarBackups({ mostrarLoading: true })
         ]);
         adminCarregado = true;
@@ -3976,250 +3974,6 @@ function inicializarEventosBackups() {
 
 
 // ============================================================
-// PROJETOS DO PAINEL ADMIN
-// ============================================================
-
-function statusProjetoLabel(status) {
-    return {
-        em_desenvolvimento: "Em desenvolvimento",
-        em_producao: "Em produção",
-        concluido: "Concluído"
-    }[status] || "Em desenvolvimento";
-}
-
-
-async function carregarProjetosAdmin({ mostrarLoading = false } = {}) {
-    if (!usuarioAtual?.is_admin) return;
-
-    const lista = document.getElementById("adminProjetosLista");
-    if (mostrarLoading && lista) {
-        lista.innerHTML = '<div class="admin-projetos-loading"><i class="fas fa-circle-notch fa-spin"></i> Carregando projetos...</div>';
-    }
-
-    const resposta = await chamarAPI("/api/admin/projetos");
-    if (!resposta.ok || !resposta.dados?.success) {
-        if (lista) lista.innerHTML = '<div class="admin-projetos-vazio">Não foi possível carregar os projetos.</div>';
-        return;
-    }
-
-    projetosAdmin = Array.isArray(resposta.dados.projetos) ? resposta.dados.projetos : [];
-    renderizarProjetosAdmin();
-}
-
-
-function renderizarProjetosAdmin() {
-    const lista = document.getElementById("adminProjetosLista");
-    if (!lista) return;
-
-    if (!projetosAdmin.length) {
-        lista.innerHTML = `
-            <div class="admin-projetos-vazio">
-                <i class="fas fa-folder-plus"></i>
-                <strong>Nenhum projeto cadastrado</strong>
-                <span>Crie o primeiro portfólio usando o botão acima.</span>
-            </div>
-        `;
-        return;
-    }
-
-    lista.innerHTML = projetosAdmin.map((projeto) => `
-        <article class="admin-projeto-item" data-projeto-id="${projeto.id}">
-            <img src="${escapeHTML(normalizarUrlImagem(projeto.logo_url, './src/images/LOGO_LSD.svg'))}" alt="Logo de ${escapeHTML(projeto.nome)}">
-            <div class="admin-projeto-info">
-                <div class="admin-projeto-titulo">
-                    <h3>${escapeHTML(projeto.nome)}</h3>
-                    <span class="admin-projeto-status status-${escapeHTML(projeto.status)}">${escapeHTML(statusProjetoLabel(projeto.status))}</span>
-                </div>
-                <p>${escapeHTML(projeto.descricao || "")}</p>
-                <div class="admin-projeto-meta">
-                    <span><i class="fas fa-user-group"></i> ${(projeto.membros || []).length} membro${(projeto.membros || []).length === 1 ? "" : "s"}</span>
-                    <span><i class="fas fa-crown"></i> ${escapeHTML(projeto.lider?.nome || "Líder a definir")}</span>
-                    <span><i class="fas fa-file-lines"></i> ${(projeto.documentos || []).length} documento${(projeto.documentos || []).length === 1 ? "" : "s"}</span>
-                </div>
-            </div>
-            <div class="admin-projeto-acoes">
-                <a href="projetos.html?projeto=${encodeURIComponent(projeto.slug)}" target="_blank" rel="noopener noreferrer" title="Abrir portfólio">
-                    <i class="fas fa-arrow-up-right-from-square"></i><span>Ver</span>
-                </a>
-                <button type="button" data-editar-projeto="${projeto.id}" title="Editar projeto">
-                    <i class="fas fa-pen"></i><span>Editar</span>
-                </button>
-                <button type="button" class="perigoso" data-excluir-projeto="${projeto.id}" title="Excluir projeto">
-                    <i class="fas fa-trash"></i><span>Excluir</span>
-                </button>
-            </div>
-        </article>
-    `).join("");
-}
-
-
-function preencherOpcoesMembrosProjeto(selecionados = []) {
-    const container = document.getElementById("projetoMembrosOpcoes");
-    const selectLider = document.getElementById("projetoLider");
-    if (!container || !selectLider) return;
-
-    const idsSelecionados = new Set(selecionados.map((id) => String(id)));
-    const listaOrdenada = [...membros].sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
-
-    selectLider.innerHTML = '<option value="">A definir</option>' + listaOrdenada.map((membro) => `
-        <option value="${membro.id}">${escapeHTML(membro.nome)}</option>
-    `).join("");
-
-    container.innerHTML = listaOrdenada.length
-        ? listaOrdenada.map((membro) => `
-            <label class="projeto-membro-opcao">
-                <input type="checkbox" value="${membro.id}" ${idsSelecionados.has(String(membro.id)) ? "checked" : ""}>
-                <img src="${normalizarUrlImagem(membro.foto)}" alt="">
-                <span><strong>${escapeHTML(membro.nome)}</strong><small>${escapeHTML(membro.funcao || "Membro LSD")}</small></span>
-            </label>
-        `).join("")
-        : '<div class="admin-projetos-vazio">Nenhum membro cadastrado.</div>';
-}
-
-
-async function abrirModalProjetoAdmin(projeto = null) {
-    if (!usuarioAtual?.is_admin) return;
-
-    if (!membros.length) await carregarMembros();
-    const modal = document.getElementById("modalProjetoAdmin");
-    const form = document.getElementById("formProjetoAdmin");
-    if (!modal || !form) return;
-
-    form.reset();
-    document.getElementById("projetoAdminId").value = projeto?.id || "";
-    document.getElementById("modalProjetoTitulo").innerHTML = projeto
-        ? '<i class="fas fa-pen"></i> Editar projeto'
-        : '<i class="fas fa-diagram-project"></i> Novo projeto';
-    document.getElementById("projetoNome").value = projeto?.nome || "";
-    document.getElementById("projetoStatus").value = projeto?.status || "em_desenvolvimento";
-    document.getElementById("projetoDescricao").value = projeto?.descricao || "";
-    document.getElementById("projetoOrientador").value = projeto?.professor_orientador || "";
-    document.getElementById("projetoTecnologias").value = (projeto?.tecnologias || []).join(", ");
-    document.getElementById("projetoRepositorio").value = projeto?.repositorio_url || "";
-    document.getElementById("projetoSite").value = projeto?.site_url || "";
-    document.getElementById("projetoLogo").required = !projeto;
-    document.getElementById("projetoLogoAtual").textContent = projeto
-        ? "Deixe vazio para manter a imagem atual."
-        : "Obrigatória ao criar um novo projeto.";
-
-    preencherOpcoesMembrosProjeto((projeto?.membros || []).map((membro) => membro.id));
-    document.getElementById("projetoLider").value = projeto?.lider_id || "";
-
-    modal.hidden = false;
-    document.body.classList.add("modal-aberto");
-    requestAnimationFrame(() => {
-        modal.classList.add("visivel");
-        document.getElementById("projetoNome")?.focus();
-    });
-}
-
-
-function fecharModalProjetoAdmin() {
-    const modal = document.getElementById("modalProjetoAdmin");
-    if (!modal) return;
-    modal.classList.remove("visivel");
-    document.body.classList.remove("modal-aberto");
-    setTimeout(() => { modal.hidden = true; }, 180);
-}
-
-
-async function salvarProjetoAdmin(evento) {
-    evento.preventDefault();
-    const id = document.getElementById("projetoAdminId").value;
-    const botao = document.getElementById("btnSalvarProjeto");
-    const membroIds = Array.from(document.querySelectorAll("#projetoMembrosOpcoes input:checked"))
-        .map((input) => Number(input.value));
-    const liderId = document.getElementById("projetoLider").value;
-    if (liderId && !membroIds.includes(Number(liderId))) membroIds.push(Number(liderId));
-
-    const dados = new FormData();
-    dados.append("nome", document.getElementById("projetoNome").value.trim());
-    dados.append("status", document.getElementById("projetoStatus").value);
-    dados.append("descricao", document.getElementById("projetoDescricao").value.trim());
-    dados.append("professor_orientador", document.getElementById("projetoOrientador").value.trim());
-    dados.append("lider_id", liderId);
-    dados.append("tecnologias", JSON.stringify(
-        document.getElementById("projetoTecnologias").value.split(",").map((item) => item.trim()).filter(Boolean)
-    ));
-    dados.append("membro_ids", JSON.stringify(membroIds));
-    dados.append("repositorio_url", document.getElementById("projetoRepositorio").value.trim());
-    dados.append("site_url", document.getElementById("projetoSite").value.trim());
-
-    const logo = document.getElementById("projetoLogo").files?.[0];
-    if (logo) dados.append("logo", logo);
-
-    botao.disabled = true;
-    const original = botao.innerHTML;
-    botao.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Salvando...';
-
-    const resposta = await chamarAPI(id ? `/api/admin/projetos/${id}` : "/api/admin/projetos", {
-        method: id ? "PUT" : "POST",
-        body: dados
-    });
-
-    botao.disabled = false;
-    botao.innerHTML = original;
-
-    if (!resposta.ok || !resposta.dados?.success) {
-        mostrarToast(resposta.dados?.message || "Não foi possível salvar o projeto.", "erro");
-        return;
-    }
-
-    fecharModalProjetoAdmin();
-    await Promise.allSettled([
-        carregarProjetosAdmin(),
-        carregarDiretorioMembros({ silencioso: true })
-    ]);
-    mostrarToast(id ? "Projeto atualizado com sucesso." : "Projeto criado com sucesso.", "sucesso");
-}
-
-
-function inicializarEventosProjetosAdmin() {
-    document.getElementById("btnNovoProjetoAdmin")?.addEventListener("click", () => abrirModalProjetoAdmin());
-    document.getElementById("modalProjetoFechar")?.addEventListener("click", fecharModalProjetoAdmin);
-    document.getElementById("modalProjetoCancelar")?.addEventListener("click", fecharModalProjetoAdmin);
-    document.getElementById("formProjetoAdmin")?.addEventListener("submit", salvarProjetoAdmin);
-
-    document.getElementById("modalProjetoAdmin")?.addEventListener("click", (evento) => {
-        if (evento.target.id === "modalProjetoAdmin") fecharModalProjetoAdmin();
-    });
-
-    document.getElementById("adminProjetosLista")?.addEventListener("click", async (evento) => {
-        const editar = evento.target.closest("[data-editar-projeto]");
-        const excluir = evento.target.closest("[data-excluir-projeto]");
-
-        if (editar) {
-            const projeto = projetosAdmin.find((item) => String(item.id) === String(editar.dataset.editarProjeto));
-            if (projeto) await abrirModalProjetoAdmin(projeto);
-            return;
-        }
-
-        if (excluir) {
-            const projeto = projetosAdmin.find((item) => String(item.id) === String(excluir.dataset.excluirProjeto));
-            if (!projeto) return;
-            const confirmado = await confirmarAcao(
-                "Excluir projeto",
-                `O portfólio “${projeto.nome}” e seus vínculos serão removidos. Deseja continuar?`,
-                true
-            );
-            if (!confirmado) return;
-
-            excluir.disabled = true;
-            const resposta = await chamarAPI(`/api/admin/projetos/${projeto.id}`, { method: "DELETE" });
-            if (!resposta.ok || !resposta.dados?.success) {
-                excluir.disabled = false;
-                mostrarToast(resposta.dados?.message || "Não foi possível excluir o projeto.", "erro");
-                return;
-            }
-            projetosAdmin = projetosAdmin.filter((item) => item.id !== projeto.id);
-            renderizarProjetosAdmin();
-            mostrarToast("Projeto excluído.", "sucesso");
-        }
-    });
-}
-
-
-// ============================================================
 // PAINEL ADMIN
 // ============================================================
 
@@ -4907,7 +4661,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     inicializarEventosFeed();
     inicializarEventosMembros();
     inicializarEventosAdmin();
-    inicializarEventosProjetosAdmin();
     inicializarComunicadoAdmin();
     inicializarEventosAdvertencias();
     inicializarEventosBackups();
@@ -4958,7 +4711,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else if (abaInicial === "admin") {
             await Promise.allSettled([
                 carregarMembros({ mostrarLoading: true }),
-                carregarProjetosAdmin({ mostrarLoading: true }),
                 carregarBackups({ mostrarLoading: true })
             ]);
             adminCarregado = true;

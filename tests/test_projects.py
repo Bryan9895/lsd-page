@@ -1,5 +1,6 @@
 """Cobertura da API de portfólio e dos vínculos projeto ↔ membro."""
 from io import BytesIO
+from pathlib import Path
 import unittest
 
 from werkzeug.security import generate_password_hash
@@ -195,6 +196,20 @@ class ProjectPortfolioTests(unittest.TestCase):
         )
         self.assertEqual(len(portfolio.json["projeto"]["documentos"]), 1)
         self.assertIsNone(portfolio.json["projeto"]["documentos"][0]["enviado_por"])
+
+    def test_gestao_esta_no_portfolio_e_status_e_apenas_tag(self):
+        raiz = Path(__file__).resolve().parents[1]
+        portfolio = (raiz / "projetos.html").read_text(encoding="utf-8")
+        dashboard = (raiz / "dashboard.html").read_text(encoding="utf-8")
+        javascript = (raiz / "src/js/projetos.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="btnNovoProjetoAdmin"', portfolio)
+        self.assertIn('id="modalProjetoAdmin"', portfolio)
+        self.assertIn("./src/images/Planeta2.png", portfolio)
+        self.assertNotIn("data-filtro-status", portfolio)
+        self.assertNotIn('id="btnNovoProjetoAdmin"', dashboard)
+        self.assertIn("if (usuarioAtual.is_admin)", javascript)
+        self.assertIn("statusTagHTML(projeto.status)", javascript)
 
 
 if __name__ == "__main__":
