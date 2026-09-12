@@ -261,6 +261,16 @@ function normalizarUrlImagem(
 }
 
 
+function aplicarFallbackImagem(imagem, fallback) {
+    if (!imagem) return;
+    imagem.addEventListener("error", () => {
+        if (imagem.dataset.fallbackAplicado === "1") return;
+        imagem.dataset.fallbackAplicado = "1";
+        imagem.src = fallback;
+    }, { once: true });
+}
+
+
 function escapeHTML(texto) {
 
     const div = document.createElement("div");
@@ -990,6 +1000,7 @@ function renderizarPerfil() {
             normalizarUrlImagem(
                 usuarioAtual.foto
             );
+        aplicarFallbackImagem(img, "./src/images/equipe/avatar/default-avatar.png");
     });
 
 
@@ -1006,6 +1017,7 @@ function renderizarPerfil() {
                 usuarioAtual.capa,
                 "./src/images/lab/lsd_panorama.JPG"
             );
+        aplicarFallbackImagem(capa, "./src/images/lab/lsd_panorama.JPG");
     }
 
 
@@ -3516,6 +3528,15 @@ function renderizarPerfilPublico(dados) {
             </div>
         </article>
     `;
+
+    aplicarFallbackImagem(
+        conteudo.querySelector(".perfil-publico-avatar"),
+        "./src/images/equipe/avatar/default-avatar.png"
+    );
+    aplicarFallbackImagem(
+        conteudo.querySelector(".perfil-publico-capa img"),
+        "./src/images/lab/lsd_panorama.JPG"
+    );
 
     conteudo.querySelectorAll(".conquista-item[data-conquista-index]").forEach((item) => {
         const abrir = () => {

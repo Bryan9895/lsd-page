@@ -135,6 +135,20 @@ os.makedirs(
 )
 
 
+def imagem_upload_ou_padrao(valor, padrao):
+    """Retorna o upload somente se ele existir; caso contrário usa o padrão."""
+    if not isinstance(valor, str) or not valor.strip():
+        return padrao
+
+    caminho_relativo = valor.strip()
+    if not caminho_relativo.startswith("/uploads/"):
+        return caminho_relativo
+
+    nome = os.path.basename(caminho_relativo)
+    caminho = os.path.join(app.config["UPLOAD_FOLDER"], nome)
+    return caminho_relativo if os.path.isfile(caminho) else padrao
+
+
 # ============================================================
 # CORS
 # ============================================================
@@ -619,10 +633,16 @@ class User(db.Model):
                 self.linguagens_lista(),
 
             "foto":
-                self.foto,
+                imagem_upload_ou_padrao(
+                    self.foto,
+                    "/uploads/default-avatar.png"
+                ),
 
             "capa":
-                self.capa,
+                imagem_upload_ou_padrao(
+                    self.capa,
+                    "/uploads/default-capa.jpg"
+                ),
 
             "data_entrada":
                 self.data_entrada,
