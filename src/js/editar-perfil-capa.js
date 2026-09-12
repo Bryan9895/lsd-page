@@ -2,7 +2,7 @@
 // pré-visualização de imagem, drag-and-drop e contador de caracteres da bio.
 // Não interfere no envio/salvamento dos formulários, que continua em dashboard.js.
 (function () {
-  function setupImagePreview(inputId, imgId, nameEl) {
+  function setupImagePreview(inputId, imgId, nameEl, targetIds) {
     const input = document.getElementById(inputId);
     const img = document.getElementById(imgId);
     if (!input || !img) return;
@@ -20,11 +20,7 @@
     });
 
     // Suporte a arrastar-e-soltar sobre a área de preview/dropzone
-    const dropTargets = [
-      document.getElementById('capaPreviewWrap'),
-      document.getElementById('capaDropzone'),
-      document.getElementById('avatarDropzone'),
-    ].filter(Boolean);
+    const dropTargets = targetIds.map((id) => document.getElementById(id)).filter(Boolean);
 
     dropTargets.forEach((zone) => {
       zone.addEventListener('dragover', (e) => {
@@ -36,7 +32,7 @@
         e.preventDefault();
         zone.classList.remove('arrastando');
         const file = e.dataTransfer.files && e.dataTransfer.files[0];
-        if (file) {
+        if (file && file.type.startsWith('image/')) {
           input.files = e.dataTransfer.files;
           showFile(file);
         }
@@ -44,8 +40,8 @@
     });
   }
 
-  setupImagePreview('inputCapa', 'capaPreviewImg', document.getElementById('capaNomeArquivo'));
-  setupImagePreview('inputAvatar', 'avatarPreviewImg', document.getElementById('avatarNomeArquivo'));
+  setupImagePreview('inputCapa', 'capaPreviewImg', document.getElementById('capaNomeArquivo'), ['capaPreviewWrap', 'capaDropzone']);
+  setupImagePreview('inputAvatar', 'avatarPreviewImg', document.getElementById('avatarNomeArquivo'), ['avatarDropzone']);
 
   // Contador de caracteres da bio
   const bio = document.getElementById('perfilBioInput');
@@ -62,6 +58,8 @@
     btnEditarPerfil.addEventListener('click', () => {
       const avatarAtual = document.querySelector('.perfil-avatar');
       const previewAvatar = document.getElementById('avatarPreviewImg');
+      document.getElementById('inputAvatar').value = '';
+      document.getElementById('avatarNomeArquivo').textContent = 'Clique na foto para alterar o avatar';
       if (avatarAtual && previewAvatar) previewAvatar.src = avatarAtual.src;
     });
   }
@@ -71,6 +69,7 @@
     btnEditarCapa.addEventListener('click', () => {
       const capaAtual = document.querySelector('.perfil-capa img');
       const previewCapa = document.getElementById('capaPreviewImg');
+      document.getElementById('inputCapa').value = '';
       if (capaAtual && previewCapa) previewCapa.src = capaAtual.src;
     });
   }

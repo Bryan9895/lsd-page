@@ -4733,3 +4733,69 @@ html.tema-escuro .kanban-coluna { border-color: var(--dash-border); }
     input[type="checkbox"],
     input[type="radio"] { touch-action: manipulation; }
 }
+
+
+/* Layout do painel e modal com uma única região de rolagem. */
+:root { --dash-nav-height: 66px; }
+.pontos-legenda { font-size: .9rem; color: var(--dash-text-soft); }
+#userPontosDisplay { font-size: 1.1rem; color: var(--dash-text); }
+html.tema-escuro { color-scheme: dark; }
+.dash-nav { justify-content: space-between; }
+.dashboard-inicializando .abas-nav { pointer-events: none; }
+body.perfil-modal-aberto { overflow: hidden; }
+#modalEditarPerfil {
+    top: var(--perfil-viewport-top, 0px);
+    bottom: auto;
+    height: var(--perfil-viewport-height, 100dvh);
+    overflow: hidden;
+}
+#modalEditarPerfil .modal-perfil-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+}
+#modalEditarPerfil h2,
+#modalEditarPerfil .modal-subtitulo { flex-shrink: 0; }
+#formEditarPerfil {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+.perfil-form-corpo {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 4px;
+    scrollbar-gutter: stable;
+}
+#formEditarPerfil .modal-acoes {
+    position: static;
+    flex-shrink: 0;
+    margin: 12px 0 0;
+    padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+}
+@media (max-width: 1180px) {
+    .dash-col-direita {
+        display: grid;
+        position: static;
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 980px) {
+    .dash-nav { grid-template-columns: 1fr auto; }
+    .dash-nav-links { grid-column: 2; }
+    .dash-col-central { grid-row: 1; }
+    .dash-col-esquerda.sidebar-left { grid-row: 2; }
+    .dash-col-direita { grid-row: 3; }
+}
+@media (max-width: 700px) {
+    .abas-nav { top: var(--dash-nav-height); }
+    .dash-col-direita { grid-template-columns: 1fr; }
+    .dash-nav-link, .btn-tema-dashboard { width: 44px; height: 44px; min-height: 44px; }
+    #modalEditarPerfil { padding: max(8px, env(safe-area-inset-top)) 0 0; }
+    #modalEditarPerfil .modal-perfil-card { max-height: 100%; }
+}

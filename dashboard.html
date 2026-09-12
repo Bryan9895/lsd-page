@@ -4,6 +4,14 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <meta name="description" content="Painel do membro — LSD Laboratório de Sistemas e Dados">
+        <script>
+            try {
+                document.documentElement.classList.toggle(
+                    "tema-escuro",
+                    localStorage.getItem("lsd_dashboard_tema") === "escuro"
+                );
+            } catch (_) { /* O painel continua disponível sem armazenamento. */ }
+        </script>
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
         <link rel="stylesheet" href="./src/css/styles.css">
@@ -18,11 +26,6 @@
             <div class="dash-nav-logo">
                 <img src="./src/images/LOGO_LSD.svg" alt="Logo LSD">
                 <span class="dash-logo-texto">LSD <strong>Painel</strong></span>
-            </div>
-
-            <div class="dash-busca">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Buscar no LSD..." aria-label="Buscar no LSD">
             </div>
 
             <div class="dash-nav-links">
@@ -326,8 +329,8 @@
                 <div class="card-lateral perfil-pontos-box" style="margin-bottom: 16px;">
                     <h3><i class="fas fa-trophy" style="color: #E8A020;"></i> Pontuação</h3>
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
-                        <span style="font-size: 0.9rem; color: #555;">Pontos acumulados:</span>
-                        <strong id="userPontosDisplay" style="font-size: 1.1rem; color: #14284F;">0 pts</strong>
+                        <span class="pontos-legenda">Pontos acumulados:</span>
+                        <strong id="userPontosDisplay">0 pts</strong>
                     </div>
                 </div>
 
@@ -399,7 +402,7 @@
         <!-- ===== Modal: Editar Capa ===== -->
         <div class="modal-overlay" id="modalEditarCapa" hidden>
             <div class="modal-card modal-capa-card">
-                <button type="button" class="modal-fechar" data-modal-cancel>&times;</button>
+                <button type="button" class="modal-fechar" aria-label="Fechar modal" data-modal-cancel>&times;</button>
                 <h2><i class="fas fa-image"></i> Editar Capa</h2>
                 <p class="modal-subtitulo">Escolha uma imagem de destaque para o topo do seu perfil.</p>
 
@@ -429,12 +432,13 @@
 
         <!-- ===== Modal: Editar Perfil ===== -->
         <div class="modal-overlay" id="modalEditarPerfil" hidden>
-            <div class="modal-card modal-perfil-card">
-                <button type="button" class="modal-fechar" data-modal-cancel>&times;</button>
-                <h2><i class="fas fa-user-pen"></i> Editar Perfil</h2>
+            <div class="modal-card modal-perfil-card" role="dialog" aria-modal="true" aria-labelledby="editarPerfilTitulo" tabindex="-1">
+                <button type="button" class="modal-fechar" aria-label="Fechar modal" data-modal-cancel>&times;</button>
+                <h2 id="editarPerfilTitulo"><i class="fas fa-user-pen"></i> Editar Perfil</h2>
                 <p class="modal-subtitulo">Atualize suas informações públicas no painel do LSD.</p>
 
                 <form id="formEditarPerfil">
+                    <div class="perfil-form-corpo">
 
                     <div class="perfil-form-avatar">
                         <label class="avatar-preview-wrap" for="inputAvatar" id="avatarDropzone">
@@ -496,6 +500,7 @@
                         <label><input type="checkbox" name="linguagens" value="Godot"> Godot</label>
                     </div>
 
+                    </div>
                     <div class="modal-acoes">
                         <button type="button" class="btn-cancelar" data-modal-cancel>Cancelar</button>
                         <button type="submit" class="btn-salvar"><i class="fas fa-check"></i> Salvar Perfil</button>
