@@ -3191,6 +3191,144 @@ async function abrirPerfilMembro(userId) {
 }
 
 
+function formatarDataConquista(data) {
+    if (!data) return "Data não disponível";
+
+    try {
+        const valor = new Date(data);
+        if (Number.isNaN(valor.getTime())) return "Data não disponível";
+
+        return valor.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        });
+    } catch (erro) {
+        return "Data não disponível";
+    }
+}
+
+
+function classeRaridadeConquista(raridade) {
+    return String(raridade || "comum")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "comum";
+}
+
+
+function abrirDetalhesConquista(conquista, membro = {}) {
+    if (!conquista) return;
+
+    document.querySelector(".conquista-detalhe-overlay")?.remove();
+
+    const raridade = conquista.raridade || "comum";
+    const raridadeClasse = classeRaridadeConquista(raridade);
+    const percentualNumero = Number(conquista.percentual_desbloqueio);
+    const percentual = Number.isFinite(percentualNumero)
+        ? `${percentualNumero.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`
+        : "—";
+    const dataConquista = formatarDataConquista(conquista.data_conquista);
+    const nomeMembro = membro.nome || "Este membro";
+    const nomeConquista = conquista.nome || "Conquista";
+    const descricao = conquista.descricao || "Conquista desbloqueada no LSD.";
+    const icone = conquista.icone
+        ? `<img src="${normalizarUrlImagem(conquista.icone, '')}" alt="Selo ${escapeHTML(nomeConquista)}">`
+        : '<i class="fas fa-trophy"></i>';
+
+    const overlay = document.createElement("div");
+    overlay.className = "conquista-detalhe-overlay";
+    overlay.innerHTML = `
+        <div
+            class="conquista-detalhe-modal raridade-${escapeHTML(raridadeClasse)}"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="conquistaDetalheTitulo"
+        >
+            <button type="button" class="conquista-detalhe-fechar" aria-label="Fechar detalhes da conquista">
+                <i class="fas fa-xmark"></i>
+            </button>
+
+            <div class="conquista-detalhe-hero">
+                <div class="conquista-detalhe-selo">${icone}</div>
+            </div>
+
+            <div class="conquista-detalhe-corpo">
+                <div class="conquista-detalhe-titulo-linha">
+                    <div>
+                        <span class="conquista-detalhe-eyebrow">CONQUISTA LSD</span>
+                        <h3 id="conquistaDetalheTitulo">${escapeHTML(nomeConquista)}</h3>
+                    </div>
+                    <span class="conquista-detalhe-raridade raridade-${escapeHTML(raridadeClasse)}">
+                        ${escapeHTML(raridade)}
+                    </span>
+                </div>
+
+                <p class="conquista-detalhe-descricao">${escapeHTML(descricao)}</p>
+
+                <div class="conquista-detalhe-divisor"></div>
+
+                <section class="conquista-detalhe-historico" aria-label="Histórico da conquista">
+                    <h4>Histórico</h4>
+
+                    <div class="conquista-detalhe-status">
+                        <i class="fas fa-trophy"></i>
+                        <div>
+                            <strong>${escapeHTML(percentual)} desbloquearam</strong>
+                            <span> · Conquistada em ${escapeHTML(dataConquista)}</span>
+                        </div>
+                    </div>
+
+                    <div class="conquista-detalhe-evento">
+                        <span class="conquista-detalhe-ponto"></span>
+                        <p>
+                            <strong>${escapeHTML(nomeMembro)}</strong>
+                            desbloqueou <strong>${escapeHTML(nomeConquista)}</strong>.
+                        </p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.classList.add("conquista-modal-aberto");
+
+    const modal = overlay.querySelector(".conquista-detalhe-modal");
+    const fecharBotao = overlay.querySelector(".conquista-detalhe-fechar");
+    const focoAnterior = document.activeElement;
+
+    const fechar = () => {
+        document.removeEventListener("keydown", teclaEsc);
+        overlay.classList.remove("visivel");
+        modal?.classList.remove("visivel");
+        document.body.classList.remove("conquista-modal-aberto");
+        setTimeout(() => {
+            overlay.remove();
+            focoAnterior?.focus?.({ preventScroll: true });
+        }, 170);
+    };
+
+    const teclaEsc = (evento) => {
+        if (evento.key === "Escape") fechar();
+    };
+
+    fecharBotao?.addEventListener("click", fechar);
+    overlay.addEventListener("click", (evento) => {
+        if (evento.target === overlay) fechar();
+    });
+    document.addEventListener("keydown", teclaEsc);
+
+    requestAnimationFrame(() => {
+        overlay.classList.add("visivel");
+        modal?.classList.add("visivel");
+        fecharBotao?.focus({ preventScroll: true });
+    });
+}
+
+
 function renderizarPerfilPublico(dados) {
     const conteudo = document.getElementById("membroPerfilConteudo");
     if (!conteudo) return;
@@ -3237,11 +3375,12 @@ function renderizarPerfilPublico(dados) {
         : `<div class="perfil-secao-vazia"><i class="fas fa-table-columns"></i> Este membro ainda não assumiu nenhum card.</div>`;
 
     const conquistasHtml = conquistas.length
-        ? conquistas.map((conquista) => `
+        ? conquistas.map((conquista, indice) => `
             <article
                 class="conquista-item"
-                title="${escapeHTML(conquista.descricao || conquista.nome)}"
-                aria-label="${escapeHTML(conquista.descricao || conquista.nome)}"
+                data-conquista-index="${indice}"
+                aria-label="Ver detalhes da conquista ${escapeHTML(conquista.nome || "Conquista")}"
+                role="button"
                 tabindex="0"
             >
                 <div class="conquista-icone">
@@ -3249,7 +3388,7 @@ function renderizarPerfilPublico(dados) {
                         ? `<img src="${normalizarUrlImagem(conquista.icone, '')}" alt="Selo ${escapeHTML(conquista.nome || "Conquista")}">`
                         : '<i class="fas fa-trophy"></i>'}
                 </div>
-                <strong>${escapeHTML(conquista.nome || "Conquista")}</strong>
+                <strong class="conquista-nome">${escapeHTML(conquista.nome || "Conquista")}</strong>
             </article>
         `).join("")
         : `
@@ -3351,6 +3490,22 @@ function renderizarPerfilPublico(dados) {
             </div>
         </article>
     `;
+
+    conteudo.querySelectorAll(".conquista-item[data-conquista-index]").forEach((item) => {
+        const abrir = () => {
+            const indice = Number(item.dataset.conquistaIndex);
+            const conquista = conquistas[indice];
+            if (conquista) abrirDetalhesConquista(conquista, membro);
+        };
+
+        item.addEventListener("click", abrir);
+        item.addEventListener("keydown", (evento) => {
+            if (evento.key === "Enter" || evento.key === " ") {
+                evento.preventDefault();
+                abrir();
+            }
+        });
+    });
 }
 
 

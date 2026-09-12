@@ -1,6 +1,6 @@
 # LSD — Laboratório de Sistemas e Dados
 
-![Version](https://img.shields.io/badge/version-2.5.4-blue)
+![Version](https://img.shields.io/badge/version-2.5.7-blue)
 ![Python](https://img.shields.io/badge/Python-Flask-3776AB)
 ![JavaScript](https://img.shields.io/badge/JavaScript-Frontend-F7DF1E)
 ![Database](https://img.shields.io/badge/Database-SQLite-003B57)
@@ -8,11 +8,22 @@
 
 Plataforma web interna do **LSD — Laboratório de Sistemas e Dados**, desenvolvida para centralizar atividades da equipe em um único ambiente.
 
-A versão **2.5.4** reúne melhorias de usabilidade no dashboard e recuperação de senha por e-mail, mantendo os recursos de colaboração, administração e backups.
+A versão **2.5.7** aprimora o sistema de conquistas com selos vetoriais circulares, nomes visíveis no perfil público, detalhes interativos inspirados no GitHub e um seletor compacto de reações no feed.
 
 ---
 
-# Versão atual — 2.5.4
+# Versão atual — 2.5.7
+
+## Novidades da 2.5.7
+
+| Área | Atualização |
+|---|---|
+| Conquistas no perfil | O nome de cada conquista fica sempre visível abaixo do selo no perfil público. |
+| Detalhes da conquista | Clique ou teclado abre um modal inspirado nos achievements do GitHub, com selo ampliado, nome, descrição, raridade, data de desbloqueio, percentual global e histórico. |
+| Estatísticas | A API do perfil passa a informar quantos membros desbloquearam cada conquista e o percentual correspondente. |
+| Acessibilidade | Selos podem ser abertos com `Enter`/`Espaço`, o modal fecha com `Esc` ou clique fora e devolve o foco ao selo. |
+| Visual | Modal responsivo, compatível com tema escuro e adaptado para bottom sheet em celulares. |
+| Reações e selos | Mantidos os selos SVG circulares e o seletor de emotes sob demanda da linha 2.5.x. |
 
 Atualizações recentes integradas pelos [PRs #6](https://github.com/Bryan9895/lsd-page/pull/6) e [#7](https://github.com/Bryan9895/lsd-page/pull/7):
 

@@ -4682,13 +4682,29 @@ def perfil_publico_membro(current_user, user_id):
     # da passagem do tempo, como "Preguiçoso".
     conquistas = verificar_conquistas(membro)
 
+    # Estatísticas das conquistas exibidas no perfil público.
+    total_membros = max(User.query.count(), 1)
+    conquistas_serializadas = []
+
+    for item in conquistas:
+        dados_conquista = item.to_dict()
+        total_desbloqueios = UserAchievement.query.filter_by(
+            achievement_id=item.achievement_id
+        ).count()
+        dados_conquista["total_desbloqueios"] = total_desbloqueios
+        dados_conquista["percentual_desbloqueio"] = round(
+            (total_desbloqueios / total_membros) * 100,
+            1
+        )
+        conquistas_serializadas.append(dados_conquista)
+
     # Projetos terão modelo próprio futuramente. Mantemos o contrato da API
     # desde já para o frontend não precisar ser refeito quando isso chegar.
     return jsonify({
         "success": True,
         "membro": membro.to_dict(),
         "cards": [card.to_dict() for card in cards_membro],
-        "conquistas": [item.to_dict() for item in conquistas],
+        "conquistas": conquistas_serializadas,
         "projetos": []
     }), 200
 
