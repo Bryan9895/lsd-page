@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from functools import wraps
 
 import jwt
+from dotenv import load_dotenv
 
 if __package__:
     from .password_reset import register_password_reset, password_stamp
@@ -46,8 +47,11 @@ BASE_DIR = os.path.dirname(
 )
 
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
+# Configuração local; variáveis do servidor têm prioridade sobre o .env.
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"), override=False)
 APP_ENV = os.getenv("APP_ENV", "development").strip().lower()
 IS_PRODUCTION = APP_ENV == "production"
+app.config["APP_ENV"] = APP_ENV
 
 
 # Chave usada pelos tokens JWT.
