@@ -1925,6 +1925,7 @@
     .post-codigo pre { font-size: 11.5px; }
 }
 
+
 /* ============================================================
    UI/UX — NAVEGAÇÃO, FEEDBACK E ATUALIZAÇÕES PARCIAIS
    ============================================================ */
@@ -5281,4 +5282,64 @@ body.perfil-modal-aberto { overflow: hidden; }
     .dash-nav-link, .btn-tema-dashboard { width: 44px; height: 44px; min-height: 44px; }
     #modalEditarPerfil { padding: max(8px, env(safe-area-inset-top)) 0 0; }
     #modalEditarPerfil .modal-perfil-card { max-height: 100%; }
+}
+
+/* Navbar unificada com o site principal; mantém a altura compacta do perfil. */
+.dash-nav {
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+    display: block;
+    width: 100%;
+    height: 66px;
+    min-height: 66px;
+    padding: 0;
+    background: var(--dash-nav-bg);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 6px 20px rgba(20,40,79,.15);
+}
+.dash-nav .site-nav-dashboard,
+.dash-nav .site-nav-dashboard.scrolled {
+    position: static;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 66px;
+    min-height: 66px;
+    padding: 0 max(4%, 24px);
+    background: var(--dash-nav-bg);
+    box-shadow: none;
+}
+.site-nav-dashboard .nav-ativo { color: var(--dash-accent); }
+.site-nav-dashboard .nav-ativo::after { width: 100%; }
+.site-nav-dashboard .nav-account-actions { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.site-nav-dashboard .dash-nav-sair { gap: 6px; }
+html.tema-escuro .dash-nav .site-nav-dashboard { background: var(--dash-nav-bg); }
+
+@media (max-width: 768px) {
+    .dash-nav .site-nav-dashboard,
+    .dash-nav .site-nav-dashboard.scrolled { padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right)); gap: 10px; }
+    .site-nav-dashboard .Logo-LSD { flex: 0 0 auto; min-width: 0; }
+    .site-nav-dashboard .Logo-LSD img { width: 32px; height: 32px; max-height: 32px; }
+    .site-nav-dashboard .logo-subtexto { display: none !important; }
+    .site-nav-dashboard .nav-right { flex: 1 1 auto; min-width: 0; gap: 8px; }
+    .site-nav-dashboard .options-nav { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+    .site-nav-dashboard .options-nav ul { width: 100%; gap: 2px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .site-nav-dashboard .options-nav ul::-webkit-scrollbar { display: none; }
+    .site-nav-dashboard .options-nav li { flex: 0 0 auto; }
+    .site-nav-dashboard .options-nav a { min-height: 32px; padding: 7px 8px; font-size: 11.5px; line-height: 1; white-space: nowrap; }
+    .site-nav-dashboard .nav-account-actions { gap: 5px; }
+    .site-nav-dashboard .btn-tema-dashboard { width: 34px; height: 34px; min-height: 34px; padding: 0; justify-content: center; border-radius: 9px; }
+    .site-nav-dashboard .btn-tema-dashboard span { display: none; }
+    .site-nav-dashboard .btn-entrar { min-height: 34px; padding: 7px 9px; border-radius: 9px; font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+    .dash-nav .site-nav-dashboard,
+    .dash-nav .site-nav-dashboard.scrolled { padding-inline: 8px; gap: 7px; }
+    .site-nav-dashboard .Logo-LSD img { width: 30px; height: 30px; }
+    .site-nav-dashboard .options-nav a { padding-inline: 6px; font-size: 11px; }
+    .site-nav-dashboard .dash-nav-sair span { display: none; }
+    .site-nav-dashboard .dash-nav-sair { width: 34px; padding: 0; justify-content: center; }
 }
