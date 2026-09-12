@@ -206,6 +206,8 @@ class ProjectPortfolioTests(unittest.TestCase):
         self.assertIn('id="btnNovoProjetoAdmin"', portfolio)
         self.assertIn('id="modalProjetoAdmin"', portfolio)
         self.assertIn("./src/images/Planeta2.png", portfolio)
+        self.assertIn('class="portfolio-planetas"', portfolio)
+        self.assertNotIn('class="portfolio-orbitas"', portfolio)
         self.assertNotIn("data-filtro-status", portfolio)
         self.assertNotIn('id="btnNovoProjetoAdmin"', dashboard)
         self.assertIn("if (usuarioAtual.is_admin)", javascript)
