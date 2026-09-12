@@ -849,7 +849,7 @@ async function carregarConquistasDashboard() {
 
     grid.innerHTML = conquistas.map((conquista) => `
         <div
-            class="conquista-dashboard-selo"
+            class="conquista-dashboard-selo raridade-${escapeHTML(classeRaridadeConquista(conquista.raridade))}"
             title="${escapeHTML(conquista.descricao || conquista.nome || "Conquista")}"
             aria-label="${escapeHTML(conquista.descricao || conquista.nome || "Conquista")}"
             tabindex="0"
@@ -858,7 +858,7 @@ async function carregarConquistasDashboard() {
                 src="${normalizarUrlImagem(conquista.icone, '')}"
                 alt="Selo ${escapeHTML(conquista.nome || "Conquista")}"
             >
-            <span>${escapeHTML(conquista.nome || "Conquista")}</span>
+            <span class="conquista-nome">${escapeHTML(conquista.nome || "Conquista")}</span>
         </div>
     `).join("");
 }
@@ -870,10 +870,19 @@ async function carregarProgressoPerfil() {
     const nivel = resposta.dados.nivel || {};
     const nivelEl = document.getElementById("perfilNivel");
     const pontosEl = document.getElementById("nivelPontos");
+    const raridadeEl = document.getElementById("nivelRaridade");
     const streakEl = document.getElementById("nivelStreak");
     const barra = document.getElementById("nivelBarraFill");
-    if (nivelEl) nivelEl.textContent = `Nível ${nivel.nivel || 1}`;
+    const raridade = classeRaridadeConquista(nivel.raridade || "comum");
+    if (nivelEl) {
+        nivelEl.textContent = `Nível ${nivel.nivel || 1}`;
+        nivelEl.className = `nivel-raridade-${raridade}`;
+    }
     if (pontosEl) pontosEl.textContent = `${nivel.pontos || 0} pontos`;
+    if (raridadeEl) {
+        raridadeEl.textContent = (nivel.raridade || "comum").replace(/^./, (letra) => letra.toUpperCase());
+        raridadeEl.className = `nivel-raridade-${raridade}`;
+    }
     if (streakEl) streakEl.innerHTML = `<i class="fas fa-fire"></i> ${resposta.dados.streak || 0} dias`;
     if (barra) barra.style.width = `${Math.max(0, Math.min(100, nivel.progresso || 0))}%`;
 }
@@ -3379,7 +3388,7 @@ function renderizarPerfilPublico(dados) {
     const conquistasHtml = conquistas.length
         ? conquistas.map((conquista, indice) => `
             <article
-                class="conquista-item"
+                class="conquista-item raridade-${escapeHTML(classeRaridadeConquista(conquista.raridade))}"
                 data-conquista-index="${indice}"
                 aria-label="Ver detalhes da conquista ${escapeHTML(conquista.nome || "Conquista")}"
                 role="button"

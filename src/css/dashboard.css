@@ -3886,6 +3886,40 @@ body.dialog-aberto {
     font-size: 12px;
 }
 
+#perfilNivel.nivel-raridade-comum,
+#nivelRaridade {
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(15, 31, 58, .72);
+}
+
+#perfilNivel.nivel-raridade-raro,
+#nivelRaridade.nivel-raridade-raro {
+    color: #72C7FF;
+}
+
+#perfilNivel.nivel-raridade-epico,
+#nivelRaridade.nivel-raridade-epico {
+    color: #B98CFF;
+}
+
+#perfilNivel.nivel-raridade-lendario,
+#nivelRaridade.nivel-raridade-lendario {
+    color: #FFD34E;
+}
+
+#perfilNivel.nivel-raridade-mitico,
+#nivelRaridade.nivel-raridade-mitico {
+    color: #FF72C8;
+    text-shadow: 0 0 8px rgba(91, 225, 255, .45);
+}
+
+.perfil-publico .conquista-item.raridade-secreto .conquista-nome,
+.conquista-dashboard-selo.raridade-secreto .conquista-nome {
+    color: #FFFFFF;
+    -webkit-text-stroke: 1px #000000;
+    text-shadow: 1px 0 #000000, -1px 0 #000000, 0 1px #000000, 0 -1px #000000;
+}
+
 .nivel-barra {
     height: 8px;
     margin: 13px 0 7px;
@@ -4057,6 +4091,33 @@ html.tema-escuro .btn-reacao:hover, html.tema-escuro .btn-reacao:focus-visible, 
     overflow-wrap: anywhere;
 }
 
+.conquista-dashboard-selo.raridade-comum .conquista-nome,
+.perfil-publico .conquista-item.raridade-comum .conquista-nome {
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(15, 31, 58, .72);
+}
+
+.conquista-dashboard-selo.raridade-raro .conquista-nome,
+.perfil-publico .conquista-item.raridade-raro .conquista-nome {
+    color: #72C7FF;
+}
+
+.conquista-dashboard-selo.raridade-epico .conquista-nome,
+.perfil-publico .conquista-item.raridade-epico .conquista-nome {
+    color: #B98CFF;
+}
+
+.conquista-dashboard-selo.raridade-lendario .conquista-nome,
+.perfil-publico .conquista-item.raridade-lendario .conquista-nome {
+    color: #FFD34E;
+}
+
+.conquista-dashboard-selo.raridade-mitico .conquista-nome,
+.perfil-publico .conquista-item.raridade-mitico .conquista-nome {
+    color: #FF72C8;
+    text-shadow: 0 0 8px rgba(91, 225, 255, .45);
+}
+
 .conquistas-dashboard-vazio {
     grid-column: 1 / -1;
     display: flex;
@@ -4224,14 +4285,26 @@ body.conquista-modal-aberto { overflow: hidden; }
 }
 
 .conquista-detalhe-modal.raridade-comum .conquista-detalhe-hero { background: linear-gradient(135deg, #8C959F, #57606A); }
-.conquista-detalhe-modal.raridade-incomum .conquista-detalhe-hero { background: linear-gradient(135deg, #3FB950, #238636); }
 .conquista-detalhe-modal.raridade-raro .conquista-detalhe-hero { background: linear-gradient(135deg, #58A6FF, #1F6FEB); }
-.conquista-detalhe-modal.raridade-ouro .conquista-detalhe-hero,
-.conquista-detalhe-modal.raridade-diamante .conquista-detalhe-hero { background: linear-gradient(135deg, #F2CC60, #D29922); }
 .conquista-detalhe-modal.raridade-epico .conquista-detalhe-hero { background: linear-gradient(135deg, #A371F7, #8957E5); }
-.conquista-detalhe-modal.raridade-lendario .conquista-detalhe-hero { background: linear-gradient(135deg, #F0883E, #A371F7); }
-.conquista-detalhe-modal.raridade-especial .conquista-detalhe-hero { background: linear-gradient(135deg, #FF7B72, #A371F7); }
-.conquista-detalhe-modal.raridade-secreto .conquista-detalhe-hero { background: linear-gradient(135deg, #21262D, #6E40C9); }
+.conquista-detalhe-modal.raridade-lendario .conquista-detalhe-hero { background: linear-gradient(135deg, #F2CC60, #D29922); }
+.conquista-detalhe-modal.raridade-mitico .conquista-detalhe-hero { background: linear-gradient(135deg, #FF72C8, #5BE1FF); }
+.conquista-detalhe-modal.raridade-secreto .conquista-detalhe-hero { background: #111111; }
+
+.conquista-detalhe-modal .conquista-detalhe-titulo-linha h3 {
+    color: #FFFFFF;
+}
+
+.conquista-detalhe-modal.raridade-comum .conquista-detalhe-titulo-linha h3 { color: #FFFFFF; }
+.conquista-detalhe-modal.raridade-raro .conquista-detalhe-titulo-linha h3 { color: #72C7FF; }
+.conquista-detalhe-modal.raridade-epico .conquista-detalhe-titulo-linha h3 { color: #B98CFF; }
+.conquista-detalhe-modal.raridade-lendario .conquista-detalhe-titulo-linha h3 { color: #FFD34E; }
+.conquista-detalhe-modal.raridade-mitico .conquista-detalhe-titulo-linha h3 { color: #FF72C8; }
+.conquista-detalhe-modal.raridade-secreto .conquista-detalhe-titulo-linha h3 {
+    color: #FFFFFF;
+    -webkit-text-stroke: 1px #000000;
+    text-shadow: 1px 0 #000000, -1px 0 #000000, 0 1px #000000, 0 -1px #000000;
+}
 
 .conquista-detalhe-selo {
     display: grid;

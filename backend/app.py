@@ -1473,28 +1473,28 @@ CONQUISTAS_PADRAO = [
         "nome": "Primeiras Faíscas",
         "descricao": "Alcançou 100 pontos no quadro Kanban.",
         "icone": "/src/images/conquistas/100_pontos.svg",
-        "raridade": "bronze"
+        "raridade": "comum"
     },
     {
         "codigo": "300_pontos",
         "nome": "Pegando Ritmo",
         "descricao": "Alcançou 300 pontos no quadro Kanban.",
         "icone": "/src/images/conquistas/300_pontos.svg",
-        "raridade": "prata"
+        "raridade": "raro"
     },
     {
         "codigo": "500_pontos",
         "nome": "Sem Freio!",
         "descricao": "Alcançou 500 pontos no quadro Kanban.",
         "icone": "/src/images/conquistas/500_pontos.svg",
-        "raridade": "ouro"
+        "raridade": "epico"
     },
     {
         "codigo": "1000_pontos",
         "nome": "Isso Já É Poder",
         "descricao": "Alcançou 1000 pontos no quadro Kanban.",
         "icone": "/src/images/conquistas/1000_pontos.svg",
-        "raridade": "diamante"
+        "raridade": "lendario"
     },
     {
         "codigo": "comentarista",
@@ -1515,33 +1515,33 @@ CONQUISTAS_PADRAO = [
         "nome": "Volto Já...",
         "descricao": "Passou 2 semanas completas sem criar um novo card.",
         "icone": "/src/images/conquistas/preguicoso.svg",
-        "raridade": "especial"
+        "raridade": "raro"
     },
     {
         "codigo": "sempre_confusao",
         "nome": "Era Só Um Aviso...",
         "descricao": "Recebeu 3 advertências da administração.",
         "icone": "/src/images/conquistas/sempre_confusao.svg",
-        "raridade": "especial"
+        "raridade": "raro"
     },
     {"codigo": "perfil_completo", "nome": "Quem é Você?", "descricao": "Completou seu perfil com foto e biografia.", "icone": "/src/images/conquistas/perfil.svg", "raridade": "comum"},
     {"codigo": "bate_papo", "nome": "Bate-Papo", "descricao": "Publicou pelo menos 30 comentários no feed.", "icone": "/src/images/conquistas/bate_papo.svg", "raridade": "comum"},
     {"codigo": "primeiro_registro", "nome": "Primeiro Registro", "descricao": "Fez sua primeira publicação no feed.", "icone": "/src/images/conquistas/primeiro_registro.svg", "raridade": "comum"},
-    {"codigo": "construindo_juntos", "nome": "Construindo Juntos", "descricao": "Recebeu 10 curtidas em publicações.", "icone": "/src/images/conquistas/construindo_juntos.svg", "raridade": "incomum"},
-    {"codigo": "frequente", "nome": "Frequente", "descricao": "Fez login por 7 dias seguidos.", "icone": "/src/images/conquistas/frequente.svg", "raridade": "incomum"},
-    {"codigo": "organizado", "nome": "Organizado", "descricao": "Concluiu 10 cards no Kanban.", "icone": "/src/images/conquistas/organizado.svg", "raridade": "incomum"},
-    {"codigo": "em_evidencia", "nome": "Em Evidência", "descricao": "Alcançou 500 pontos e se destacou na comunidade.", "icone": "/src/images/conquistas/em_evidencia.svg", "raridade": "incomum"},
+    {"codigo": "construindo_juntos", "nome": "Construindo Juntos", "descricao": "Recebeu 10 curtidas em publicações.", "icone": "/src/images/conquistas/construindo_juntos.svg", "raridade": "raro"},
+    {"codigo": "frequente", "nome": "Frequente", "descricao": "Fez login por 7 dias seguidos.", "icone": "/src/images/conquistas/frequente.svg", "raridade": "raro"},
+    {"codigo": "organizado", "nome": "Organizado", "descricao": "Concluiu 10 cards no Kanban.", "icone": "/src/images/conquistas/organizado.svg", "raridade": "raro"},
+    {"codigo": "em_evidencia", "nome": "Em Evidência", "descricao": "Alcançou 500 pontos e se destacou na comunidade.", "icone": "/src/images/conquistas/em_evidencia.svg", "raridade": "raro"},
     {"codigo": "mao_na_massa", "nome": "Mão na Massa", "descricao": "Anexou arquivos ou código em 3 publicações.", "icone": "/src/images/conquistas/mao_na_massa.svg", "raridade": "raro"},
     {"codigo": "parceiro_jornada", "nome": "Parceiro de Jornada", "descricao": "Ajudou outros membros em 5 comentários.", "icone": "/src/images/conquistas/parceiro_jornada.svg", "raridade": "raro"},
-    {"codigo": "explorador", "nome": "Explorador", "descricao": "Participou de 3 frentes diferentes no quadro.", "icone": "/src/images/conquistas/explorador.svg", "raridade": "épico"},
-    {"codigo": "mestre_lsd", "nome": "Mestre do LSD", "descricao": "Conquistou todas as outras conquistas.", "icone": "/src/images/conquistas/mestre_lsd.svg", "raridade": "lendário"},
+    {"codigo": "explorador", "nome": "Explorador", "descricao": "Participou de 3 frentes diferentes no quadro.", "icone": "/src/images/conquistas/explorador.svg", "raridade": "epico"},
+    {"codigo": "mestre_lsd", "nome": "Mestre do LSD", "descricao": "Conquistou todas as outras conquistas.", "icone": "/src/images/conquistas/mestre_lsd.svg", "raridade": "mitico"},
     {"codigo": "madrugadora", "nome": "Madrugadora(o)", "descricao": "Fez login entre meia-noite e 6h.", "icone": "/src/images/conquistas/madrugadora.svg", "raridade": "raro"},
-    {"codigo": "movido_cafe", "nome": "Movido a Café", "descricao": "Fez login por 30 dias seguidos.", "icone": "/src/images/conquistas/movido_cafe.svg", "raridade": "épico"},
-    {"codigo": "sede_conhecimento", "nome": "Sede de Conhecimento", "descricao": "Publicou 10 materiais ou documentos.", "icone": "/src/images/conquistas/sede_conhecimento.svg", "raridade": "incomum"},
-    {"codigo": "ritmo_forte", "nome": "Ritmo Forte", "descricao": "Completou 5 cards em uma semana.", "icone": "/src/images/conquistas/ritmo_forte.svg", "raridade": "épico"},
-    {"codigo": "espirito_comunitario", "nome": "Espírito Comunitário", "descricao": "Recebeu 50 curtidas em publicações.", "icone": "/src/images/conquistas/espirito_comunitario.svg", "raridade": "épico"},
+    {"codigo": "movido_cafe", "nome": "Movido a Café", "descricao": "Fez login por 30 dias seguidos.", "icone": "/src/images/conquistas/movido_cafe.svg", "raridade": "epico"},
+    {"codigo": "sede_conhecimento", "nome": "Sede de Conhecimento", "descricao": "Publicou 10 materiais ou documentos.", "icone": "/src/images/conquistas/sede_conhecimento.svg", "raridade": "raro"},
+    {"codigo": "ritmo_forte", "nome": "Ritmo Forte", "descricao": "Completou 5 cards em uma semana.", "icone": "/src/images/conquistas/ritmo_forte.svg", "raridade": "epico"},
+    {"codigo": "espirito_comunitario", "nome": "Espírito Comunitário", "descricao": "Recebeu 50 curtidas em publicações.", "icone": "/src/images/conquistas/espirito_comunitario.svg", "raridade": "epico"},
     {"codigo": "desbloqueador", "nome": "Desbravador", "descricao": "Participou de uma publicação com a comunidade.", "icone": "/src/images/conquistas/desbloqueador.svg", "raridade": "raro"},
-    {"codigo": "construtor", "nome": "Construtor(a)", "descricao": "Criou 30 cards no laboratório.", "icone": "/src/images/conquistas/construtor.svg", "raridade": "épico"},
+    {"codigo": "construtor", "nome": "Construtor(a)", "descricao": "Criou 30 cards no laboratório.", "icone": "/src/images/conquistas/construtor.svg", "raridade": "epico"},
     {"codigo": "fim_jornada", "nome": "Fim da Jornada?", "descricao": "Descobriu a conquista secreta.", "icone": "/src/images/conquistas/fim_jornada.svg", "raridade": "secreto"}
 ]
 
@@ -1575,8 +1575,20 @@ def nivel_usuario(usuario):
     pontos = max(0, int(usuario.pontos or 0))
     nivel = (pontos // 100) + 1
     inicio = (nivel - 1) * 100
+    if nivel >= 50:
+        raridade = "mitico"
+    elif nivel >= 25:
+        raridade = "lendario"
+    elif nivel >= 10:
+        raridade = "epico"
+    elif nivel >= 5:
+        raridade = "raro"
+    else:
+        raridade = "comum"
+
     return {
         "nivel": nivel,
+        "raridade": raridade,
         "pontos": pontos,
         "pontos_no_nivel": pontos - inicio,
         "pontos_para_proximo": 100 - (pontos - inicio),
