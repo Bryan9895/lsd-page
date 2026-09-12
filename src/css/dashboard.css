@@ -4804,6 +4804,8 @@ html.tema-escuro .kanban-coluna { border-color: var(--dash-border); }
     .post-card-acoes button { min-height: 42px; padding-inline: 6px; }
     .post-reacoes { left: -8px; max-width: min(88vw, 360px); }
     .reacao-botao-texto { display: none; }
+    .post-reacoes { left: -8px; max-width: min(88vw, 360px); }
+    .reacao-botao-texto { display: none; }
 
     .conquistas-dashboard-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
