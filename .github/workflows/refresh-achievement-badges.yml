@@ -1,36 +1,662 @@
-name: Refinar conquistas e reações
+name: Aplicar V2.5.7 - detalhes de conquistas
 
 on:
   push:
+    branches:
+      - "automation/v2.5.7-conquista-modal"
     paths:
-      - "tools/update_achievements_ui.py"
       - ".github/workflows/refresh-achievement-badges.yml"
-  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  apply-ui-refresh:
+  apply-v257:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout da automação
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Aplicar melhorias
-        run: python tools/update_achievements_ui.py
+      - name: Preparar main atual
+        shell: bash
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
 
-      - name: Commit das melhorias
+      - name: Aplicar detalhes interativos de conquistas
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+
+          # ------------------------------------------------------------
+          # Backend: adiciona estatística global de desbloqueio ao perfil.
+          # ------------------------------------------------------------
+          app_path = root / 'backend' / 'app.py'
+          app = app_path.read_text(encoding='utf-8')
+
+          if 'percentual_desbloqueio' not in app:
+              alvo = '''    conquistas = verificar_conquistas(membro)\n\n    # Projetos terão modelo próprio futuramente.'''
+              novo = '''    conquistas = verificar_conquistas(membro)\n\n    # Estatísticas inspiradas no painel de achievements do GitHub.\n    # O percentual considera todos os membros cadastrados no LSD.\n    total_membros = max(User.query.count(), 1)\n    conquistas_serializadas = []\n\n    for item in conquistas:\n        dados_conquista = item.to_dict()\n        total_desbloqueios = UserAchievement.query.filter_by(\n            achievement_id=item.achievement_id\n        ).count()\n        dados_conquista["total_desbloqueios"] = total_desbloqueios\n        dados_conquista["percentual_desbloqueio"] = round(\n            (total_desbloqueios / total_membros) * 100,\n            1\n        )\n        conquistas_serializadas.append(dados_conquista)\n\n    # Projetos terão modelo próprio futuramente.'''
+              if alvo not in app:
+                  raise SystemExit('Não foi possível localizar o bloco de conquistas do perfil público no backend.')
+              app = app.replace(alvo, novo, 1)
+
+              antigo_retorno = '        "conquistas": [item.to_dict() for item in conquistas],'
+              if antigo_retorno not in app:
+                  raise SystemExit('Não foi possível localizar o retorno de conquistas do perfil público.')
+              app = app.replace(antigo_retorno, '        "conquistas": conquistas_serializadas,', 1)
+
+          app_path.write_text(app, encoding='utf-8')
+
+          # ------------------------------------------------------------
+          # Frontend JS: nome sob o selo + modal clicável estilo GitHub.
+          # ------------------------------------------------------------
+          js_path = root / 'src' / 'js' / 'dashboard.js'
+          js = js_path.read_text(encoding='utf-8')
+
+          if 'function abrirDetalhesConquista(' not in js:
+              marcador = '\n\nfunction renderizarPerfilPublico(dados) {'
+              if marcador not in js:
+                  raise SystemExit('Função renderizarPerfilPublico não encontrada.')
+
+              helpers = r'''
+
+function formatarDataConquista(data) {
+    if (!data) return "Data não disponível";
+
+    try {
+        const valor = new Date(data);
+        if (Number.isNaN(valor.getTime())) return "Data não disponível";
+
+        return valor.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        });
+    } catch (erro) {
+        return "Data não disponível";
+    }
+}
+
+
+function classeRaridadeConquista(raridade) {
+    return String(raridade || "comum")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "comum";
+}
+
+
+function abrirDetalhesConquista(conquista, membro = {}) {
+    if (!conquista) return;
+
+    document.querySelector(".conquista-detalhe-overlay")?.remove();
+
+    const raridade = conquista.raridade || "comum";
+    const raridadeClasse = classeRaridadeConquista(raridade);
+    const percentualNumero = Number(conquista.percentual_desbloqueio);
+    const percentual = Number.isFinite(percentualNumero)
+        ? `${percentualNumero.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`
+        : "—";
+    const dataConquista = formatarDataConquista(conquista.data_conquista);
+    const nomeMembro = membro.nome || "Este membro";
+    const nomeConquista = conquista.nome || "Conquista";
+    const descricao = conquista.descricao || "Conquista desbloqueada no LSD.";
+    const icone = conquista.icone
+        ? `<img src="${normalizarUrlImagem(conquista.icone, '')}" alt="Selo ${escapeHTML(nomeConquista)}">`
+        : '<i class="fas fa-trophy"></i>';
+
+    const overlay = document.createElement("div");
+    overlay.className = "conquista-detalhe-overlay";
+    overlay.innerHTML = `
+        <div
+            class="conquista-detalhe-modal raridade-${escapeHTML(raridadeClasse)}"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="conquistaDetalheTitulo"
+        >
+            <button type="button" class="conquista-detalhe-fechar" aria-label="Fechar detalhes da conquista">
+                <i class="fas fa-xmark"></i>
+            </button>
+
+            <div class="conquista-detalhe-hero">
+                <div class="conquista-detalhe-selo">${icone}</div>
+            </div>
+
+            <div class="conquista-detalhe-corpo">
+                <div class="conquista-detalhe-titulo-linha">
+                    <div>
+                        <span class="conquista-detalhe-eyebrow">CONQUISTA LSD</span>
+                        <h3 id="conquistaDetalheTitulo">${escapeHTML(nomeConquista)}</h3>
+                    </div>
+                    <span class="conquista-detalhe-raridade raridade-${escapeHTML(raridadeClasse)}">
+                        ${escapeHTML(raridade)}
+                    </span>
+                </div>
+
+                <p class="conquista-detalhe-descricao">${escapeHTML(descricao)}</p>
+
+                <div class="conquista-detalhe-divisor"></div>
+
+                <section class="conquista-detalhe-historico" aria-label="Histórico da conquista">
+                    <h4>Histórico</h4>
+
+                    <div class="conquista-detalhe-status">
+                        <i class="fas fa-trophy"></i>
+                        <div>
+                            <strong>${escapeHTML(percentual)} desbloquearam</strong>
+                            <span>· Conquistada em ${escapeHTML(dataConquista)}</span>
+                        </div>
+                    </div>
+
+                    <div class="conquista-detalhe-evento">
+                        <span class="conquista-detalhe-ponto"></span>
+                        <p>
+                            <strong>${escapeHTML(nomeMembro)}</strong>
+                            desbloqueou <strong>${escapeHTML(nomeConquista)}</strong>.
+                        </p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.classList.add("conquista-modal-aberto");
+
+    const modal = overlay.querySelector(".conquista-detalhe-modal");
+    const fecharBotao = overlay.querySelector(".conquista-detalhe-fechar");
+    const focoAnterior = document.activeElement;
+
+    const fechar = () => {
+        document.removeEventListener("keydown", teclaEsc);
+        overlay.classList.remove("visivel");
+        document.body.classList.remove("conquista-modal-aberto");
+        setTimeout(() => {
+            overlay.remove();
+            focoAnterior?.focus?.({ preventScroll: true });
+        }, 170);
+    };
+
+    const teclaEsc = (evento) => {
+        if (evento.key === "Escape") fechar();
+    };
+
+    fecharBotao?.addEventListener("click", fechar);
+    overlay.addEventListener("click", (evento) => {
+        if (evento.target === overlay) fechar();
+    });
+    document.addEventListener("keydown", teclaEsc);
+
+    requestAnimationFrame(() => {
+        overlay.classList.add("visivel");
+        modal?.classList.add("visivel");
+        fecharBotao?.focus({ preventScroll: true });
+    });
+}
+'''
+              js = js.replace(marcador, helpers + marcador, 1)
+
+          padrao_conquistas = re.compile(
+              r'    const conquistasHtml = conquistas\.length\n.*?\n    const projetosHtml = projetos\.length',
+              re.S
+          )
+          novo_conquistas = r'''    const conquistasHtml = conquistas.length
+        ? conquistas.map((conquista, indice) => `
+            <article
+                class="conquista-item"
+                data-conquista-index="${indice}"
+                aria-label="Ver detalhes da conquista ${escapeHTML(conquista.nome || "Conquista")}"
+                role="button"
+                tabindex="0"
+            >
+                <div class="conquista-icone">
+                    ${conquista.icone
+                        ? `<img src="${normalizarUrlImagem(conquista.icone, '')}" alt="Selo ${escapeHTML(conquista.nome || "Conquista")}">`
+                        : '<i class="fas fa-trophy"></i>'}
+                </div>
+                <strong class="conquista-nome">${escapeHTML(conquista.nome || "Conquista")}</strong>
+            </article>
+        `).join("")
+        : `
+            <div class="perfil-secao-vazia conquista-placeholder">
+                <i class="fas fa-medal"></i>
+                <div>
+                    <strong>Nenhuma conquista desbloqueada ainda</strong>
+                    <span>Complete os requisitos do LSD para desbloquear seus primeiros selos.</span>
+                </div>
+            </div>
+        `;
+
+    const projetosHtml = projetos.length'''
+
+          if 'class="conquista-nome"' not in js:
+              js, quantidade = padrao_conquistas.subn(novo_conquistas, js, count=1)
+              if quantidade != 1:
+                  raise SystemExit('Não foi possível atualizar o HTML das conquistas do perfil público.')
+
+          if 'abrirDetalhesConquista(conquista, membro);' not in js:
+              final_render = '''            </div>\n        </article>\n    `;\n}\n\n\nfunction inicializarEventosMembros() {'''
+              final_novo = '''            </div>\n        </article>\n    `;\n\n    conteudo.querySelectorAll(".conquista-item[data-conquista-index]").forEach((item) => {\n        const abrir = () => {\n            const indice = Number(item.dataset.conquistaIndex);\n            const conquista = conquistas[indice];\n            if (conquista) abrirDetalhesConquista(conquista, membro);\n        };\n\n        item.addEventListener("click", abrir);\n        item.addEventListener("keydown", (evento) => {\n            if (evento.key === "Enter" || evento.key === " ") {\n                evento.preventDefault();\n                abrir();\n            }\n        });\n    });\n}\n\n\nfunction inicializarEventosMembros() {'''
+              if final_render not in js:
+                  raise SystemExit('Fim de renderizarPerfilPublico não encontrado.')
+              js = js.replace(final_render, final_novo, 1)
+
+          js_path.write_text(js, encoding='utf-8')
+
+          # ------------------------------------------------------------
+          # CSS: nome legível + modal inspirado em achievements do GitHub.
+          # ------------------------------------------------------------
+          css_path = root / 'src' / 'css' / 'dashboard.css'
+          css = css_path.read_text(encoding='utf-8')
+
+          css = re.sub(
+              r'(\.perfil-publico \.conquista-item \{.*?cursor:)\s*help;',
+              r'\1 pointer;',
+              css,
+              count=1,
+              flags=re.S
+          )
+
+          css = re.sub(
+              r'(\.perfil-publico \.conquista-item strong \{.*?color:)\s*#F0F6FC;',
+              r'\1 #24292F;',
+              css,
+              count=1,
+              flags=re.S
+          )
+
+          if '.conquista-detalhe-overlay {' not in css:
+              marcador_css = '/* ---------- Tema escuro ---------- */'
+              if marcador_css not in css:
+                  raise SystemExit('Marcador de tema escuro não encontrado no CSS.')
+
+              modal_css = r'''
+/* ---------- Detalhes de conquistas no perfil público — v2.5.7 ---------- */
+.perfil-publico .conquista-item {
+    border-radius: 10px;
+    transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.perfil-publico .conquista-item:hover,
+.perfil-publico .conquista-item:focus-visible {
+    background: rgba(88, 166, 255, .07);
+    box-shadow: 0 0 0 1px rgba(88, 166, 255, .13);
+    transform: translateY(-2px);
+}
+
+.perfil-publico .conquista-item:focus-visible {
+    outline: 3px solid rgba(88, 166, 255, .26);
+    outline-offset: 2px;
+}
+
+.perfil-publico .conquista-nome {
+    display: -webkit-box;
+    min-height: 2.5em;
+    color: #24292F;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+body.conquista-modal-aberto {
+    overflow: hidden;
+}
+
+.conquista-detalhe-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 180;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    background: rgba(1, 4, 9, .72);
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity .17s ease;
+}
+
+.conquista-detalhe-overlay.visivel {
+    opacity: 1;
+}
+
+.conquista-detalhe-modal {
+    position: relative;
+    width: min(440px, 100%);
+    max-height: min(680px, calc(100dvh - 44px));
+    overflow: auto;
+    border: 1px solid #30363D;
+    border-radius: 12px;
+    background: #0D1117;
+    color: #F0F6FC;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .48);
+    opacity: 0;
+    transform: translateY(10px) scale(.985);
+    transition: opacity .17s ease, transform .17s ease;
+}
+
+.conquista-detalhe-modal.visivel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.conquista-detalhe-fechar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(255, 255, 255, .36);
+    border-radius: 9px;
+    background: rgba(13, 17, 23, .48);
+    color: #fff;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+}
+
+.conquista-detalhe-fechar:hover,
+.conquista-detalhe-fechar:focus-visible {
+    background: rgba(13, 17, 23, .78);
+    outline: 2px solid #fff;
+    outline-offset: 1px;
+}
+
+.conquista-detalhe-hero {
+    display: grid;
+    place-items: center;
+    min-height: 180px;
+    padding: 28px;
+    background: linear-gradient(135deg, #58A6FF, #A371F7);
+}
+
+.conquista-detalhe-modal.raridade-comum .conquista-detalhe-hero {
+    background: linear-gradient(135deg, #8C959F, #57606A);
+}
+
+.conquista-detalhe-modal.raridade-incomum .conquista-detalhe-hero {
+    background: linear-gradient(135deg, #3FB950, #238636);
+}
+
+.conquista-detalhe-modal.raridade-raro .conquista-detalhe-hero {
+    background: linear-gradient(135deg, #58A6FF, #1F6FEB);
+}
+
+.conquista-detalhe-modal.raridade-ouro .conquista-detalhe-hero,
+.conquista-detalhe-modal.raridade-diamante .conquista-detalhe-hero {
+    background: linear-gradient(135deg, #F2CC60, #D29922);
+}
+
+.conquista-detalhe-modal.raridade-epico .conquista-detalhe-hero {
+    background: linear-gradient(135deg, #A371F7, #8957E5);
+}
+
+.conquista-detalhe-modal.raridade-lendario .conquista-detalhe-hero {
+    background: linear-gradient(135deg, #F0883E, #A371F7);
+}
+
+.conquista-detalhe-modal.raridade-especial .conquista-detalhe-hero {
+    background: linear-gradient(135deg, #FF7B72, #A371F7);
+}
+
+.conquista-detalhe-modal.raridade-secreto .conquista-detalhe-hero {
+    background: linear-gradient(135deg, #21262D, #6E40C9);
+}
+
+.conquista-detalhe-selo {
+    display: grid;
+    place-items: center;
+    width: 116px;
+    height: 116px;
+    border: 5px solid rgba(255, 255, 255, .94);
+    border-radius: 50%;
+    background: #0D1117;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .3);
+}
+
+.conquista-detalhe-selo img {
+    width: 104px;
+    height: 104px;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+.conquista-detalhe-selo > i {
+    font-size: 46px;
+    color: #F2CC60;
+}
+
+.conquista-detalhe-corpo {
+    padding: 22px 18px 20px;
+}
+
+.conquista-detalhe-titulo-linha {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.conquista-detalhe-eyebrow {
+    display: block;
+    margin-bottom: 5px;
+    color: #8B949E;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+}
+
+.conquista-detalhe-titulo-linha h3 {
+    margin: 0;
+    color: #F0F6FC;
+    font-size: 1.23rem;
+    line-height: 1.25;
+}
+
+.conquista-detalhe-raridade {
+    flex: 0 0 auto;
+    padding: 5px 8px;
+    border: 1px solid #30363D;
+    border-radius: 999px;
+    background: #161B22;
+    color: #C9D1D9;
+    font-size: .67rem;
+    font-weight: 800;
+    text-transform: capitalize;
+}
+
+.conquista-detalhe-descricao {
+    margin: 10px 0 0;
+    color: #F0F6FC;
+    font-size: .87rem;
+    line-height: 1.55;
+}
+
+.conquista-detalhe-divisor {
+    height: 1px;
+    margin: 17px 0;
+    background: #30363D;
+}
+
+.conquista-detalhe-historico h4 {
+    margin: 0 0 14px;
+    color: #8B949E;
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.conquista-detalhe-status,
+.conquista-detalhe-evento {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.conquista-detalhe-status {
+    color: #8B949E;
+    font-size: .77rem;
+}
+
+.conquista-detalhe-status > i {
+    width: 18px;
+    margin-top: 2px;
+    color: #8B949E;
+    text-align: center;
+}
+
+.conquista-detalhe-status strong {
+    color: #3FB950;
+}
+
+.conquista-detalhe-status span {
+    color: #8B949E;
+}
+
+.conquista-detalhe-evento {
+    position: relative;
+    margin: 14px 0 0 7px;
+    padding-left: 21px;
+}
+
+.conquista-detalhe-evento::before {
+    position: absolute;
+    top: -13px;
+    bottom: 9px;
+    left: 3px;
+    width: 1px;
+    background: #30363D;
+    content: "";
+}
+
+.conquista-detalhe-ponto {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    z-index: 1;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #8B949E;
+}
+
+.conquista-detalhe-evento p {
+    margin: 0;
+    color: #8B949E;
+    font-size: .77rem;
+    line-height: 1.45;
+}
+
+.conquista-detalhe-evento strong {
+    color: #58A6FF;
+    font-weight: 600;
+}
+
+html.tema-escuro .perfil-publico .conquista-nome,
+html.tema-escuro .perfil-publico .conquista-item strong {
+    color: #F0F6FC;
+}
+
+html.tema-escuro .perfil-publico .conquista-item:hover,
+html.tema-escuro .perfil-publico .conquista-item:focus-visible {
+    background: rgba(88, 166, 255, .08);
+}
+
+@media (max-width: 520px) {
+    .conquista-detalhe-overlay {
+        align-items: end;
+        padding: 0;
+    }
+
+    .conquista-detalhe-modal {
+        width: 100%;
+        max-height: 88dvh;
+        border-right: 0;
+        border-bottom: 0;
+        border-left: 0;
+        border-radius: 18px 18px 0 0;
+    }
+
+    .conquista-detalhe-hero {
+        min-height: 156px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .conquista-detalhe-overlay,
+    .conquista-detalhe-modal,
+    .perfil-publico .conquista-item {
+        transition: none !important;
+    }
+}
+
+'''
+              css = css.replace(marcador_css, modal_css + marcador_css, 1)
+
+          css_path.write_text(css, encoding='utf-8')
+
+          # ------------------------------------------------------------
+          # README: versão e descrição da funcionalidade aplicada.
+          # ------------------------------------------------------------
+          readme_path = root / 'README.md'
+          readme = readme_path.read_text(encoding='utf-8')
+
+          readme = readme.replace(
+              '![Version](https://img.shields.io/badge/version-2.5.4-blue)',
+              '![Version](https://img.shields.io/badge/version-2.5.7-blue)',
+              1
+          )
+          readme = re.sub(
+              r'A versão \*\*2\.5\.4\*\* reúne melhorias de usabilidade no dashboard e recuperação de senha por e-mail, mantendo os recursos de colaboração, administração e backups\.',
+              'A versão **2.5.7** aprimora o sistema de conquistas com selos vetoriais circulares, nomes visíveis no perfil público, detalhes interativos inspirados no GitHub e um seletor compacto de reações no feed.',
+              readme,
+              count=1
+          )
+          readme = readme.replace('# Versão atual — 2.5.4', '# Versão atual — 2.5.7', 1)
+
+          if '## Novidades da 2.5.7' not in readme:
+              marcador_readme = '# Versão atual — 2.5.7\n\n'
+              novidades = '''## Novidades da 2.5.7\n\n| Área | Atualização |\n|---|---|\n| Conquistas no perfil | O nome de cada conquista fica sempre visível abaixo do selo no perfil público. |\n| Detalhes da conquista | Clique ou teclado abre um modal inspirado nos achievements do GitHub, com selo ampliado, nome, descrição, raridade, data de desbloqueio, percentual global e histórico. |\n| Estatísticas | A API do perfil passa a informar quantos membros desbloquearam cada conquista e o percentual correspondente. |\n| Acessibilidade | Selos podem ser abertos com `Enter`/`Espaço`, o modal fecha com `Esc` ou clique fora e devolve o foco ao selo. |\n| Visual | Modal responsivo, compatível com tema escuro e adaptado para bottom sheet em celulares. |\n| Conquistas e reações | Mantidos os selos SVG circulares e o seletor de emotes sob demanda introduzidos na linha 2.5.x. |\n\n'''
+              if marcador_readme not in readme:
+                  raise SystemExit('Cabeçalho da versão atual não encontrado no README.')
+              readme = readme.replace(marcador_readme, marcador_readme + novidades, 1)
+
+          readme_path.write_text(readme, encoding='utf-8')
+          PY
+
+      - name: Validar arquivos
+        shell: bash
+        run: |
+          python -m py_compile backend/app.py
+          node --check src/js/dashboard.js
+          grep -q "conquista-detalhe-overlay" src/css/dashboard.css
+          grep -q "Versão atual — 2.5.7" README.md
+          grep -q "percentual_desbloqueio" backend/app.py
+
+      - name: Commit V2.5.7
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/images/conquistas src/js/dashboard.js src/css/dashboard.css
+          git add backend/app.py src/js/dashboard.js src/css/dashboard.css README.md
           if git diff --cached --quiet; then
             echo "Nenhuma alteração necessária."
             exit 0
           fi
-          git commit -m "feat: refinar conquistas vetoriais e seletor de reações"
-          git push
+          git commit \
+            -m "V2.5.7 — detalhes interativos de conquistas" \
+            -m "Funcionalidade aplicada: nomes visíveis abaixo dos selos e modal inspirado no GitHub ao clicar em uma conquista, exibindo descrição, raridade, data, percentual de desbloqueio e histórico; README atualizado para a versão 2.5.7."
+          git push origin main
