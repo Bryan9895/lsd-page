@@ -1770,3 +1770,7 @@ A revisão mobile-first do Dashboard, melhorias da navbar, refinamento do modo e
 ```text
 docs/alteracoes/README_RESPONSIVIDADE_UIUX.md
 ```
+
+## Recuperação de senha por e-mail
+
+Para ativar envio SMTP, configurar o WSGI e testar a redefinição, consulte [o guia de recuperação de senha](docs/alteracoes/README_RECUPERACAO_SENHA.md).

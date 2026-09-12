@@ -10,6 +10,11 @@ from functools import wraps
 
 import jwt
 
+if __package__:
+    from .password_reset import register_password_reset, password_stamp
+else:
+    from password_reset import register_password_reset, password_stamp
+
 from flask import (
     Flask,
     request,
@@ -1398,6 +1403,7 @@ def verificar_conquistas(usuario):
 def criar_token(user):
 
     payload = {
+        "password_stamp": password_stamp(user, app.config["SECRET_KEY"]),
 
         "user_id":
             user.id,
@@ -1525,6 +1531,9 @@ def token_required(f):
                         "Usuário associado ao token não existe."
                 }), 401
 
+
+            if dados.get("password_stamp") != password_stamp(current_user, app.config["SECRET_KEY"]):
+                return jsonify(success=False, message="Sessão expirada. Faça login novamente."), 401
 
         except jwt.ExpiredSignatureError:
 
@@ -2085,7 +2094,8 @@ def paginas_frontend(pagina):
         "dashboard.html",
         "entrar-login.html",
         "login.html",
-        "recuperar-senha.html"
+        "recuperar-senha.html",
+        "redefinir-senha.html"
     }
 
     if pagina not in paginas:
@@ -5595,6 +5605,7 @@ def inicializar_aplicacao():
 
 # Em hospedagem WSGI o bloco __main__ não é executado.
 # Por isso a preparação do banco precisa ocorrer na importação.
+register_password_reset(app, db, User)
 inicializar_aplicacao()
 
 
