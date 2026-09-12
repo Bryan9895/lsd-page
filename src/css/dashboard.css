@@ -3861,6 +3861,153 @@ body.dialog-aberto {
     overflow: hidden;
 }
 
+.progresso-perfil-topo,
+.notificacoes-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.progresso-perfil-topo h3,
+.notificacoes-topo h3 {
+    margin: 0;
+}
+
+.progresso-perfil-topo i,
+.notificacoes-topo i {
+    color: #E8A020;
+    margin-right: 5px;
+}
+
+.progresso-perfil-topo strong,
+.notificacoes-topo > span {
+    color: #177E89;
+    font-size: 12px;
+}
+
+.nivel-barra {
+    height: 8px;
+    margin: 13px 0 7px;
+    border-radius: 999px;
+    background: #E8EDF3;
+    overflow: hidden;
+}
+
+.nivel-barra span {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #177E89, #E8A020);
+    transition: width .35s ease;
+}
+
+.nivel-legenda {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: #7B8798;
+    font-size: 10px;
+}
+
+.nivel-legenda i {
+    color: #E0643A;
+}
+
+.notificacoes-lista,
+.atividades-lista {
+    display: grid;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.notificacao-item,
+.atividade-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 0;
+    border: 0;
+    border-bottom: 1px solid #EEF1F5;
+    background: transparent;
+    color: #526078;
+    text-align: left;
+    font: inherit;
+}
+
+.notificacao-item {
+    cursor: pointer;
+}
+
+.notificacao-item > i,
+.atividade-item > i {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    color: #E8A020;
+}
+
+.notificacao-item span {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.notificacao-item strong {
+    font-size: 10px;
+}
+
+.notificacao-item small,
+.atividade-item span {
+    color: #7B8798;
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.notificacao-item.nova {
+    background: rgba(232, 160, 32, .08);
+}
+
+.estado-lateral {
+    color: #8992A5;
+    font-size: 10px;
+}
+
+.post-reacoes {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-wrap: wrap;
+}
+
+.btn-reacao {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 5px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+}
+
+.btn-reacao:hover,
+.btn-reacao.ativa {
+    border-color: #BFD9DD;
+    background: #EEF8F8;
+}
+
+.btn-reacao span {
+    font-size: 15px;
+}
+
+.btn-reacao small {
+    color: #7B8798;
+    font-size: 9px;
+}
+
 .conquistas-dashboard-topo {
     display: flex;
     align-items: center;

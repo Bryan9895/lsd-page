@@ -832,7 +832,7 @@ async function carregarConquistasDashboard() {
         : [];
 
     if (contador) {
-        contador.textContent = `${conquistas.length}/9`;
+        contador.textContent = `${conquistas.length}/28`;
     }
 
     if (!conquistas.length) {
@@ -859,6 +859,51 @@ async function carregarConquistasDashboard() {
             <span>${escapeHTML(conquista.nome || "Conquista")}</span>
         </div>
     `).join("");
+}
+
+
+async function carregarProgressoPerfil() {
+    const resposta = await chamarAPI("/api/perfil/progresso");
+    if (!resposta.ok || !resposta.dados?.success) return;
+    const nivel = resposta.dados.nivel || {};
+    const nivelEl = document.getElementById("perfilNivel");
+    const pontosEl = document.getElementById("nivelPontos");
+    const streakEl = document.getElementById("nivelStreak");
+    const barra = document.getElementById("nivelBarraFill");
+    if (nivelEl) nivelEl.textContent = `Nível ${nivel.nivel || 1}`;
+    if (pontosEl) pontosEl.textContent = `${nivel.pontos || 0} pontos`;
+    if (streakEl) streakEl.innerHTML = `<i class="fas fa-fire"></i> ${resposta.dados.streak || 0} dias`;
+    if (barra) barra.style.width = `${Math.max(0, Math.min(100, nivel.progresso || 0))}%`;
+}
+
+
+async function carregarAtividadesRecentes() {
+    const lista = document.getElementById("atividadesLista");
+    if (!lista) return;
+    const resposta = await chamarAPI("/api/atividades/recentes");
+    const atividades = resposta.dados?.atividades || [];
+    lista.innerHTML = atividades.length
+        ? atividades.map((item) => `<div class="atividade-item"><i class="fas fa-bolt"></i><span>${escapeHTML(item.descricao)}</span></div>`).join("")
+        : '<span class="estado-lateral">Nenhuma atividade ainda.</span>';
+}
+
+
+async function carregarNotificacoes() {
+    const lista = document.getElementById("notificacoesLista");
+    const contador = document.getElementById("notificacoesContador");
+    if (!lista) return;
+    const resposta = await chamarAPI("/api/notificacoes");
+    const notificacoes = resposta.dados?.notificacoes || [];
+    if (contador) contador.textContent = resposta.dados?.nao_lidas || 0;
+    lista.innerHTML = notificacoes.length
+        ? notificacoes.slice(0, 5).map((item) => `<button type="button" class="notificacao-item ${item.lida ? "lida" : "nova"}" data-notificacao-id="${item.id}"><i class="fas fa-${item.tipo === "conquista" ? "trophy" : "bell"}"></i><span><strong>${escapeHTML(item.titulo)}</strong><small>${escapeHTML(item.mensagem)}</small></span></button>`).join("")
+        : '<span class="estado-lateral">Nenhuma notificação.</span>';
+    lista.querySelectorAll("[data-notificacao-id]").forEach((item) => item.addEventListener("click", async () => {
+        await chamarAPI(`/api/notificacoes/${item.dataset.notificacaoId}/ler`, { method: "POST" });
+        item.classList.remove("nova");
+        item.classList.add("lida");
+        if (contador) contador.textContent = Math.max(0, Number(contador.textContent) - 1);
+    }));
 }
 
 
@@ -2414,6 +2459,14 @@ function postParaHTML(post) {
                     Curtir
                 </button>
 
+                <div class="post-reacoes" role="group" aria-label="Reagir à publicação">
+                    ${["❤️", "😂", "😮", "😢", "😡", "👏", "🔥", "🎉"].map((emoji) => `
+                        <button type="button" class="btn-reacao ${post.reacao_por_mim === emoji ? "ativa" : ""}" data-post-id="${post.id}" data-emoji="${emoji}" aria-label="Reagir com ${emoji}">
+                            <span>${emoji}</span><small>${Number(post.reacoes?.[emoji] || 0) || ""}</small>
+                        </button>
+                    `).join("")}
+                </div>
+
                 <button
                     type="button"
                     class="btn-focar-comentario"
@@ -2609,6 +2662,7 @@ function inicializarEventosFeed() {
     feedLista.addEventListener("click", async (evento) => {
         const btnTentar = evento.target.closest(".btn-tentar-novamente-feed");
         const btnCurtir = evento.target.closest(".btn-curtir-post");
+        const btnReacao = evento.target.closest(".btn-reacao");
         const btnFocar = evento.target.closest(".btn-focar-comentario");
         const btnExcluir = evento.target.closest(".btn-excluir-post");
         const btnExcluirComentario = evento.target.closest(".btn-excluir-comentario");
@@ -2640,6 +2694,32 @@ function inicializarEventosFeed() {
             if (postCache) {
                 postCache.curtido_por_mim = curtido;
                 postCache.total_curtidas = total;
+            }
+            return;
+        }
+
+        if (btnReacao) {
+            const id = btnReacao.dataset.postId;
+            const emoji = btnReacao.dataset.emoji;
+            const resposta = await chamarAPI(`/api/posts/${id}/reacoes`, {
+                method: "POST",
+                body: JSON.stringify({ emoji })
+            });
+            if (!resposta.ok || !resposta.dados?.success) {
+                mostrarToast(resposta.dados?.message || "Não foi possível reagir.", "erro");
+                return;
+            }
+            const postCache = posts.find((p) => String(p.id) === String(id));
+            if (postCache) {
+                postCache.reacoes = resposta.dados.reacoes || {};
+                postCache.reacao_por_mim = resposta.dados.emoji;
+                const card = btnReacao.closest(".post-card");
+                card?.querySelectorAll(".btn-reacao").forEach((botao) => {
+                    const emote = botao.dataset.emoji;
+                    botao.classList.toggle("ativa", emote === postCache.reacao_por_mim);
+                    const contador = botao.querySelector("small");
+                    if (contador) contador.textContent = Number(postCache.reacoes[emote] || 0) || "";
+                });
             }
             return;
         }
@@ -4397,7 +4477,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             carregarDestaques(),
             carregarResponsaveisCards(),
             carregarAdvertencias(),
-            carregarConquistasDashboard()
+            carregarConquistasDashboard(),
+            carregarProgressoPerfil(),
+            carregarAtividadesRecentes(),
+            carregarNotificacoes()
         ]);
 
         // Carrega somente a aba que o usuário realmente vai ver.

@@ -10,7 +10,7 @@ os.environ.update(DATABASE_PATH=TEMP.name + '/test.db', UPLOAD_FOLDER=TEMP.name 
                   MAIL_HOST='smtp.example.com', MAIL_USERNAME='test', MAIL_PASSWORD='test',
                   MAIL_FROM='test@example.com', PUBLIC_BASE_URL='https://lsd.example.com',
                   APP_ENV='development', MAIL_BACKEND='smtp', MAIL_SECURITY='starttls', MAIL_PORT='587')
-from backend.app import app, db, User
+from backend.app import app, db, User, Post
 from backend import password_reset
 from werkzeug.security import generate_password_hash
 SEND_RESET_EMAIL = password_reset.send_reset_email
@@ -131,6 +131,41 @@ class PasswordResetTests(unittest.TestCase):
                 json={'email': 'member@example.com'}).status_code, 503)
             with self.assertRaises(ValueError):
                 SEND_RESET_EMAIL(app.config, 'member@example.com', 'http://example.com')
+
+    def test_profile_progress_notifications_and_reactions(self):
+        other = User(nome='Outro', email='other@example.com',
+                     senha_hash=generate_password_hash('other-password'), pontos=250)
+        db.session.add(other)
+        db.session.commit()
+
+        token = self.client.post('/api/login', json={
+            'email': 'member@example.com', 'senha': 'old-password'
+        }).json['token']
+        headers = {'Authorization': 'Bearer ' + token}
+
+        progresso = self.client.get('/api/perfil/progresso', headers=headers)
+        self.assertEqual(progresso.status_code, 200)
+        self.assertEqual(progresso.json['nivel']['nivel'], 1)
+        self.assertEqual(progresso.json['streak'], 1)
+
+        self.assertEqual(self.client.get('/api/notificacoes', headers=headers).status_code, 200)
+        self.assertGreaterEqual(self.client.get('/api/notificacoes', headers=headers).json['nao_lidas'], 1)
+
+        post = Post(user_id=other.id, conteudo='Publicação de teste')
+        db.session.add(post)
+        db.session.commit()
+        reacao = self.client.post(f'/api/posts/{post.id}/reacoes', headers=headers,
+                                  json={'emoji': '🔥'})
+        self.assertEqual(reacao.status_code, 200)
+        self.assertEqual(reacao.json['reacoes']['🔥'], 1)
+        remover = self.client.post(f'/api/posts/{post.id}/reacoes', headers=headers,
+                                   json={'emoji': '🔥'})
+        self.assertEqual(remover.status_code, 200)
+        self.assertNotIn('🔥', remover.json['reacoes'])
+
+        atividades = self.client.get('/api/atividades/recentes', headers=headers)
+        self.assertEqual(atividades.status_code, 200)
+        self.assertTrue(any(item['tipo'] == 'reacao' for item in atividades.json['atividades']))
 
     def test_admin_announcement_uses_unique_bcc_recipients(self):
         admin = User(nome='Admin', email='admin@example.com',

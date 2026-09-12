@@ -2,18 +2,18 @@
 
 ![Backend](https://img.shields.io/badge/Backend-Flask-000000)
 ![Database](https://img.shields.io/badge/Database-SQLite-003B57)
-![Achievements](https://img.shields.io/badge/Conquistas-9-F2B134)
+![Achievements](https://img.shields.io/badge/Conquistas-28-F2B134)
 ![Status](https://img.shields.io/badge/status-implementado-brightgreen)
 
 Esta documentação descreve o sistema de conquistas do Dashboard LSD, inspirado na ideia de achievements exibidos no perfil do GitHub.
 
-As conquistas são verificadas pelo backend, armazenadas no banco de dados e exibidas tanto no Dashboard principal quanto no perfil público do membro.
+As conquistas são verificadas pelo backend, armazenadas no banco de dados e exibidas tanto no Dashboard principal quanto no perfil público do membro. O dashboard também exibe nível, sequência de logins, atividades recentes e notificações quando uma conquista é desbloqueada.
 
 ---
 
 # Conquistas disponíveis
 
-O catálogo atual possui 9 conquistas:
+O catálogo atual possui 28 conquistas:
 
 | Conquista | Requisito |
 |---|---|
@@ -26,6 +26,14 @@ O catálogo atual possui 9 conquistas:
 | A Fábrica Não Para | Criar pelo menos 30 cards |
 | Volto Já... | Passar 14 dias completos sem criar um novo card |
 | Era Só Um Aviso... | Receber pelo menos 3 advertências |
+| Quem é Você? | Completar foto e biografia do perfil |
+| Bate-Papo | Publicar pelo menos 30 comentários |
+| Primeiro Registro | Fazer a primeira publicação |
+| Construindo Juntos | Receber 10 curtidas |
+| Frequente | Fazer login por 7 dias seguidos |
+| Organizado | Concluir 10 cards |
+| Mão na Massa | Publicar 3 materiais, arquivos ou códigos |
+| Espírito Comunitário | Receber 50 curtidas |
 
 ---
 
@@ -103,6 +111,9 @@ quantidade de comentários
 quantidade de cards criados
 quantidade de advertências
 ultimo_card_criado_em
+
+Também são considerados os registros diários de login, publicações, materiais,
+reações e atividades do membro.
 ```
 
 Somente conquistas ainda não registradas são inseridas no banco.

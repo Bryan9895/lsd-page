@@ -4,6 +4,7 @@ import json
 import sqlite3
 import threading
 import zipfile
+from collections import Counter
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from functools import wraps
@@ -805,7 +806,20 @@ class Post(db.Model):
                     in self.curtidas
                 )
                 if current_user_id
-                else False
+                else False,
+
+            "reacoes": dict(Counter(
+                reacao.emoji
+                for reacao in PostReaction.query.filter_by(post_id=self.id).all()
+            )),
+
+            "reacao_por_mim": (
+                next((reacao.emoji for reacao in PostReaction.query.filter_by(
+                    post_id=self.id, user_id=current_user_id
+                ).all()), None)
+                if current_user_id
+                else None
+            )
 
         }
 
@@ -929,6 +943,71 @@ class PostLike(db.Model):
         default=datetime.utcnow,
         nullable=False
     )
+
+
+class PostReaction(db.Model):
+    __tablename__ = "post_reactions"
+    __table_args__ = (
+        db.UniqueConstraint("post_id", "user_id", name="uq_post_reaction_user"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    emoji = db.Column(db.String(16), nullable=False)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class UserLogin(db.Model):
+    __tablename__ = "user_logins"
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "data", name="uq_user_login_day"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    data = db.Column(db.Date, nullable=False, index=True)
+    primeiro_login = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class UserActivity(db.Model):
+    __tablename__ = "user_activities"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    tipo = db.Column(db.String(40), nullable=False)
+    descricao = db.Column(db.String(255), nullable=False)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tipo": self.tipo,
+            "descricao": self.descricao,
+            "data_criacao": self.data_criacao.isoformat() if self.data_criacao else None
+        }
+
+
+class Notification(db.Model):
+    __tablename__ = "notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    tipo = db.Column(db.String(40), nullable=False)
+    titulo = db.Column(db.String(160), nullable=False)
+    mensagem = db.Column(db.String(500), nullable=False)
+    lida = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tipo": self.tipo,
+            "titulo": self.titulo,
+            "mensagem": self.mensagem,
+            "lida": bool(self.lida),
+            "data_criacao": self.data_criacao.isoformat() if self.data_criacao else None
+        }
 
 
 # ============================================================
@@ -1280,7 +1359,26 @@ CONQUISTAS_PADRAO = [
         "descricao": "Recebeu 3 advertências da administração.",
         "icone": "/src/images/conquistas/sempre_confusao.svg",
         "raridade": "especial"
-    }
+    },
+    {"codigo": "perfil_completo", "nome": "Quem é Você?", "descricao": "Completou seu perfil com foto e biografia.", "icone": "/src/images/conquistas/perfil.svg", "raridade": "comum"},
+    {"codigo": "bate_papo", "nome": "Bate-Papo", "descricao": "Publicou pelo menos 30 comentários no feed.", "icone": "/src/images/conquistas/bate_papo.svg", "raridade": "comum"},
+    {"codigo": "primeiro_registro", "nome": "Primeiro Registro", "descricao": "Fez sua primeira publicação no feed.", "icone": "/src/images/conquistas/primeiro_registro.svg", "raridade": "comum"},
+    {"codigo": "construindo_juntos", "nome": "Construindo Juntos", "descricao": "Recebeu 10 curtidas em publicações.", "icone": "/src/images/conquistas/construindo_juntos.svg", "raridade": "incomum"},
+    {"codigo": "frequente", "nome": "Frequente", "descricao": "Fez login por 7 dias seguidos.", "icone": "/src/images/conquistas/frequente.svg", "raridade": "incomum"},
+    {"codigo": "organizado", "nome": "Organizado", "descricao": "Concluiu 10 cards no Kanban.", "icone": "/src/images/conquistas/organizado.svg", "raridade": "incomum"},
+    {"codigo": "em_evidencia", "nome": "Em Evidência", "descricao": "Alcançou 500 pontos e se destacou na comunidade.", "icone": "/src/images/conquistas/em_evidencia.svg", "raridade": "incomum"},
+    {"codigo": "mao_na_massa", "nome": "Mão na Massa", "descricao": "Anexou arquivos ou código em 3 publicações.", "icone": "/src/images/conquistas/mao_na_massa.svg", "raridade": "raro"},
+    {"codigo": "parceiro_jornada", "nome": "Parceiro de Jornada", "descricao": "Ajudou outros membros em 5 comentários.", "icone": "/src/images/conquistas/parceiro_jornada.svg", "raridade": "raro"},
+    {"codigo": "explorador", "nome": "Explorador", "descricao": "Participou de 3 frentes diferentes no quadro.", "icone": "/src/images/conquistas/explorador.svg", "raridade": "épico"},
+    {"codigo": "mestre_lsd", "nome": "Mestre do LSD", "descricao": "Conquistou todas as outras conquistas.", "icone": "/src/images/conquistas/mestre_lsd.svg", "raridade": "lendário"},
+    {"codigo": "madrugadora", "nome": "Madrugadora(o)", "descricao": "Fez login entre meia-noite e 6h.", "icone": "/src/images/conquistas/madrugadora.svg", "raridade": "raro"},
+    {"codigo": "movido_cafe", "nome": "Movido a Café", "descricao": "Fez login por 30 dias seguidos.", "icone": "/src/images/conquistas/movido_cafe.svg", "raridade": "épico"},
+    {"codigo": "sede_conhecimento", "nome": "Sede de Conhecimento", "descricao": "Publicou 10 materiais ou documentos.", "icone": "/src/images/conquistas/sede_conhecimento.svg", "raridade": "incomum"},
+    {"codigo": "ritmo_forte", "nome": "Ritmo Forte", "descricao": "Completou 5 cards em uma semana.", "icone": "/src/images/conquistas/ritmo_forte.svg", "raridade": "épico"},
+    {"codigo": "espirito_comunitario", "nome": "Espírito Comunitário", "descricao": "Recebeu 50 curtidas em publicações.", "icone": "/src/images/conquistas/espirito_comunitario.svg", "raridade": "épico"},
+    {"codigo": "desbloqueador", "nome": "Desbravador", "descricao": "Participou de uma publicação com a comunidade.", "icone": "/src/images/conquistas/desbloqueador.svg", "raridade": "raro"},
+    {"codigo": "construtor", "nome": "Construtor(a)", "descricao": "Criou 30 cards no laboratório.", "icone": "/src/images/conquistas/construtor.svg", "raridade": "épico"},
+    {"codigo": "fim_jornada", "nome": "Fim da Jornada?", "descricao": "Descobriu a conquista secreta.", "icone": "/src/images/conquistas/fim_jornada.svg", "raridade": "secreto"}
 ]
 
 
@@ -1307,6 +1405,64 @@ def garantir_catalogo_conquistas():
 
     if alterado:
         db.session.commit()
+
+
+def nivel_usuario(usuario):
+    pontos = max(0, int(usuario.pontos or 0))
+    nivel = (pontos // 100) + 1
+    inicio = (nivel - 1) * 100
+    return {
+        "nivel": nivel,
+        "pontos": pontos,
+        "pontos_no_nivel": pontos - inicio,
+        "pontos_para_proximo": 100 - (pontos - inicio),
+        "progresso": int(((pontos - inicio) / 100) * 100)
+    }
+
+
+def registrar_atividade(usuario_id, tipo, descricao):
+    db.session.add(UserActivity(
+        user_id=usuario_id,
+        tipo=tipo,
+        descricao=descricao[:255]
+    ))
+    antigas = UserActivity.query.filter_by(user_id=usuario_id).order_by(
+        UserActivity.data_criacao.desc()
+    ).all()
+    for atividade in antigas[49:]:
+        db.session.delete(atividade)
+
+
+def registrar_login(usuario):
+    hoje = datetime.utcnow().date()
+    login = UserLogin.query.filter_by(user_id=usuario.id, data=hoje).first()
+    if not login:
+        db.session.add(UserLogin(user_id=usuario.id, data=hoje))
+        registrar_atividade(usuario.id, "login", "Entrou no LSD")
+        db.session.commit()
+
+    dias = {
+        item.data for item in UserLogin.query.filter_by(user_id=usuario.id).all()
+    }
+    streak = 0
+    data = hoje
+    while data in dias:
+        streak += 1
+        data -= timedelta(days=1)
+    return streak
+
+
+def streak_usuario(usuario_id):
+    hoje = datetime.utcnow().date()
+    dias = {
+        item.data for item in UserLogin.query.filter_by(user_id=usuario_id).all()
+    }
+    streak = 0
+    data = hoje
+    while data in dias:
+        streak += 1
+        data -= timedelta(days=1)
+    return streak
 
 
 def verificar_conquistas(usuario):
@@ -1340,6 +1496,24 @@ def verificar_conquistas(usuario):
         membro_id=usuario.id
     ).count()
 
+    total_posts = Post.query.filter_by(user_id=usuario.id).count()
+    total_curtidas_recebidas = db.session.query(PostLike).join(
+        Post, Post.id == PostLike.post_id
+    ).filter(Post.user_id == usuario.id).count()
+    total_materiais = Post.query.filter(
+        Post.user_id == usuario.id,
+        db.or_(Post.arquivo_url.isnot(None), Post.codigo_snippet.isnot(None), Post.midia_url.isnot(None))
+    ).count()
+    comentarios_em_outros = db.session.query(PostComment).join(
+        Post, Post.id == PostComment.post_id
+    ).filter(Post.user_id != usuario.id, PostComment.user_id == usuario.id).count()
+    cards_concluidos = Card.query.filter_by(criador_id=usuario.id, status="concluido").count()
+    login_streak = streak_usuario(usuario.id)
+    horario_madrugada = UserLogin.query.filter(
+        UserLogin.user_id == usuario.id,
+        db.extract("hour", UserLogin.primeiro_login) < 6
+    ).count() > 0
+
     referencia_preguica = usuario.ultimo_card_criado_em
     passou_duas_semanas = bool(
         referencia_preguica
@@ -1356,6 +1530,25 @@ def verificar_conquistas(usuario):
         "criador_cards": total_cards_criados >= 30,
         "preguicoso": passou_duas_semanas,
         "sempre_confusao": total_advertencias >= 3
+        ,"perfil_completo": bool(usuario.bio and usuario.foto and "default-avatar" not in usuario.foto)
+        ,"bate_papo": total_comentarios >= 30
+        ,"primeiro_registro": total_posts >= 1
+        ,"construindo_juntos": total_curtidas_recebidas >= 10
+        ,"frequente": login_streak >= 7
+        ,"organizado": cards_concluidos >= 10
+        ,"em_evidencia": pontos >= 500
+        ,"mao_na_massa": total_materiais >= 3
+        ,"parceiro_jornada": comentarios_em_outros >= 5
+        ,"explorador": total_cards_criados >= 3
+        ,"mestre_lsd": len(desbloqueadas) >= len(CONQUISTAS_PADRAO) - 1
+        ,"madrugadora": horario_madrugada
+        ,"movido_cafe": login_streak >= 30
+        ,"sede_conhecimento": total_materiais >= 10
+        ,"ritmo_forte": cards_concluidos >= 5
+        ,"espirito_comunitario": total_curtidas_recebidas >= 50
+        ,"desbloqueador": total_posts >= 3
+        ,"construtor": total_cards_criados >= 30
+        ,"fim_jornada": False
     }
 
     novas = []
@@ -1376,6 +1569,13 @@ def verificar_conquistas(usuario):
             achievement_id=conquista.id
         )
         db.session.add(vinculo)
+        db.session.add(Notification(
+            user_id=usuario.id,
+            tipo="conquista",
+            titulo="Nova conquista desbloqueada",
+            mensagem=f"Você desbloqueou: {conquista.nome}."
+        ))
+        registrar_atividade(usuario.id, "conquista", f"Desbloqueou a conquista {conquista.nome}")
         novas.append(codigo)
 
     if novas:
@@ -2581,6 +2781,7 @@ def login():
 
     # Reavalia as conquistas a cada login. Isso também cobre
     # requisitos baseados em tempo, pontos, comentários e advertências.
+    registrar_login(user)
     verificar_conquistas(user)
 
     token = criar_token(
@@ -3915,6 +4116,9 @@ def criar_post(
 
         db.session.commit()
 
+        registrar_atividade(current_user.id, "publicacao", "Publicou uma mensagem no feed")
+        db.session.commit()
+
 
         return jsonify({
 
@@ -4044,7 +4248,10 @@ def comentar_post(
 
         db.session.commit()
 
+        registrar_atividade(current_user.id, "comentario", "Comentou em uma publicação")
+
         verificar_conquistas(current_user)
+        db.session.commit()
 
 
         return jsonify({
@@ -4220,6 +4427,13 @@ def curtir_post(
 
         db.session.commit()
 
+        registrar_atividade(
+            current_user.id,
+            "curtida",
+            f"{('Curtiu' if curtido else 'Removeu a curtida de')} uma publicação de {post.autor.nome}"
+        )
+        db.session.commit()
+
 
         total = (
             PostLike.query
@@ -4258,6 +4472,43 @@ def curtir_post(
             "message":
                 "Não foi possível atualizar a curtida."
         }), 500
+
+
+EMOTES_POST = {"❤️", "😂", "😮", "😢", "😡", "👏", "🔥", "🎉"}
+
+
+@app.post("/api/posts/<int:post_id>/reacoes")
+@token_required
+def reagir_post(current_user, post_id):
+    post = db.session.get(Post, post_id)
+    if not post:
+        return jsonify(success=False, message="Post não encontrado."), 404
+
+    data = request.get_json(silent=True) or {}
+    emoji = data.get("emoji")
+    if emoji not in EMOTES_POST:
+        return jsonify(success=False, message="Reação inválida."), 400
+
+    reacao = PostReaction.query.filter_by(post_id=post.id, user_id=current_user.id).first()
+    if reacao and reacao.emoji == emoji:
+        db.session.delete(reacao)
+        ativa = False
+    elif reacao:
+        reacao.emoji = emoji
+        ativa = True
+    else:
+        db.session.add(PostReaction(post_id=post.id, user_id=current_user.id, emoji=emoji))
+        ativa = True
+
+    try:
+        db.session.commit()
+        registrar_atividade(current_user.id, "reacao", f"Reagiu a uma publicação com {emoji}")
+        db.session.commit()
+        reacoes = Counter(item.emoji for item in PostReaction.query.filter_by(post_id=post.id).all())
+        return jsonify(success=True, emoji=emoji if ativa else None, reacoes=dict(reacoes)), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify(success=False, message="Não foi possível atualizar a reação."), 500
 
 
 # ============================================================
@@ -4462,6 +4713,54 @@ def minhas_conquistas(current_user):
             for item in conquistas
         ]
     }), 200
+
+
+@app.get("/api/perfil/progresso")
+@token_required
+def meu_progresso(current_user):
+    return jsonify({
+        "success": True,
+        "nivel": nivel_usuario(current_user),
+        "streak": streak_usuario(current_user.id)
+    }), 200
+
+
+@app.get("/api/atividades/recentes")
+@token_required
+def atividades_recentes(current_user):
+    atividades = UserActivity.query.filter_by(user_id=current_user.id).order_by(
+        UserActivity.data_criacao.desc()
+    ).limit(20).all()
+    return jsonify({
+        "success": True,
+        "atividades": [item.to_dict() for item in atividades]
+    }), 200
+
+
+@app.get("/api/notificacoes")
+@token_required
+def minhas_notificacoes(current_user):
+    notificacoes = Notification.query.filter_by(user_id=current_user.id).order_by(
+        Notification.data_criacao.desc()
+    ).limit(30).all()
+    return jsonify({
+        "success": True,
+        "nao_lidas": Notification.query.filter_by(user_id=current_user.id, lida=False).count(),
+        "notificacoes": [item.to_dict() for item in notificacoes]
+    }), 200
+
+
+@app.post("/api/notificacoes/<int:notificacao_id>/ler")
+@token_required
+def marcar_notificacao_lida(current_user, notificacao_id):
+    notificacao = Notification.query.filter_by(
+        id=notificacao_id, user_id=current_user.id
+    ).first()
+    if not notificacao:
+        return jsonify(success=False, message="Notificação não encontrada."), 404
+    notificacao.lida = True
+    db.session.commit()
+    return jsonify(success=True), 200
 
 
 # ============================================================
@@ -5200,6 +5499,25 @@ def excluir_membro(
             synchronize_session=False
         )
 
+        PostReaction.query.filter_by(
+            user_id=membro.id
+        ).delete(
+            synchronize_session=False
+        )
+
+        UserLogin.query.filter_by(user_id=membro.id).delete(
+            synchronize_session=False
+        )
+        UserActivity.query.filter_by(user_id=membro.id).delete(
+            synchronize_session=False
+        )
+        Notification.query.filter_by(user_id=membro.id).delete(
+            synchronize_session=False
+        )
+        UserAchievement.query.filter_by(user_id=membro.id).delete(
+            synchronize_session=False
+        )
+
 
         # ====================================================
         # ADVERTÊNCIAS
@@ -5233,6 +5551,12 @@ def excluir_membro(
             )
             .all()
         )
+
+        post_ids = [post.id for post in posts]
+        if post_ids:
+            PostReaction.query.filter(PostReaction.post_id.in_(post_ids)).delete(
+                synchronize_session=False
+            )
 
 
         for post in posts:
