@@ -4085,7 +4085,7 @@ html.tema-escuro .btn-reacao:hover, html.tema-escuro .btn-reacao:focus-visible, 
     border: 0;
     background: transparent;
     text-align: center;
-    cursor: help;
+    cursor: pointer;
     outline: none;
 }
 
@@ -4115,10 +4115,265 @@ html.tema-escuro .btn-reacao:hover, html.tema-escuro .btn-reacao:focus-visible, 
 
 .perfil-publico .conquista-item strong {
     max-width: 100%;
-    color: #F0F6FC;
+    color: #24292F;
     font-size: .72rem;
     line-height: 1.25;
     overflow-wrap: anywhere;
+}
+
+
+/* ---------- Detalhes de conquistas no perfil público — v2.5.7 ---------- */
+.perfil-publico .conquista-item {
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.perfil-publico .conquista-item:hover,
+.perfil-publico .conquista-item:focus-visible {
+    background: rgba(88, 166, 255, .07);
+    box-shadow: 0 0 0 1px rgba(88, 166, 255, .13);
+    transform: translateY(-2px);
+}
+
+.perfil-publico .conquista-item:focus-visible {
+    outline: 3px solid rgba(88, 166, 255, .26);
+    outline-offset: 2px;
+}
+
+.perfil-publico .conquista-nome {
+    display: -webkit-box;
+    min-height: 2.5em;
+    color: #24292F;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+body.conquista-modal-aberto { overflow: hidden; }
+
+.conquista-detalhe-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 180;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    background: rgba(1, 4, 9, .72);
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity .17s ease;
+}
+
+.conquista-detalhe-overlay.visivel { opacity: 1; }
+
+.conquista-detalhe-modal {
+    position: relative;
+    width: min(440px, 100%);
+    max-height: min(680px, calc(100dvh - 44px));
+    overflow: auto;
+    border: 1px solid #30363D;
+    border-radius: 12px;
+    background: #0D1117;
+    color: #F0F6FC;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .48);
+    opacity: 0;
+    transform: translateY(10px) scale(.985);
+    transition: opacity .17s ease, transform .17s ease;
+}
+
+.conquista-detalhe-modal.visivel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.conquista-detalhe-fechar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(255, 255, 255, .36);
+    border-radius: 9px;
+    background: rgba(13, 17, 23, .48);
+    color: #fff;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+}
+
+.conquista-detalhe-fechar:hover,
+.conquista-detalhe-fechar:focus-visible {
+    background: rgba(13, 17, 23, .78);
+    outline: 2px solid #fff;
+    outline-offset: 1px;
+}
+
+.conquista-detalhe-hero {
+    display: grid;
+    place-items: center;
+    min-height: 180px;
+    padding: 28px;
+    background: linear-gradient(135deg, #58A6FF, #A371F7);
+}
+
+.conquista-detalhe-modal.raridade-comum .conquista-detalhe-hero { background: linear-gradient(135deg, #8C959F, #57606A); }
+.conquista-detalhe-modal.raridade-incomum .conquista-detalhe-hero { background: linear-gradient(135deg, #3FB950, #238636); }
+.conquista-detalhe-modal.raridade-raro .conquista-detalhe-hero { background: linear-gradient(135deg, #58A6FF, #1F6FEB); }
+.conquista-detalhe-modal.raridade-ouro .conquista-detalhe-hero,
+.conquista-detalhe-modal.raridade-diamante .conquista-detalhe-hero { background: linear-gradient(135deg, #F2CC60, #D29922); }
+.conquista-detalhe-modal.raridade-epico .conquista-detalhe-hero { background: linear-gradient(135deg, #A371F7, #8957E5); }
+.conquista-detalhe-modal.raridade-lendario .conquista-detalhe-hero { background: linear-gradient(135deg, #F0883E, #A371F7); }
+.conquista-detalhe-modal.raridade-especial .conquista-detalhe-hero { background: linear-gradient(135deg, #FF7B72, #A371F7); }
+.conquista-detalhe-modal.raridade-secreto .conquista-detalhe-hero { background: linear-gradient(135deg, #21262D, #6E40C9); }
+
+.conquista-detalhe-selo {
+    display: grid;
+    place-items: center;
+    width: 116px;
+    height: 116px;
+    border: 5px solid rgba(255, 255, 255, .94);
+    border-radius: 50%;
+    background: #0D1117;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .3);
+}
+
+.conquista-detalhe-selo img {
+    width: 104px;
+    height: 104px;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+.conquista-detalhe-selo > i { font-size: 46px; color: #F2CC60; }
+.conquista-detalhe-corpo { padding: 22px 18px 20px; }
+
+.conquista-detalhe-titulo-linha {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.conquista-detalhe-eyebrow {
+    display: block;
+    margin-bottom: 5px;
+    color: #8B949E;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+}
+
+.conquista-detalhe-titulo-linha h3 {
+    margin: 0;
+    color: #F0F6FC;
+    font-size: 1.23rem;
+    line-height: 1.25;
+}
+
+.conquista-detalhe-raridade {
+    flex: 0 0 auto;
+    padding: 5px 8px;
+    border: 1px solid #30363D;
+    border-radius: 999px;
+    background: #161B22;
+    color: #C9D1D9;
+    font-size: .67rem;
+    font-weight: 800;
+    text-transform: capitalize;
+}
+
+.conquista-detalhe-descricao {
+    margin: 10px 0 0;
+    color: #F0F6FC;
+    font-size: .87rem;
+    line-height: 1.55;
+}
+
+.conquista-detalhe-divisor {
+    height: 1px;
+    margin: 17px 0;
+    background: #30363D;
+}
+
+.conquista-detalhe-historico h4 {
+    margin: 0 0 14px;
+    color: #8B949E;
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.conquista-detalhe-status,
+.conquista-detalhe-evento {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.conquista-detalhe-status { color: #8B949E; font-size: .77rem; }
+.conquista-detalhe-status > i { width: 18px; margin-top: 2px; color: #8B949E; text-align: center; }
+.conquista-detalhe-status strong { color: #3FB950; }
+.conquista-detalhe-status span { color: #8B949E; }
+
+.conquista-detalhe-evento {
+    position: relative;
+    margin: 14px 0 0 7px;
+    padding-left: 21px;
+}
+
+.conquista-detalhe-evento::before {
+    position: absolute;
+    top: -13px;
+    bottom: 9px;
+    left: 3px;
+    width: 1px;
+    background: #30363D;
+    content: "";
+}
+
+.conquista-detalhe-ponto {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    z-index: 1;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #8B949E;
+}
+
+.conquista-detalhe-evento p { margin: 0; color: #8B949E; font-size: .77rem; line-height: 1.45; }
+.conquista-detalhe-evento strong { color: #58A6FF; font-weight: 600; }
+
+html.tema-escuro .perfil-publico .conquista-nome,
+html.tema-escuro .perfil-publico .conquista-item strong { color: #F0F6FC; }
+
+html.tema-escuro .perfil-publico .conquista-item:hover,
+html.tema-escuro .perfil-publico .conquista-item:focus-visible { background: rgba(88, 166, 255, .08); }
+
+@media (max-width: 520px) {
+    .conquista-detalhe-overlay { align-items: end; padding: 0; }
+    .conquista-detalhe-modal {
+        width: 100%;
+        max-height: 88dvh;
+        border-right: 0;
+        border-bottom: 0;
+        border-left: 0;
+        border-radius: 18px 18px 0 0;
+    }
+    .conquista-detalhe-hero { min-height: 156px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .conquista-detalhe-overlay,
+    .conquista-detalhe-modal,
+    .perfil-publico .conquista-item { transition: none !important; }
 }
 
 /* ---------- Tema escuro ---------- */
