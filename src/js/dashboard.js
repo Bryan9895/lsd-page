@@ -2459,12 +2459,16 @@ function postParaHTML(post) {
                     Curtir
                 </button>
 
-                <div class="post-reacoes" role="group" aria-label="Reagir à publicação">
-                    ${["❤️", "😂", "😮", "😢", "😡", "👏", "🔥", "🎉"].map((emoji) => `
-                        <button type="button" class="btn-reacao ${post.reacao_por_mim === emoji ? "ativa" : ""}" data-post-id="${post.id}" data-emoji="${emoji}" aria-label="Reagir com ${emoji}">
-                            <span>${emoji}</span><small>${Number(post.reacoes?.[emoji] || 0) || ""}</small>
-                        </button>
-                    `).join("")}
+                <div class="post-reacoes-wrap">
+                    <button type="button" class="btn-abrir-reacoes ${post.reacao_por_mim ? "ativa" : ""}" data-post-id="${post.id}" aria-expanded="false" aria-controls="reacoes-${post.id}" title="Reagir à publicação">
+                        <span class="reacao-botao-icone" aria-hidden="true">${post.reacao_por_mim ? `<span class="reacao-escolhida">${escapeHTML(post.reacao_por_mim)}</span>` : `<i class="far fa-face-smile"></i>`}</span>
+                        <span class="reacao-botao-texto">Reagir</span>
+                    </button>
+                    <div class="post-reacoes" id="reacoes-${post.id}" role="menu" aria-label="Escolher reação" hidden>
+                        ${["❤️", "😂", "😮", "😢", "😡", "👏", "🔥", "🎉"].map((emoji) => `
+                            <button type="button" class="btn-reacao ${post.reacao_por_mim === emoji ? "ativa" : ""}" data-post-id="${post.id}" data-emoji="${emoji}" aria-label="Reagir com ${emoji}" role="menuitem"><span>${emoji}</span><small>${Number(post.reacoes?.[emoji] || 0) || ""}</small></button>
+                        `).join("")}
+                    </div>
                 </div>
 
                 <button
@@ -2529,6 +2533,15 @@ function removerElementoComAnimacao(elemento, callback = null) {
         elemento.remove();
         callback?.();
     }, 190);
+}
+
+
+function fecharMenusReacao(excecao = null) {
+    document.querySelectorAll(".post-reacoes:not([hidden])").forEach((menu) => {
+        if (menu === excecao) return;
+        menu.hidden = true;
+        menu.closest(".post-reacoes-wrap")?.querySelector(".btn-abrir-reacoes")?.setAttribute("aria-expanded", "false");
+    });
 }
 
 
@@ -2662,6 +2675,7 @@ function inicializarEventosFeed() {
     feedLista.addEventListener("click", async (evento) => {
         const btnTentar = evento.target.closest(".btn-tentar-novamente-feed");
         const btnCurtir = evento.target.closest(".btn-curtir-post");
+        const btnAbrirReacoes = evento.target.closest(".btn-abrir-reacoes");
         const btnReacao = evento.target.closest(".btn-reacao");
         const btnFocar = evento.target.closest(".btn-focar-comentario");
         const btnExcluir = evento.target.closest(".btn-excluir-post");
@@ -2698,6 +2712,17 @@ function inicializarEventosFeed() {
             return;
         }
 
+        if (btnAbrirReacoes) {
+            const menu = btnAbrirReacoes.closest(".post-reacoes-wrap")?.querySelector(".post-reacoes");
+            if (!menu) return;
+            const abrir = menu.hidden;
+            fecharMenusReacao(menu);
+            menu.hidden = !abrir;
+            btnAbrirReacoes.setAttribute("aria-expanded", String(abrir));
+            if (abrir) menu.querySelector(".btn-reacao")?.focus({ preventScroll: true });
+            return;
+        }
+
         if (btnReacao) {
             const id = btnReacao.dataset.postId;
             const emoji = btnReacao.dataset.emoji;
@@ -2720,6 +2745,13 @@ function inicializarEventosFeed() {
                     const contador = botao.querySelector("small");
                     if (contador) contador.textContent = Number(postCache.reacoes[emote] || 0) || "";
                 });
+                const abrirReacoes = card?.querySelector(".btn-abrir-reacoes");
+                const iconeReacao = abrirReacoes?.querySelector(".reacao-botao-icone");
+                abrirReacoes?.classList.toggle("ativa", Boolean(postCache.reacao_por_mim));
+                abrirReacoes?.setAttribute("aria-expanded", "false");
+                if (iconeReacao) iconeReacao.innerHTML = postCache.reacao_por_mim ? `<span class="reacao-escolhida">${escapeHTML(postCache.reacao_por_mim)}</span>` : `<i class="far fa-face-smile"></i>`;
+                const menu = card?.querySelector(".post-reacoes");
+                if (menu) menu.hidden = true;
             }
             return;
         }
@@ -2813,6 +2845,13 @@ function inicializarEventosFeed() {
             }
             return;
         }
+    });
+
+    document.addEventListener("click", (evento) => {
+        if (!evento.target.closest(".post-reacoes-wrap")) fecharMenusReacao();
+    });
+    document.addEventListener("keydown", (evento) => {
+        if (evento.key === "Escape") fecharMenusReacao();
     });
 
     feedLista.addEventListener("submit", async (evento) => {

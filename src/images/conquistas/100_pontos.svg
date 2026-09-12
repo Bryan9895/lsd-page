@@ -1,16 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+<title id="title">Primeiras Faíscas</title>
 <defs>
-  <radialGradient id="bg" cx="35%" cy="25%" r="80%"><stop offset="0" stop-color="#243449"/><stop offset="1" stop-color="#0a111b"/></radialGradient>
-  <linearGradient id="ring" x1="18" y1="16" x2="112" y2="116"><stop stop-color="#47e6c1"/><stop offset="1" stop-color="#2e9cff"/></linearGradient>
-  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".45"/></filter>
-  <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="face" cx="36%" cy="28%" r="78%">
+    <stop offset="0" stop-color="#26374a"/>
+    <stop offset="0.58" stop-color="#111b27"/>
+    <stop offset="1" stop-color="#090f17"/>
+  </radialGradient>
+  <linearGradient id="ring" x1="22" y1="18" x2="108" y2="112">
+    <stop offset="0" stop-color="#D29922"/>
+    <stop offset="1" stop-color="#F0883E"/>
+  </linearGradient>
+  <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+    <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000" flood-opacity=".38"/>
+  </filter>
 </defs>
-<circle cx="64" cy="64" r="58" fill="#08101a" opacity=".42" filter="url(#shadow)"/>
-<circle cx="64" cy="64" r="54" fill="url(#bg)" stroke="url(#ring)" stroke-width="7"/>
-<circle cx="64" cy="64" r="43" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>
-<g filter="url(#glow)">
-    <path d="M70 25 43 68h19l-5 34 29-47H67z" fill="#8fffe6" stroke="#eafffb" stroke-width="3" stroke-linejoin="round"/>
-    <circle cx="39" cy="39" r="5" fill="#fff" opacity=".85"/>
-  </g>
-
+<g filter="url(#shadow)">
+  <circle cx="64" cy="64" r="57" fill="#070c12" opacity=".5"/>
+  <circle cx="64" cy="64" r="54" fill="url(#face)" stroke="url(#ring)" stroke-width="5"/>
+  <circle cx="64" cy="64" r="46.5" fill="none" stroke="#ffffff" stroke-opacity=".09" stroke-width="1.5"/>
+  <path d="M29 42c10-17 27-27 47-27" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="3" stroke-linecap="round"/>
+  <g fill="none" stroke="#f8fbff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M68 29 50 60h13l-6 31 23-38H66z" fill="#f2cc60" stroke="#fff0ae"/><path d="M38 40v8M34 44h8M91 36v7M87.5 39.5h7" stroke="#ffd866"/></g>
+</g>
 </svg>
