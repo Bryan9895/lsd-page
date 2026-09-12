@@ -88,7 +88,7 @@ function acoesAdminHTML(projeto, local = "card") {
 
 function projetoCardHTML(projeto) {
     const membros = Array.isArray(projeto.membros) ? projeto.membros : [];
-    const tecnologias = Array.isArray(projeto.tecnologias) ? projeto.tecnologias.slice(0, 3) : [];
+    const tecnologias = Array.isArray(projeto.tecnologias) ? projeto.tecnologias.slice(0, 2) : [];
     const avatares = membros.slice(0, 3).map((membro) => `<img src="${escapeHTML(urlInternaOuHttp(membro.foto, "./src/images/equipe/avatar/default-avatar.png"))}" alt="" loading="lazy">`).join("");
     return `<article class="projeto-card" data-projeto-slug="${escapeHTML(projeto.slug)}">
         ${acoesAdminHTML(projeto)}
