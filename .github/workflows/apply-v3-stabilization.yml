@@ -5,6 +5,10 @@ on:
     branches:
       - codex/v3-stabilization-implementation
 
+concurrency:
+  group: v3-stabilization-implementation
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
