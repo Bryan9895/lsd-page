@@ -13,10 +13,10 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-from repair_database import (
-    collect_upload_references,
-    duplicate_achievement_groups,
-)
+try:
+    from .repair_database import collect_upload_references, duplicate_achievement_groups
+except ImportError:  # execução direta: python tools/validate_backup.py
+    from repair_database import collect_upload_references, duplicate_achievement_groups
 
 
 def _database_members(names: list[str]) -> list[str]:
