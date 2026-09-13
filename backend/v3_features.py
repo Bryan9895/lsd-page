@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import jwt
 from flask import g, jsonify, request
@@ -18,6 +19,8 @@ PROJECT_ADMIN_RE = re.compile(r"^/api/admin/projetos(?:/(\d+))?$")
 MEMBER_PROFILE_RE = re.compile(r"^/api/membros/(\d+)/perfil$")
 COMMENT_RE = re.compile(r"^/api/posts/(\d+)/comentarios$")
 REACTION_RE = re.compile(r"^/api/posts/(\d+)/reacoes$")
+REGISTRATION_PATHS = {"/api/register", "/api/cadastro"}
+FORTALEZA_TZ = ZoneInfo("America/Fortaleza")
 
 
 def register_v3_features(app, db, namespace):
@@ -94,6 +97,12 @@ def register_v3_features(app, db, namespace):
     @app.before_request
     def v3_before_request():
         g.v3_user = current_user()
+
+        # O momento da entrada é capturado no início da requisição de cadastro,
+        # no fuso oficial do laboratório, e persistido após a criação da conta.
+        if request.method == "POST" and request.path in REGISTRATION_PATHS:
+            g.v3_joined_at = datetime.now(FORTALEZA_TZ).isoformat(timespec="seconds")
+
         if request.method == "POST" and request.path == "/api/cards" and g.v3_user:
             if not bool(getattr(g.v3_user, "is_admin", False)):
                 data = request.get_json(silent=True) or {}
@@ -165,8 +174,8 @@ def register_v3_features(app, db, namespace):
                 add_notification(post.user_id, "reacao", "Nova reação no feed",
                                  f"{actor.nome} reagiu {emoji} à sua publicação.")
 
-    def notify_new_member():
-        if request.method != "POST" or request.path not in {"/api/register", "/api/cadastro"}:
+    def notify_new_member(response_payload=None):
+        if request.method != "POST" or request.path not in REGISTRATION_PATHS:
             return
         data = request.get_json(silent=True)
         if not isinstance(data, dict):
@@ -175,7 +184,21 @@ def register_v3_features(app, db, namespace):
         newcomer = User.query.filter_by(email=email).first() if email else None
         if not newcomer:
             return
+
         changed = False
+        joined_at = getattr(g, "v3_joined_at", None)
+        if joined_at:
+            newcomer.data_entrada = joined_at
+            changed = True
+
+            # A resposta do cadastro também deve refletir imediatamente o valor
+            # persistido, evitando que a primeira renderização use o formato legado.
+            if isinstance(response_payload, dict):
+                for key in ("usuario", "user"):
+                    user_payload = response_payload.get(key)
+                    if isinstance(user_payload, dict):
+                        user_payload["data_entrada"] = joined_at
+
         for member in User.query.filter(User.id != newcomer.id).all():
             changed |= add_notification(member.id, "comunidade", "Novo membro na comunidade",
                                         f"{newcomer.nome} entrou para a comunidade LSD.", dedupe_minutes=10)
@@ -225,7 +248,7 @@ def register_v3_features(app, db, namespace):
         if changed:
             db.session.commit()
 
-        notify_new_member()
+        notify_new_member(payload)
 
         if isinstance(payload, (dict, list)):
             payload = normalize_utc(payload)
