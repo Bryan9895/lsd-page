@@ -3,7 +3,7 @@ const API_BASE = ["127.0.0.1", "localhost"].includes(window.location.hostname)
     : window.location.origin;
 const TOKEN_KEY = "token_lsd";
 function obterTokenProjeto() {
-    try { const value = obterTokenProjeto(); if (value) return value; } catch (_) {}
+    try { const value = localStorage.getItem(TOKEN_KEY); if (value) return value; } catch (_) {}
     try { return sessionStorage.getItem(TOKEN_KEY); } catch (_) { return null; }
 }
 const STATUS_PROJETO = {
