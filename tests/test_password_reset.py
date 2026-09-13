@@ -10,7 +10,7 @@ os.environ.update(DATABASE_PATH=TEMP.name + '/test.db', UPLOAD_FOLDER=TEMP.name 
                   MAIL_HOST='smtp.example.com', MAIL_USERNAME='test', MAIL_PASSWORD='test',
                   MAIL_FROM='test@example.com', PUBLIC_BASE_URL='https://lsd.example.com',
                   APP_ENV='development', MAIL_BACKEND='smtp', MAIL_SECURITY='starttls', MAIL_PORT='587')
-from backend.app import app, db, User, Post, Notification
+from backend.app import app, db, User, Post, Notification, Notification
 from backend import password_reset
 from werkzeug.security import generate_password_hash
 SEND_RESET_EMAIL = password_reset.send_reset_email
