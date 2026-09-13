@@ -10,7 +10,7 @@ os.environ.update(DATABASE_PATH=TEMP.name + '/test.db', UPLOAD_FOLDER=TEMP.name 
                   MAIL_HOST='smtp.example.com', MAIL_USERNAME='test', MAIL_PASSWORD='test',
                   MAIL_FROM='test@example.com', PUBLIC_BASE_URL='https://lsd.example.com',
                   APP_ENV='development', MAIL_BACKEND='smtp', MAIL_SECURITY='starttls', MAIL_PORT='587')
-from backend.app import app, db, User, Post
+from backend.app import app, db, User, Post, Notification
 from backend import password_reset
 from werkzeug.security import generate_password_hash
 SEND_RESET_EMAIL = password_reset.send_reset_email
@@ -167,7 +167,7 @@ class PasswordResetTests(unittest.TestCase):
         self.assertEqual(atividades.status_code, 200)
         self.assertTrue(any(item['tipo'] == 'reacao' for item in atividades.json['atividades']))
 
-    def test_admin_announcement_uses_unique_bcc_recipients(self):
+    def test_admin_announcement_uses_internal_notifications(self):
         admin = User(nome='Admin', email='admin@example.com',
                      senha_hash=generate_password_hash('admin-password'), is_admin=True)
         duplicate = User(nome='Duplicado', email='MEMBER@example.com',
@@ -195,9 +195,10 @@ class PasswordResetTests(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json['destinatarios'], 2)
-        recipients = send.call_args.args[1]
-        self.assertEqual(recipients, ['admin@example.com', 'member@example.com'])
+        self.assertEqual(response.json['canal'], 'notificacao_interna')
+        self.assertEqual(response.json['destinatarios'], 3)
+        send.assert_not_called()
+        self.assertEqual(Notification.query.filter_by(tipo='comunicado').count(), 3)
 
         invalid = self.client.post(
             '/api/admin/comunicados',
@@ -205,6 +206,7 @@ class PasswordResetTests(unittest.TestCase):
             json={'assunto': 'Oi', 'mensagem': 'curta'}
         )
         self.assertEqual(invalid.status_code, 400)
+
 
 if __name__ == '__main__':
     unittest.main()
