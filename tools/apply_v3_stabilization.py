@@ -22,6 +22,15 @@ def patch_app():
     path = ROOT / "backend" / "app.py"
     text = path.read_text(encoding="utf-8")
 
+    # A data de entrada não pode ficar presa ao mês em que a feature foi criada.
+    if "def mes_ano_fortaleza():" not in text:
+        marker_user = "# ============================================================\n# MODELO USER\n# ============================================================"
+        helper = '''MESES_PT_BR = ("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")\n\n\ndef mes_ano_fortaleza():\n    agora = datetime.now(ZoneInfo("America/Fortaleza"))\n    return f"{MESES_PT_BR[agora.month - 1]} {agora.year}"\n\n\n'''
+        if marker_user not in text:
+            raise SystemExit("Marcador do modelo User não encontrado em backend/app.py")
+        text = text.replace(marker_user, helper + marker_user, 1)
+    text = text.replace('default="Set 2026"', 'default=mes_ano_fortaleza', 1)
+
     if "register_v3_features(app, db, globals())" not in text:
         marker = "register_password_reset(app, db, User)\ninicializar_aplicacao()"
         replacement = """register_password_reset(app, db, User)
