@@ -1,6 +1,8 @@
 """Regressões críticas encontradas na preparação da V3."""
 import unittest
+from datetime import datetime
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 from werkzeug.security import generate_password_hash
 
@@ -88,6 +90,30 @@ class V3StabilizationTests(unittest.TestCase):
         posts = response.json if isinstance(response.json, list) else response.json.get("posts", [])
         self.assertTrue(posts)
         self.assertTrue(posts[0]["data_criacao"].endswith("Z"), posts[0]["data_criacao"])
+
+    def test_registration_stores_exact_fortaleza_timestamp(self):
+        before = datetime.now(ZoneInfo("America/Fortaleza"))
+        response = self.client.post("/api/register", data={
+            "nome": "Novo Membro Horário",
+            "email": "novo-horario@example.com",
+            "senha": "senha-segura-123",
+            "codigo_acesso": app.config["ACCESS_CODE"],
+            "funcao": "Membro LSD",
+        })
+        after = datetime.now(ZoneInfo("America/Fortaleza"))
+        self.assertIn(response.status_code, (200, 201), response.json)
+
+        created = User.query.filter_by(email="novo-horario@example.com").first()
+        self.assertIsNotNone(created)
+        joined_at = datetime.fromisoformat(created.data_entrada)
+        self.assertIsNotNone(joined_at.tzinfo)
+        self.assertEqual(joined_at.utcoffset().total_seconds(), -3 * 60 * 60)
+        self.assertLessEqual(before, joined_at)
+        self.assertLessEqual(joined_at, after)
+
+        payload_user = (response.json or {}).get("usuario") or (response.json or {}).get("user") or {}
+        if payload_user:
+            self.assertEqual(payload_user.get("data_entrada"), created.data_entrada)
 
     def test_admin_announcement_notifies_and_sends_email(self):
         headers = self.auth("admin-v3@example.com", "admin-password")
