@@ -1,224 +1,63 @@
-# Deploy temporário gratuito — PythonAnywhere
+# Implantação do LSD-PAGE no PythonAnywhere
 
-Guia preparado para o **LSD v2.3.2**.
+Este guia usa o banco SQLite existente. **Não apague nem substitua o banco em produção.**
+O caminho atual padrão no projeto é `backend/instance/lsd_database.db`.
 
-## Por que PythonAnywhere
+## Conferir os arquivos antes do Reload
 
-Para o período temporário de duas semanas, a versão gratuita é adequada porque oferece um web app Python com filesystem persistente. O projeto continua usando SQLite e `backend/uploads/`, então os dados podem ser copiados depois para o servidor definitivo da empresa.
-
-> Observação importante: contas gratuitas novas do PythonAnywhere não possuem Scheduled Tasks. Por isso a v2.3.2 implementa backup diário dentro da própria aplicação: a primeira visita de cada dia cria um snapshot, sem depender de cron.
-
-## 1. Criar a conta
-
-Crie uma conta gratuita em PythonAnywhere. O endereço final será parecido com:
-
-```text
-https://SEU_USUARIO.pythonanywhere.com
-```
-
-## 2. Enviar o projeto
-
-No menu **Files**, envie o ZIP da v2.3.2 para sua home.
-
-Abra uma **Bash Console** e execute, ajustando o nome do ZIP se necessário:
+Na Bash Console, ajuste o caminho real da instalação (por exemplo,
+`/home/Bryan9895/site_lsd/lsd-page`) e execute:
 
 ```bash
-cd ~
-unzip Site_LSD_v2.3.2_pythonanywhere.zip
-mv Site_LSD_v2.3.2 Site_LSD
-cd ~/Site_LSD
+cd /home/SEU_USUARIO/site_lsd/lsd-page
+python tools/check_deployment.py \
+  --database /home/SEU_USUARIO/site_lsd/lsd-page/backend/instance/lsd_database.db \
+  --uploads /home/SEU_USUARIO/site_lsd/lsd-page/backend/uploads
 ```
 
-Se o ZIP já extrair uma pasta `Site_LSD`, não execute o `mv`.
+O comando abre o SQLite **somente para leitura**, verifica sua integridade e informa
+o caminho absoluto e a quantidade de membros. Confira se essa quantidade coincide
+com os dados que você espera ver no painel. Se der erro, corrija o caminho antes
+de recarregar a Web App.
 
-## 3. Criar o virtualenv
+## Configurar a Web App
 
-```bash
-mkvirtualenv lsd-v232 --python=python3.13
-cd ~/Site_LSD
-pip install -r requirements.txt
-```
+1. Selecione **Manual configuration**, com a mesma versão de Python usada pelo
+   virtualenv. Instale as dependências nele com `pip install -r requirements.txt`.
+2. Em **Source code** e **Working directory**, indique o diretório que contém
+   `backend/` e `dashboard.html`.
+3. No arquivo WSGI da aba **Web**, use `pythonanywhere_wsgi.py.example` como
+   base e altere `PROJECT_HOME` para esse mesmo diretório. O exemplo define
+   `DATABASE_PATH` para `backend/instance/lsd_database.db` e importa `backend.app`.
+   Se o arquivo real estiver em outro local, altere o caminho no WSGI e repita
+   a verificação acima para **esse mesmo arquivo**.
+4. Configure `SECRET_KEY`, `LSD_ACCESS_CODE`, `ADMIN_EMAIL`, `PUBLIC_BASE_URL`
+   e `MAIL_*` no `.env` local à raiz do projeto, usando `.env.example` como base.
+   O `.env` é ignorado pelo Git. Uma chave pode ser gerada com
+   `python -c "import secrets; print(secrets.token_hex(32))"`.
+5. Em **Static files**, configure `/src/` para `PROJECT_HOME/src` e `/uploads/`
+   para o mesmo `UPLOAD_FOLDER` que o WSGI utiliza.
+6. Clique em **Reload**. Se houver erro, consulte os logs **Error log** e
+   **Server log** na aba Web; não coloque chaves ou senhas no repositório.
 
-Para ativar novamente depois:
+Em produção, o app exige `DATABASE_PATH` absoluto apontando para um SQLite já
+existente com a tabela `users`. Isso impede a criação acidental de um banco novo
+quando um caminho estiver incorreto. Para uma instalação nova, crie e valide o
+banco em um ambiente de desenvolvimento antes de configurá-lo na Web App.
 
-```bash
-workon lsd-v232
-```
+## Conferência funcional após o Reload
 
-## 4. Criar a Web App
+1. Abra a página inicial e confirme CSS, imagens e navegação.
+2. Faça login com uma conta já presente no banco e confirme membros, cards e posts.
+3. Crie um card de teste, mova-o de A Fazer para Em Andamento e Concluído e
+   confirme que os 5 pontos são concedidos uma única vez e o card fica bloqueado.
+4. Publique e comente no feed; atualize foto e capa com imagens pequenas.
+5. Abra o painel Admin: confira os indicadores e teste o backup manual. Baixe
+   o ZIP e confirme que contém `database/lsd_database.db` e os uploads esperados.
+6. Teste em um celular o menu, Kanban, feed, projetos e o modal de edição do
+   perfil, inclusive a rolagem até **Salvar**.
 
-No menu **Web**:
-
-1. Clique em **Add a new web app**.
-2. Escolha **Manual configuration**.
-3. Escolha a mesma versão do Python usada no virtualenv, preferencialmente Python 3.13.
-4. Em **Virtualenv**, informe:
-
-```text
-/home/SEU_USUARIO/.virtualenvs/lsd-v232
-```
-
-5. Em **Source code** e **Working directory**, use:
-
-```text
-/home/SEU_USUARIO/Site_LSD
-```
-
-## 5. Configurar o WSGI
-
-No menu **Web**, clique no link do arquivo WSGI, normalmente semelhante a:
-
-```text
-/var/www/SEU_USUARIO_pythonanywhere_com_wsgi.py
-```
-
-Apague o conteúdo dele e use como base o arquivo:
-
-```text
-pythonanywhere_wsgi.py.example
-```
-
-Troque obrigatoriamente:
-
-```python
-USERNAME = "SEU_USUARIO_PYTHONANYWHERE"
-```
-
-Gere uma SECRET_KEY forte na Bash Console:
-
-```bash
-python -c "import secrets; print(secrets.token_hex(32))"
-```
-
-Copie o resultado para:
-
-```python
-os.environ["SECRET_KEY"] = "SUA_CHAVE_GERADA"
-```
-
-Não publique essa chave em GitHub.
-
-## 6. Static Files
-
-Ainda na aba **Web**, em **Static files**, adicione:
-
-```text
-URL:  /src/
-Path: /home/SEU_USUARIO/Site_LSD/src
-```
-
-E:
-
-```text
-URL:  /uploads/
-Path: /home/SEU_USUARIO/Site_LSD/backend/uploads
-```
-
-Isso faz o PythonAnywhere servir CSS, JavaScript, imagens e uploads diretamente, economizando o único worker da conta gratuita.
-
-## 7. Recarregar
-
-Clique em **Reload** na aba Web.
-
-Abra:
-
-```text
-https://SEU_USUARIO.pythonanywhere.com
-```
-
-O frontend e a API usam o mesmo domínio, então a configuração de produção não libera CORS globalmente.
-
-## 8. Teste mínimo antes de enviar aos membros
-
-Faça os testes nesta ordem:
-
-```text
-1. Abrir a página inicial
-2. Criar uma conta de teste com código 00001
-3. Fazer login
-4. Abrir o dashboard
-5. Criar um card
-6. Publicar no feed
-7. Atualizar o perfil
-8. Fazer upload de uma imagem pequena
-9. Entrar com a conta admin
-10. Abrir Painel Admin > Backups temporários
-11. Criar um backup manual
-12. Baixar o ZIP do backup
-```
-
-## Backup diário da v2.3.2
-
-A aplicação armazena backups em:
-
-```text
-backend/backups/
-```
-
-Cada ZIP possui:
-
-```text
-database/lsd_database.db
-uploads/
-backup.json
-```
-
-Por padrão são mantidos os **5 backups mais recentes**.
-
-O fuso padrão é:
-
-```text
-America/Fortaleza
-```
-
-O backup diário é criado na primeira visita do dia. Isso é intencional para funcionar no plano gratuito atual do PythonAnywhere, que não oferece Scheduled Tasks para novas contas.
-
-No Painel Admin existe também:
-
-```text
-Backups temporários
-```
-
-Nessa área o administrador pode:
-
-- consultar o último backup diário;
-- criar um backup manual;
-- baixar os backups existentes;
-- verificar tamanho e data dos arquivos.
-
-## Antes de migrar para o servidor da empresa
-
-No último dia:
-
-1. Avise os membros para não alterarem dados por alguns minutos.
-2. Entre como administrador.
-3. Abra **Painel Admin > Backups temporários**.
-4. Clique em **Criar backup agora**.
-5. Baixe o ZIP criado.
-6. Descompacte-o no servidor definitivo.
-7. Substitua o banco pelo arquivo:
-
-```text
-database/lsd_database.db
-```
-
-8. Copie o conteúdo de:
-
-```text
-uploads/
-```
-
-para:
-
-```text
-backend/uploads/
-```
-
-Assim contas, cards, posts, curtidas, comentários, advertências, perfis e arquivos enviados durante as duas semanas são preservados.
-
-## Limites do plano gratuito
-
-A hospedagem é temporária. Evite uploads grandes e monitore o espaço disponível. O projeto foi configurado com retenção curta de backups justamente para reduzir consumo de disco.
-
-Para essas duas semanas, mantenha somente os backups automáticos e faça download local de backups importantes.
-
+O sistema ainda usa ajustes de esquema na inicialização. A revisão das migrations
+e uma migração ensaiada sobre **uma cópia do banco real** são necessárias antes
+de atualizar o servidor institucional; não execute `flask db upgrade` diretamente
+no banco atual, pois a revisão Alembic existente é antiga.

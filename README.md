@@ -1,12 +1,25 @@
 # LSD — Laboratório de Sistemas e Dados
 
-![Version](https://img.shields.io/badge/version-2.6.0-blue)
+![Version](https://img.shields.io/badge/version-2.7.x-blue)
 ![Python](https://img.shields.io/badge/Python-Flask-3776AB)
 ![JavaScript](https://img.shields.io/badge/JavaScript-Frontend-F7DF1E)
 ![Database](https://img.shields.io/badge/Database-SQLite-003B57)
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-orange)
 
 Plataforma web interna do **LSD — Laboratório de Sistemas e Dados**, desenvolvida para centralizar atividades da equipe em um único ambiente.
+
+**Estado atual:** desenvolvimento e estabilização. O painel já reúne Kanban, feed,
+perfis, projetos, conquistas, notificações e atividades recentes. A administração
+inclui indicadores de membros, projetos ativos, cards concluídos, posts e conquistas.
+Antes de atualizar o PythonAnywhere, [confira o caminho do banco e os fluxos
+essenciais](DEPLOY_PYTHONANYWHERE.md). Os testes automatizados executam em cada
+push e PR via GitHub Actions; localmente, rode
+`python -m unittest discover -s tests -q` após instalar `requirements.txt`.
+
+**Limite conhecido:** a revisão Alembic em `backend/migrations` não acompanha o
+esquema atual. Não execute `flask db upgrade` no SQLite usado pelos membros sem
+ensaiar a migração sobre uma cópia. A validação visual em celular e o envio SMTP
+real dependem dos ambientes de destino.
 
 A versão **2.6.0** adiciona um portfólio completo de projetos, conectando projetos, membros, líderes, documentação e administração em uma experiência responsiva.
 
@@ -107,7 +120,7 @@ DEPLOY_PYTHONANYWHERE.md
 A v2.3.2 inclui um sistema de backup persistente de:
 
 ```text
-backend/lsd_database.db
+backend/instance/lsd_database.db
 backend/uploads/
 ```
 
