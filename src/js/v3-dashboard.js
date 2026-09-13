@@ -5,7 +5,10 @@
     const TOKEN_KEY = "token_lsd";
     const NAIVE_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
 
-    const token = () => localStorage.getItem(TOKEN_KEY);
+    const token = () => {
+        try { const value = localStorage.getItem(TOKEN_KEY); if (value) return value; } catch (_) {}
+        try { return sessionStorage.getItem(TOKEN_KEY); } catch (_) { return null; }
+    };
     const usuario = () => {
         try {
             return typeof usuarioAtual !== "undefined" ? usuarioAtual : null;

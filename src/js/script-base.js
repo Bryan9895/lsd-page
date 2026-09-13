@@ -206,7 +206,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const areaUsuario = document.getElementById("area-usuario");
     
     // Verifica se existe um token salvo no navegador
-    const token = localStorage.getItem("token_lsd");
+    let token = null;
+    try { token = localStorage.getItem("token_lsd"); } catch (_) {}
+    if (!token) { try { token = sessionStorage.getItem("token_lsd"); } catch (_) {} }
 
     if (areaUsuario) {
         if (token) {
@@ -222,7 +224,8 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("btn-sair").addEventListener("click", (e) => {
                 e.preventDefault();
                 // Remove o token (rasga o crachá)
-                localStorage.removeItem("token_lsd");
+                try { localStorage.removeItem("token_lsd"); } catch (_) {}
+                try { sessionStorage.removeItem("token_lsd"); } catch (_) {}
                 // Recarrega a página
                 window.location.reload();
             });

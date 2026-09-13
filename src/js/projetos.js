@@ -2,6 +2,10 @@ const API_BASE = ["127.0.0.1", "localhost"].includes(window.location.hostname)
     ? "http://127.0.0.1:5000"
     : window.location.origin;
 const TOKEN_KEY = "token_lsd";
+function obterTokenProjeto() {
+    try { const value = obterTokenProjeto(); if (value) return value; } catch (_) {}
+    try { return sessionStorage.getItem(TOKEN_KEY); } catch (_) { return null; }
+}
 const STATUS_PROJETO = {
     em_desenvolvimento: "Em desenvolvimento",
     em_producao: "Em produção",
@@ -44,7 +48,7 @@ function mostrarToast(mensagem, tipo = "") {
 
 async function requisitar(endpoint, opcoes = {}) {
     const headers = { ...(opcoes.headers || {}) };
-    const token = localStorage.getItem(TOKEN_KEY);
+    const token = obterTokenProjeto();
     if (token) headers.Authorization = `Bearer ${token}`;
     try {
         const resposta = await fetch(`${API_BASE}${endpoint}`, { ...opcoes, headers });
@@ -57,7 +61,7 @@ async function requisitar(endpoint, opcoes = {}) {
 }
 
 async function carregarUsuarioOpcional() {
-    if (!localStorage.getItem(TOKEN_KEY)) return;
+    if (!obterTokenProjeto()) return;
     const resposta = await requisitar("/api/perfil");
     if (!resposta.ok || !resposta.dados?.id) return;
     usuarioAtual = resposta.dados;
