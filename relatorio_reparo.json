@@ -1,0 +1,116 @@
+{
+  "source": "/home/bryan/Site_LSD/backend/instance/lsd_database.db",
+  "output": "/home/bryan/Site_LSD/backend/instance/lsd_database_repaired.db",
+  "safety_backup": null,
+  "removed_orphans": [
+    {
+      "table": "post_reactions",
+      "rowid": 1,
+      "missing_parent": "posts",
+      "foreign_key_index": 1
+    },
+    {
+      "table": "user_achievements",
+      "rowid": 2,
+      "missing_parent": "users",
+      "foreign_key_index": 1
+    }
+  ],
+  "deduplicated_achievements": [],
+  "fixed_upload_references": [
+    {
+      "table": "users",
+      "column": "foto",
+      "rowid": 1,
+      "old_value": "/uploads/b471809ded664d4883fe30855da98239_fotobryan.jpeg",
+      "action": "replace",
+      "new_value": "/uploads/default-avatar.png"
+    },
+    {
+      "table": "users",
+      "column": "foto",
+      "rowid": 3,
+      "old_value": "/uploads/94864281d2774827b973ea62c2c36754_1000083843.jpg",
+      "action": "replace",
+      "new_value": "/uploads/default-avatar.png"
+    },
+    {
+      "table": "users",
+      "column": "foto",
+      "rowid": 4,
+      "old_value": "/uploads/f24ed6b251ed4425a76066a4b00c7ed6_IMG-20260802-WA0019.jpg",
+      "action": "replace",
+      "new_value": "/uploads/default-avatar.png"
+    },
+    {
+      "table": "users",
+      "column": "foto",
+      "rowid": 5,
+      "old_value": "/uploads/156544f4e22342229e4867aabcd52122_1000334476.png",
+      "action": "replace",
+      "new_value": "/uploads/default-avatar.png"
+    },
+    {
+      "table": "users",
+      "column": "foto",
+      "rowid": 6,
+      "old_value": "/uploads/0fb48ee889194c7597b81ffc2f5c33b0_IMG_5184.jpg",
+      "action": "replace",
+      "new_value": "/uploads/default-avatar.png"
+    },
+    {
+      "table": "users",
+      "column": "foto",
+      "rowid": 9,
+      "old_value": "/uploads/477cc72fc76247f0b751fedf7be9aa15_1000790553.png",
+      "action": "replace",
+      "new_value": "/uploads/default-avatar.png"
+    },
+    {
+      "table": "users",
+      "column": "capa",
+      "rowid": 5,
+      "old_value": "/uploads/3b7931316ae242a0bf2d2bbdc994687f_1000334477.jpg",
+      "action": "replace",
+      "new_value": "/uploads/default-capa.jpg"
+    },
+    {
+      "table": "projeto_documentos",
+      "column": "arquivo_url",
+      "rowid": 1,
+      "old_value": "/uploads/54bf250c3eb54ed9afb62cfeed6d30f8_Artigo_Laboratorio_Sistemas_e_Dados-1.pdf",
+      "action": "delete",
+      "new_value": null
+    }
+  ],
+  "warnings": [],
+  "final_validation": {
+    "database": "/home/bryan/Site_LSD/backend/instance/lsd_database_repaired.db",
+    "quick_check": "ok",
+    "tables": [
+      "achievements",
+      "advertencias",
+      "app_settings",
+      "cards",
+      "notifications",
+      "password_reset_limits",
+      "password_resets",
+      "post_comments",
+      "post_likes",
+      "post_reactions",
+      "posts",
+      "projeto_documentos",
+      "projeto_membros",
+      "projetos",
+      "user_achievements",
+      "user_activities",
+      "user_logins",
+      "users"
+    ],
+    "members": 7,
+    "foreign_key_issues": [],
+    "duplicate_achievement_groups": [],
+    "missing_uploads": [],
+    "ok": true
+  }
+}
