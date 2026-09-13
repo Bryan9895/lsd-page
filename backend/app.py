@@ -506,6 +506,14 @@ def erro_500(error):
     }), 500
 
 
+MESES_PT_BR = ("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
+
+
+def mes_ano_fortaleza():
+    agora = datetime.now(ZoneInfo("America/Fortaleza"))
+    return f"{MESES_PT_BR[agora.month - 1]} {agora.year}"
+
+
 # ============================================================
 # MODELO USER
 # ============================================================
@@ -547,7 +555,7 @@ class User(db.Model):
 
     localizacao = db.Column(
         db.String(100),
-        default="Maranguape, CE"
+        default=""
     )
 
     github = db.Column(
@@ -581,7 +589,7 @@ class User(db.Model):
 
     data_entrada = db.Column(
         db.String(30),
-        default="Set 2026"
+        default=mes_ano_fortaleza
     )
 
     projetos_ativos = db.Column(
@@ -5453,9 +5461,12 @@ def perfil_publico_membro(current_user, user_id):
 
     for item in conquistas:
         dados_conquista = item.to_dict()
-        total_desbloqueios = UserAchievement.query.filter_by(
-            achievement_id=item.achievement_id
-        ).count()
+        total_desbloqueios = (
+            db.session.query(UserAchievement.user_id)
+            .filter(UserAchievement.achievement_id == item.achievement_id)
+            .distinct()
+            .count()
+        )
         dados_conquista["total_desbloqueios"] = total_desbloqueios
         dados_conquista["percentual_desbloqueio"] = round(
             (total_desbloqueios / total_membros) * 100,
@@ -6917,6 +6928,15 @@ def inicializar_aplicacao():
 # Por isso a preparação do banco precisa ocorrer na importação.
 register_password_reset(app, db, User)
 inicializar_aplicacao()
+
+# Ajustes transversais da estabilização V3 são registrados somente depois que
+# modelos, rotas e tabelas já existem. O import relativo mantém WSGI/pacote e o
+# fallback mantém a execução direta compatíveis.
+if __package__:
+    from .v3_features import register_v3_features
+else:
+    from v3_features import register_v3_features
+register_v3_features(app, db, globals())
 
 
 if __name__ == "__main__":

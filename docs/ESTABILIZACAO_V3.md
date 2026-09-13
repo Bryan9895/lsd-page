@@ -30,3 +30,20 @@ Em produção, usar `APP_ENV=production`, uma `SECRET_KEY` exclusiva com ao meno
 valores públicos e não devem ser tratados como credenciais privadas. As chaves
 que já tenham sido compartilhadas devem ser substituídas no servidor; depois
 disso, sessões antigas precisarão de novo login.
+
+## Pacote de estabilização V3 — notificações e mobile
+
+A camada `backend/v3_features.py` reforça a atribuição de cards, corrige a
+estatística de conquistas por usuários únicos, acrescenta nível ao perfil
+público, normaliza timestamps UTC e alimenta o sino com eventos sociais,
+entrada em projeto/comunidade e comunicados internos. O comunicado do painel
+admin não envia e-mail nesta fase; ele cria uma notificação para cada membro.
+
+A recuperação/alteração de senha continua usando e-mail. Em produção configure
+`MAIL_*` e `PUBLIC_BASE_URL`; o botão "Alterar senha por e-mail" do perfil usa
+o mesmo endpoint seguro de recuperação já testado.
+
+No frontend, `v3-mobile.css` é aplicado progressivamente: desktop permanece
+inalterado e as mudanças de Kanban, modais, cards e alvos de toque entram apenas
+em telas menores.
+
