@@ -70,7 +70,7 @@ function atualizarBotaoTema() {
 function definirTemaDashboard(tema) {
     const escuro = tema === "escuro";
     document.documentElement.classList.toggle("tema-escuro", escuro);
-    localStorage.setItem(TEMA_STORAGE_KEY, escuro ? "escuro" : "claro");
+    try { localStorage.setItem(TEMA_STORAGE_KEY, escuro ? "escuro" : "claro"); } catch (_) {}
     atualizarBotaoTema();
 }
 
@@ -93,23 +93,23 @@ function inicializarTemaDashboard() {
 // ============================================================
 
 function obterToken() {
-    const token = localStorage.getItem(TOKEN_KEY);
-
-    if (
-        !token ||
-        token === "null" ||
-        token === "undefined"
-    ) {
-        return null;
+    let token = null;
+    try { token = localStorage.getItem(TOKEN_KEY); } catch (_) {}
+    if (!token || token === "null" || token === "undefined") {
+        try { token = sessionStorage.getItem(TOKEN_KEY); } catch (_) {}
     }
+    return (!token || token === "null" || token === "undefined") ? null : token;
+}
 
-    return token;
+function removerTokenDashboard() {
+    try { localStorage.removeItem(TOKEN_KEY); } catch (_) {}
+    try { sessionStorage.removeItem(TOKEN_KEY); } catch (_) {}
 }
 
 function redirecionarLogin() {
     const retorno = `${window.location.pathname.split("/").pop() || "dashboard.html"}${window.location.search}`;
-    sessionStorage.setItem("lsd_redirect_after_login", retorno);
-    localStorage.removeItem(TOKEN_KEY);
+    try { sessionStorage.setItem("lsd_redirect_after_login", retorno); } catch (_) {}
+    removerTokenDashboard();
 
     if (!window.location.pathname.endsWith("entrar-login.html")) {
         window.location.href = "entrar-login.html";
@@ -4649,8 +4649,24 @@ function inicializarComunicadoAdmin() {
         }
 
         formulario.reset();
-        if (status) status.textContent = `${resposta.dados.destinatarios} destinatário(s) processado(s).`;
-        mostrarToast("Comunicado enviado com sucesso.", "sucesso");
+        const totalNotificacoes = Number(resposta.dados.destinatarios || 0);
+        const totalEmails = Number(resposta.dados.destinatarios_email || 0);
+        const emailEnviado = resposta.dados.email_enviado === true;
+        const emailConfigurado = resposta.dados.email_configurado === true;
+
+        if (status) {
+            if (emailEnviado) {
+                status.textContent = `${totalNotificacoes} membro(s) notificado(s) e ${totalEmails} e-mail(s) enviado(s).`;
+            } else if (emailConfigurado) {
+                status.textContent = `${totalNotificacoes} membro(s) notificado(s). O e-mail falhou; confira o SMTP no servidor.`;
+            } else {
+                status.textContent = `${totalNotificacoes} membro(s) notificado(s). SMTP ainda não configurado para envio real.`;
+            }
+        }
+        mostrarToast(
+            emailEnviado ? "Comunicado publicado e enviado por e-mail." : "Comunicado publicado nas notificações.",
+            "sucesso"
+        );
     });
 }
 
@@ -4678,9 +4694,7 @@ function inicializarLogout() {
 
             evento.preventDefault();
 
-            localStorage.removeItem(
-                TOKEN_KEY
-            );
+            removerTokenDashboard();
 
             window.location.href =
                 "entrar-login.html";

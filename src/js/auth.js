@@ -12,12 +12,57 @@ const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.ho
 const TOKEN_KEY = "token_lsd";
 const REDIRECT_KEY = "lsd_redirect_after_login";
 
-function destinoAposAutenticacao() {
-    const destino = sessionStorage.getItem(REDIRECT_KEY) || "dashboard.html";
-    sessionStorage.removeItem(REDIRECT_KEY);
-    return /^dashboard\.html(?:\?[a-zA-Z0-9_=&%-]*)?$/.test(destino)
-        ? destino
-        : "dashboard.html";
+function lerTokenSeguro() {
+    try {
+        const tokenLocal = localStorage.getItem(TOKEN_KEY);
+        if (tokenLocal && tokenLocal !== "null" && tokenLocal !== "undefined") return tokenLocal;
+    } catch (erro) {
+        console.warn("localStorage indisponível; usando armazenamento de sessão.", erro);
+    }
+
+    try {
+        const tokenSessao = sessionStorage.getItem(TOKEN_KEY);
+        if (tokenSessao && tokenSessao !== "null" && tokenSessao !== "undefined") return tokenSessao;
+    } catch (erro) {
+        console.warn("sessionStorage indisponível.", erro);
+    }
+
+    return null;
+}
+
+function salvarTokenSeguro(token) {
+    if (!token) return false;
+
+    try {
+        localStorage.setItem(TOKEN_KEY, token);
+        try { sessionStorage.removeItem(TOKEN_KEY); } catch (_) {}
+        return true;
+    } catch (erro) {
+        console.warn("Não foi possível gravar no localStorage; tentando sessionStorage.", erro);
+    }
+
+    try {
+        sessionStorage.setItem(TOKEN_KEY, token);
+        return true;
+    } catch (erro) {
+        console.error("O navegador bloqueou o armazenamento do login.", erro);
+        return false;
+    }
+}
+
+function removerTokenSeguro() {
+    try { localStorage.removeItem(TOKEN_KEY); } catch (_) {}
+    try { sessionStorage.removeItem(TOKEN_KEY); } catch (_) {}
+}
+
+function redirecionarSeguro(destino) {
+    const url = new URL(destino, window.location.href).href;
+    try {
+        window.location.assign(url);
+    } catch (erro) {
+        console.warn("Falha no primeiro redirecionamento; tentando href.", erro);
+        window.location.href = url;
+    }
 }
 
 // ---------- Utilitários de Interface ----------
@@ -178,8 +223,15 @@ if (formLogin) {
         alternarCarregando(botao, false);
 
         if (ok && dados.token) {
-            localStorage.setItem(TOKEN_KEY, dados.token);
-            window.location.href = destinoAposAutenticacao();
+            if (!salvarTokenSeguro(dados.token)) {
+                mostrarMensagem(
+                    "login-mensagem",
+                    "erro",
+                    "Login confirmado, mas o navegador bloqueou o armazenamento da sessão. Verifique as permissões de cookies/dados do site e tente novamente."
+                );
+                return;
+            }
+            redirecionarSeguro("dashboard.html");
         } else {
             const mensagemErro = dados.message || dados.erro || "E-mail ou senha incorretos.";
             mostrarMensagem("login-mensagem", "erro", mensagemErro);
@@ -253,19 +305,24 @@ if (formCadastro) {
         alternarCarregando(botao, false);
 
         if (ok && (dados.success || dados.token)) {
-            if (dados.token) {
-                localStorage.setItem(TOKEN_KEY, dados.token);
+            if (dados.token && !salvarTokenSeguro(dados.token)) {
+                mostrarMensagem(
+                    "cadastro-mensagem",
+                    "erro",
+                    '<i class="fas fa-circle-exclamation"></i> Conta criada, mas o navegador bloqueou a sessão. Entre novamente após permitir os dados do site.'
+                );
+                return;
             }
-            
+
             mostrarMensagem(
                 "cadastro-mensagem",
                 "sucesso",
-                '<i class="fas fa-circle-check"></i> Conta criada com sucesso! Redirecionando...'
+                '<i class="fas fa-circle-check"></i> Conta criada com sucesso! Abrindo seu perfil...'
             );
 
             setTimeout(() => {
-                window.location.href = destinoAposAutenticacao();
-            }, 1500);
+                redirecionarSeguro("dashboard.html");
+            }, 2500);
         } else {
             const mensagemErro = dados.message || dados.erro || "Erro ao criar conta.";
             mostrarMensagem("cadastro-mensagem", "erro", mensagemErro);
@@ -340,7 +397,7 @@ if (formRedefinir) {
         informar(dados.message || "Não foi possível alterar a senha.", ok);
         if (ok) {
             resetToken = "";
-            localStorage.removeItem(TOKEN_KEY);
+            removerTokenSeguro();
             formRedefinir.reset();
             botao.disabled = true;
         }
