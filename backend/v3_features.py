@@ -249,11 +249,43 @@ def register_v3_features(app, db, namespace):
         for member in users:
             db.session.add(Notification(user_id=member.id, tipo="comunicado", titulo=subject, mensagem=message))
         db.session.commit()
+
+        recipients = []
+        seen = set()
+        for member in users:
+            email = str(getattr(member, "email", "") or "").strip()
+            key = email.lower()
+            if email and key not in seen:
+                seen.add(key)
+                recipients.append(email)
+
+        email_configurado = (
+            app.config.get("MAIL_BACKEND") == "smtp"
+            and all(app.config.get(name) for name in ("MAIL_HOST", "MAIL_USERNAME", "MAIL_PASSWORD", "MAIL_FROM"))
+            and app.config.get("MAIL_SECURITY") in {"ssl", "starttls"}
+            and bool(recipients)
+            and callable(namespace.get("send_announcement_email"))
+        )
+        email_enviado = False
+        if email_configurado:
+            try:
+                namespace["send_announcement_email"](app.config, recipients, subject, message)
+                email_enviado = True
+            except Exception:
+                app.logger.error("Comunicado salvo nas notificações, mas o transporte SMTP falhou.")
+
         return jsonify({
             "success": True,
-            "message": "Comunicado publicado nas notificações de todos os membros.",
+            "message": (
+                "Comunicado publicado e enviado por e-mail."
+                if email_enviado
+                else "Comunicado publicado nas notificações dos membros."
+            ),
             "destinatarios": len(users),
-            "canal": "notificacao_interna",
+            "destinatarios_email": len(recipients),
+            "email_configurado": email_configurado,
+            "email_enviado": email_enviado,
+            "canal": "notificacao_interna_e_email" if email_enviado else "notificacao_interna",
         }), 200
 
     for rule in app.url_map.iter_rules():

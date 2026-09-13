@@ -1,5 +1,6 @@
 """Regressões críticas encontradas na preparação da V3."""
 import unittest
+from unittest.mock import patch
 
 from werkzeug.security import generate_password_hash
 
@@ -88,15 +89,19 @@ class V3StabilizationTests(unittest.TestCase):
         self.assertTrue(posts)
         self.assertTrue(posts[0]["data_criacao"].endswith("Z"), posts[0]["data_criacao"])
 
-    def test_admin_announcement_becomes_internal_notification(self):
+    def test_admin_announcement_notifies_and_sends_email(self):
         headers = self.auth("admin-v3@example.com", "admin-password")
-        response = self.client.post("/api/admin/comunicados", headers=headers, json={
-            "assunto": "Reunião geral",
-            "mensagem": "Hoje teremos uma reunião geral do laboratório às 17h.",
-        })
+        with patch("backend.app.send_announcement_email") as send:
+            response = self.client.post("/api/admin/comunicados", headers=headers, json={
+                "assunto": "Reunião geral",
+                "mensagem": "Hoje teremos uma reunião geral do laboratório às 17h.",
+            })
         self.assertEqual(response.status_code, 200, response.json)
-        self.assertEqual(response.json["canal"], "notificacao_interna")
+        self.assertEqual(response.json["canal"], "notificacao_interna_e_email")
+        self.assertTrue(response.json["email_enviado"])
         self.assertEqual(response.json["destinatarios"], 3)
+        self.assertEqual(response.json["destinatarios_email"], 3)
+        send.assert_called_once()
         self.assertEqual(Notification.query.filter_by(tipo="comunicado").count(), 3)
 
     def test_feed_interaction_generates_notification(self):
