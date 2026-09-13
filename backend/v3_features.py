@@ -6,7 +6,7 @@ PythonAnywhere quanto no futuro servidor institucional.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import jwt
 from flask import g, jsonify, request
@@ -32,7 +32,6 @@ def register_v3_features(app, db, namespace):
     PostReaction = namespace.get("PostReaction")
     Project = namespace.get("Project")
     UserAchievement = namespace.get("UserAchievement")
-    Achievement = namespace.get("Achievement")
     nivel_usuario = namespace.get("nivel_usuario")
 
     def current_user():
@@ -101,22 +100,24 @@ def register_v3_features(app, db, namespace):
         return value
 
     # Corrige dados históricos duplicados antes de criar a trava definitiva.
+    # Flask-SQLAlchemy exige um application context mesmo durante o import WSGI.
     if UserAchievement is not None:
         table = UserAchievement.__tablename__
-        try:
-            db.session.execute(text(
-                f"DELETE FROM {table} WHERE id NOT IN ("
-                f"SELECT MIN(id) FROM {table} GROUP BY user_id, achievement_id)"
-            ))
-            db.session.execute(text(
-                f"CREATE UNIQUE INDEX IF NOT EXISTS uq_{table}_user_achievement "
-                f"ON {table}(user_id, achievement_id)"
-            ))
-            db.session.commit()
-        except Exception:
-            # Bancos antigos podem ainda estar no meio de uma migration. Não derrube o site.
-            db.session.rollback()
-            app.logger.exception("Não foi possível consolidar conquistas duplicadas.")
+        with app.app_context():
+            try:
+                db.session.execute(text(
+                    f"DELETE FROM {table} WHERE id NOT IN ("
+                    f"SELECT MIN(id) FROM {table} GROUP BY user_id, achievement_id)"
+                ))
+                db.session.execute(text(
+                    f"CREATE UNIQUE INDEX IF NOT EXISTS uq_{table}_user_achievement "
+                    f"ON {table}(user_id, achievement_id)"
+                ))
+                db.session.commit()
+            except Exception:
+                # Bancos antigos podem ainda estar no meio de uma migration. Não derrube o site.
+                db.session.rollback()
+                app.logger.exception("Não foi possível consolidar conquistas duplicadas.")
 
     @app.before_request
     def v3_before_request():
@@ -268,14 +269,14 @@ def register_v3_features(app, db, namespace):
         # Alimenta o sino com eventos que antes existiam apenas como atividade.
         changed = False
         if request.method in {"POST", "PUT"} and PROJECT_ADMIN_RE.match(request.path):
-            before = db.session.new.copy()
+            before = set(db.session.new)
             notify_project_members(payload or {})
-            changed = changed or bool(db.session.new - before)
+            changed = changed or bool(set(db.session.new) - before)
 
         if COMMENT_RE.match(request.path) or REACTION_RE.match(request.path):
-            before = db.session.new.copy()
+            before = set(db.session.new)
             notify_social_event()
-            changed = changed or bool(db.session.new - before)
+            changed = changed or bool(set(db.session.new) - before)
 
         if changed:
             db.session.commit()
