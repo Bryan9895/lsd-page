@@ -10,8 +10,10 @@ class AuthStorageTests(unittest.TestCase):
         auth = (ROOT / "src/js/auth.js").read_text(encoding="utf-8")
         self.assertIn("function salvarTokenSeguro(token)", auth)
         self.assertIn("sessionStorage.setItem(TOKEN_KEY, token)", auth)
-        self.assertIn('redirecionarSeguro("dashboard.html")', auth)
-        self.assertIn("}, 2500);", auth)
+        self.assertIn('redirecionarSeguro("dashboard.html", true)', auth)
+        self.assertIn("SIGNUP_REDIRECT_DELAY_MS", auth)
+        self.assertIn("Conta criada com sucesso! Redirecionando para o seu perfil", auth)
+        self.assertIn('"entrar-login.html?cadastro=sucesso"', auth)
 
     def test_dashboard_reads_token_from_both_storages(self):
         dashboard = (ROOT / "src/js/dashboard-base.js").read_text(encoding="utf-8")
