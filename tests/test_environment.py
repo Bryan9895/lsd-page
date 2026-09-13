@@ -15,7 +15,7 @@ class EnvironmentTests(unittest.TestCase):
             root = Path(directory)
             (root / 'backend').mkdir()
             source = Path(__file__).resolve().parents[1] / 'backend'
-            for name in ('app.py', 'password_reset.py'):
+            for name in ('app.py', 'password_reset.py', 'v3_features.py'):
                 shutil.copy(source / name, root / 'backend' / name)
             (root / '.env').write_text(
                 'APP_ENV=development\nMAIL_BACKEND=console\n'
@@ -85,3 +85,7 @@ class EnvironmentTests(unittest.TestCase):
                                             cwd='/tmp', env=invalid, capture_output=True, text=True)
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(key, result.stderr)
+
+
+if __name__ == '__main__':
+    unittest.main()
