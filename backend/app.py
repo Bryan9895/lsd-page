@@ -10,6 +10,7 @@ from collections import Counter
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from functools import wraps
+from pathlib import Path
 from urllib.parse import urlparse
 
 import jwt
@@ -65,6 +66,11 @@ app.config["SECRET_KEY"] = os.getenv(
     "SECRET_KEY",
     "lsd_secret_key_2026_dev"
 )
+if IS_PRODUCTION and (
+    len(app.config["SECRET_KEY"]) < 32
+    or app.config["SECRET_KEY"] == "troque-por-uma-chave-longa-e-aleatoria"
+):
+    raise RuntimeError("Produção exige SECRET_KEY exclusiva com ao menos 32 caracteres.")
 
 
 # ============================================================
@@ -76,6 +82,8 @@ app.config["ACCESS_CODE"] = os.getenv(
     "LSD_ACCESS_CODE",
     "00001"
 ).strip()
+if IS_PRODUCTION and not os.getenv("LSD_ACCESS_CODE", "").strip():
+    raise RuntimeError("Produção exige LSD_ACCESS_CODE configurado no ambiente.")
 
 
 # ============================================================
@@ -99,11 +107,25 @@ os.makedirs(
     exist_ok=True
 )
 
+database_configurada = os.getenv("DATABASE_PATH", "").strip()
+if IS_PRODUCTION:
+    # Um erro de caminho não pode criar silenciosamente outro banco em produção.
+    if not database_configurada or not os.path.isabs(database_configurada):
+        raise RuntimeError("Produção exige DATABASE_PATH absoluto para o banco existente.")
+    if not os.path.isfile(database_configurada):
+        raise RuntimeError("DATABASE_PATH não aponta para um arquivo existente.")
+    try:
+        with sqlite3.connect(Path(database_configurada).as_uri() + "?mode=ro", uri=True) as conexao:
+            existe_users = conexao.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='users'"
+            ).fetchone()
+            if not existe_users:
+                raise RuntimeError("DATABASE_PATH não contém a tabela users; confira o banco escolhido.")
+    except sqlite3.DatabaseError as erro:
+        raise RuntimeError("DATABASE_PATH não contém um SQLite válido.") from erro
+
 DATABASE_PATH = os.path.abspath(
-    os.getenv(
-        "DATABASE_PATH",
-        os.path.join(INSTANCE_DIR, "lsd_database.db")
-    )
+    database_configurada or os.path.join(INSTANCE_DIR, "lsd_database.db")
 )
 
 app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -474,11 +496,8 @@ def erro_413(error):
 
 @app.errorhandler(500)
 def erro_500(error):
-
-    print(
-        "ERRO INTERNO:",
-        repr(error)
-    )
+    app.logger.error("Erro interno ao atender %s %s", request.method, request.path,
+                     exc_info=(type(error), error, error.__traceback__))
 
     return jsonify({
         "success": False,
@@ -3936,30 +3955,23 @@ def atualizar_deletar_card(
         }), 404
 
 
+    if card.status == "concluido":
+        return jsonify({
+            "success": False,
+            "message": "Cards concluídos não podem ser alterados ou excluídos."
+        }), 400
+
+    if (card.responsavel_id != current_user.id and not current_user.is_admin):
+        return jsonify({
+            "success": False,
+            "message": "Somente o responsável ou um administrador pode alterar este card."
+        }), 403
+
     # ========================================================
     # DELETE
     # ========================================================
 
     if request.method == "DELETE":
-
-        if (
-            card.responsavel_id
-            is not None
-            and
-            card.responsavel_id
-            !=
-            current_user.id
-            and
-            not current_user.is_admin
-        ):
-
-            return jsonify({
-                "success": False,
-                "message":
-                    "Apenas o responsável ou um administrador pode excluir o card."
-            }), 403
-
-
         try:
 
             db.session.delete(
@@ -4013,6 +4025,12 @@ def atualizar_deletar_card(
     status_anterior = (
         card.status
     )
+
+    if "titulo" in data and not str(data.get("titulo", "")).strip():
+        return jsonify({
+            "success": False,
+            "message": "O título não pode ficar vazio."
+        }), 400
 
 
     if (
@@ -5535,6 +5553,19 @@ def marcar_notificacao_lida(current_user, notificacao_id):
 # ============================================================
 # ADMIN - LISTAR MEMBROS
 # ============================================================
+
+@app.get("/api/admin/estatisticas")
+@admin_required
+def estatisticas_admin(current_user):
+    """Indicadores agregados do laboratório, sem dados pessoais."""
+    return jsonify({
+        "success": True,
+        "membros": User.query.count(),
+        "projetos_ativos": Project.query.filter(Project.status != "concluido").count(),
+        "cards_concluidos": Card.query.filter_by(status="concluido").count(),
+        "posts": Post.query.count(),
+        "conquistas_desbloqueadas": UserAchievement.query.count(),
+    }), 200
 
 @app.route(
     "/api/admin/membros",

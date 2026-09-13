@@ -1142,6 +1142,35 @@
     box-shadow: 0 8px 20px rgba(20, 40, 79, .06);
 }
 
+.admin-estatisticas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    gap: 12px;
+}
+
+.admin-estatistica {
+    padding: 16px;
+    border: 1px solid #e0e7f1;
+    border-radius: 12px;
+    background: #f7f9fc;
+}
+
+.admin-estatistica strong {
+    display: block;
+    color: #14284f;
+    font-size: 1.6rem;
+}
+
+.admin-estatistica span { color: #52627a; font-size: .85rem; }
+
+html.tema-escuro .admin-estatistica {
+    background: #1d2940;
+    border-color: #39445a;
+}
+
+html.tema-escuro .admin-estatistica strong { color: #f0f4ff; }
+html.tema-escuro .admin-estatistica span { color: #c5d0e2; }
+
 .admin-card h2 {
     font-size: 18px;
     color: #14284F;

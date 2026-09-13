@@ -77,6 +77,49 @@ class ProjectPortfolioTests(unittest.TestCase):
         self.assertEqual(response.status_code, 201, response.json)
         return response.json["projeto"]
 
+    def test_estatisticas_admin_exigem_permissao_e_refletem_projetos(self):
+        url = "/api/admin/estatisticas"
+        self.assertEqual(self.client.get(url).status_code, 401)
+        membro = self.token("member-projects@example.com", "member-password")
+        self.assertEqual(self.client.get(url, headers=self.auth(membro)).status_code, 403)
+
+        admin = self.token("admin-projects@example.com", "admin-password")
+        inicial = self.client.get(url, headers=self.auth(admin))
+        self.assertEqual(inicial.status_code, 200)
+        self.assertEqual(inicial.json["membros"], 3)
+        self.assertEqual(inicial.json["projetos_ativos"], 0)
+
+        self.criar_projeto()
+        atualizado = self.client.get(url, headers=self.auth(admin))
+        self.assertEqual(atualizado.json["projetos_ativos"], 1)
+
+    def test_card_concluido_bloqueado_e_pontuacao_unica(self):
+        membro = self.token("member-projects@example.com", "member-password")
+        lider = self.token("leader@example.com", "leader-password")
+        headers = self.auth(membro)
+        novo = self.client.post("/api/cards", headers=headers,
+                                 json={"titulo": "Entregar relatório", "responsavel_id": "logado"})
+        self.assertEqual(novo.status_code, 201, novo.json)
+        url = f"/api/cards/{novo.json['card']['id']}"
+
+        self.assertEqual(self.client.put(url, headers=self.auth(lider),
+                                         json={"titulo": "Alteração indevida"}).status_code, 403)
+        self.assertEqual(self.client.put(url, headers=headers,
+                                         json={"status": "concluido"}).status_code, 400)
+        self.assertEqual(self.client.put(url, headers=headers,
+                                         json={"status": "andamento", "titulo": " "}).status_code, 400)
+        self.assertEqual(self.client.put(url, headers=headers,
+                                         json={"status": "andamento"}).status_code, 200)
+        self.assertEqual(self.client.put(url, headers=headers,
+                                         json={"status": "concluido"}).status_code, 200)
+        self.assertEqual(db.session.get(User, self.ids["membro"]).pontos, 5)
+        for method, payload in (("put", {"status": "concluido"}),
+                                ("put", {"titulo": "Edição tardia"}),
+                                ("delete", None)):
+            response = getattr(self.client, method)(url, headers=headers, json=payload)
+            self.assertEqual(response.status_code, 400)
+        self.assertEqual(db.session.get(User, self.ids["membro"]).pontos, 5)
+
     def test_admin_cria_e_perfil_publico_recebe_vinculo(self):
         token_membro = self.token("member-projects@example.com", "member-password")
         negado = self.client.post(

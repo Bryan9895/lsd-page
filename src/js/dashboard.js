@@ -530,7 +530,8 @@ async function trocarAba(nomeAba, { salvar = true, carregar = true } = {}) {
     if (nomeAba === "admin" && usuarioAtual?.is_admin && !adminCarregado) {
         await Promise.allSettled([
             carregarMembros({ mostrarLoading: true }),
-            carregarBackups({ mostrarLoading: true })
+            carregarBackups({ mostrarLoading: true }),
+            carregarEstatisticasAdmin()
         ]);
         adminCarregado = true;
     }
@@ -1512,14 +1513,10 @@ function cardParaHTML(card) {
                     }
 
 
-                    <button
-                        type="button"
-                        class="post-it-excluir"
-                        data-id="${card.id}"
-                        title="Excluir Card"
-                    >
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    ${!isConcluido && (card.responsavel_id === usuarioAtual?.id || usuarioAtual?.is_admin)
+                        ? `<button type="button" class="post-it-excluir" data-id="${card.id}"
+                            title="Excluir Card"><i class="fas fa-trash"></i></button>`
+                        : ""}
 
                 </div>
 
@@ -3788,6 +3785,26 @@ function formatarTamanhoArquivo(bytes) {
 }
 
 
+async function carregarEstatisticasAdmin() {
+    const painel = document.getElementById("estatisticasAdmin");
+    if (!painel) return;
+    const resposta = await chamarAPI("/api/admin/estatisticas");
+    if (!resposta.ok) {
+        painel.textContent = "Não foi possível carregar os indicadores.";
+        return;
+    }
+    const indicadores = [
+        ["membros", "Membros"],
+        ["projetos_ativos", "Projetos ativos"],
+        ["cards_concluidos", "Cards concluídos"],
+        ["posts", "Posts"],
+        ["conquistas_desbloqueadas", "Conquistas"]
+    ];
+    painel.innerHTML = indicadores.map(([chave, titulo]) =>
+        `<div class="admin-estatistica"><strong>${Number(resposta.dados[chave] || 0)}</strong><span>${titulo}</span></div>`
+    ).join("");
+}
+
 async function carregarBackups({ mostrarLoading = false } = {}) {
     if (!usuarioAtual?.is_admin) return;
 
@@ -4741,7 +4758,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else if (abaInicial === "admin") {
             await Promise.allSettled([
                 carregarMembros({ mostrarLoading: true }),
-                carregarBackups({ mostrarLoading: true })
+                carregarBackups({ mostrarLoading: true }),
+                carregarEstatisticasAdmin()
             ]);
             adminCarregado = true;
         }
