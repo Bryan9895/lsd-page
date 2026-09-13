@@ -30,6 +30,8 @@ def patch_app():
             raise SystemExit("Marcador do modelo User não encontrado em backend/app.py")
         text = text.replace(marker_user, helper + marker_user, 1)
     text = text.replace('default="Set 2026"', 'default=mes_ano_fortaleza', 1)
+    # Perfil novo começa neutro; localização só aparece depois que o membro preencher.
+    text = text.replace('default="Maranguape, CE"', 'default=""', 1)
 
     if "register_v3_features(app, db, globals())" not in text:
         marker = "register_password_reset(app, db, User)\ninicializar_aplicacao()"
