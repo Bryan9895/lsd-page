@@ -1,0 +1,341 @@
+/* LSD-PAGE V3 — melhorias progressivas. Desktop é preservado; foco em toque e telas pequenas. */
+
+.v3-notification-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    z-index: 1200;
+}
+
+.v3-notification-bell {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(14, 74, 52, .18);
+    background: rgba(255, 255, 255, .92);
+    color: #164a39;
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    position: relative;
+    font-size: 1rem;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.v3-notification-bell:hover,
+.v3-notification-bell:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(12, 60, 44, .14);
+    outline: none;
+}
+
+.v3-notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -6px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: #d92d20;
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 800;
+    border: 2px solid #fff;
+}
+
+.v3-notification-panel {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: min(390px, calc(100vw - 28px));
+    max-height: min(560px, 70vh);
+    overflow: auto;
+    border-radius: 18px;
+    background: #fff;
+    border: 1px solid rgba(16, 24, 40, .1);
+    box-shadow: 0 24px 60px rgba(16, 24, 40, .22);
+    color: #17231f;
+}
+
+.v3-notification-panel-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 16px;
+    background: rgba(255, 255, 255, .96);
+    border-bottom: 1px solid rgba(16, 24, 40, .08);
+    backdrop-filter: blur(12px);
+}
+
+.v3-notification-panel-head strong { font-size: .95rem; }
+.v3-notification-panel-head span,
+.v3-notification-panel-head a { font-size: .74rem; color: #66736e; text-decoration: none; }
+.v3-notification-items { padding: 7px; }
+
+.v3-notification-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    border-radius: 13px;
+    padding: 11px;
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 10px;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+}
+
+.v3-notification-item:hover { background: #f5f8f6; }
+.v3-notification-item.is-unread { background: #edf8f2; }
+.v3-notification-item.is-announcement { background: #fff0ef; }
+.v3-notification-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    background: #e8f3ed;
+    color: #176243;
+}
+.v3-notification-item.is-announcement .v3-notification-icon { background: #fee4e2; color: #b42318; }
+.v3-notification-copy { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.v3-notification-copy strong { font-size: .81rem; line-height: 1.2; }
+.v3-notification-copy > span { font-size: .76rem; line-height: 1.35; color: #53625d; }
+.v3-notification-copy small { font-size: .66rem; color: #7b8984; }
+.v3-notification-empty { padding: 26px 15px; text-align: center; color: #6c7975; font-size: .82rem; }
+
+.v3-announcement-toast {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 10000;
+    width: min(430px, calc(100vw - 28px));
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 36px;
+    gap: 12px;
+    align-items: start;
+    padding: 15px;
+    border-radius: 18px;
+    color: #fff;
+    background: linear-gradient(135deg, #b42318, #d92d20);
+    box-shadow: 0 22px 55px rgba(130, 20, 12, .34);
+}
+.v3-announcement-symbol {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, .15);
+}
+.v3-announcement-copy strong { display: block; font-size: .9rem; margin-bottom: 4px; }
+.v3-announcement-copy p { margin: 0; font-size: .8rem; line-height: 1.45; color: rgba(255,255,255,.9); }
+.v3-announcement-toast > button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(255,255,255,.16);
+    color: #fff;
+    cursor: pointer;
+}
+
+.v3-field-help {
+    display: block;
+    margin-top: 6px;
+    color: #6d7a75;
+    font-size: .7rem;
+    line-height: 1.35;
+    font-weight: 500;
+}
+
+.v3-security-block {
+    margin: 18px 0 6px;
+    padding: 14px;
+    border: 1px solid rgba(16, 97, 67, .15);
+    border-radius: 14px;
+    background: #f4faf7;
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+}
+.v3-security-block > div { display: flex; flex-direction: column; gap: 3px; }
+.v3-security-block strong { font-size: .82rem; color: #174b39; }
+.v3-security-block span { font-size: .72rem; line-height: 1.35; color: #64736d; }
+.v3-reset-password {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid #24704f;
+    background: #fff;
+    color: #17543b;
+    font-weight: 700;
+    cursor: pointer;
+}
+.v3-reset-password:disabled { opacity: .58; cursor: wait; }
+
+.v3-member-level {
+    margin: 0 0 16px;
+    padding: 15px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 93, 64, .13);
+    background: linear-gradient(135deg, #f3faf6, #fff);
+}
+.v3-member-level > div:first-child { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.v3-member-level span { font-size: .75rem; color: #64736d; }
+.v3-member-level strong { color: #13583d; font-size: .9rem; }
+.v3-level-track { height: 7px; margin: 10px 0 7px; background: #dceae3; border-radius: 999px; overflow: hidden; }
+.v3-level-track span { display: block; height: 100%; background: #1d7a53; border-radius: inherit; }
+.v3-member-level small { font-size: .7rem; color: #66736e; }
+
+/* Cards do diretório com altura uniforme mesmo com bios/selos diferentes. */
+.membros-grid { align-items: stretch !important; }
+.membro-card-publico { height: 100% !important; min-height: 100%; display: flex !important; flex-direction: column; }
+.membro-card-publico .membro-card-conteudo,
+.membro-card-publico .membro-card-corpo { flex: 1 1 auto; }
+
+html.tema-escuro .v3-notification-bell,
+.tema-escuro .v3-notification-bell { background: #19231f; color: #e6f3ed; border-color: rgba(255,255,255,.12); }
+html.tema-escuro .v3-notification-badge,
+.tema-escuro .v3-notification-badge { border-color: #19231f; }
+html.tema-escuro .v3-notification-panel,
+.tema-escuro .v3-notification-panel { background: #151d1a; color: #edf5f1; border-color: rgba(255,255,255,.08); }
+html.tema-escuro .v3-notification-panel-head,
+.tema-escuro .v3-notification-panel-head { background: rgba(21,29,26,.96); border-color: rgba(255,255,255,.08); }
+html.tema-escuro .v3-notification-item:hover,
+.tema-escuro .v3-notification-item:hover { background: #202c27; }
+html.tema-escuro .v3-notification-item.is-unread,
+.tema-escuro .v3-notification-item.is-unread { background: #173628; }
+html.tema-escuro .v3-notification-item.is-announcement,
+.tema-escuro .v3-notification-item.is-announcement { background: #3b1e1b; }
+html.tema-escuro .v3-notification-copy > span,
+.tema-escuro .v3-notification-copy > span { color: #b8c5bf; }
+html.tema-escuro .v3-security-block,
+.tema-escuro .v3-security-block { background: #172720; border-color: rgba(104,200,154,.16); }
+html.tema-escuro .v3-reset-password,
+.tema-escuro .v3-reset-password { background: #1d2c25; color: #d9f2e5; border-color: #4d9271; }
+html.tema-escuro .v3-member-level,
+.tema-escuro .v3-member-level { background: linear-gradient(135deg, #172720, #1a221f); border-color: rgba(104,200,154,.14); }
+
+@media (max-width: 900px) {
+    /* Touch targets */
+    .dash-tabs .aba-btn,
+    .perfil-acoes button,
+    .post-criador-acoes button,
+    .kanban-topo button,
+    .modal-acoes button,
+    .membro-voltar { min-height: 44px; }
+
+    .dash-tabs {
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .dash-tabs::-webkit-scrollbar { display: none; }
+    .dash-tabs .aba-btn { flex: 0 0 auto; scroll-snap-align: start; white-space: nowrap; }
+
+    /* Kanban mantém a metáfora de colunas e vira carrossel horizontal tocável. */
+    .kanban-board {
+        display: flex !important;
+        gap: 12px !important;
+        overflow-x: auto !important;
+        overflow-y: visible;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior-inline: contain;
+        -webkit-overflow-scrolling: touch;
+        padding: 2px 4px 14px !important;
+        scrollbar-width: thin;
+    }
+    .kanban-coluna {
+        flex: 0 0 min(86vw, 390px) !important;
+        width: min(86vw, 390px) !important;
+        scroll-snap-align: center;
+    }
+    .post-it { touch-action: manipulation; }
+    .post-it button, .btn-assumir { min-width: 42px; min-height: 42px; }
+
+    .membros-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+@media (max-width: 640px) {
+    .v3-notification-panel {
+        position: fixed;
+        top: 70px;
+        left: 14px;
+        right: 14px;
+        width: auto;
+        max-height: calc(100dvh - 92px);
+        border-radius: 18px;
+    }
+    .v3-announcement-toast {
+        left: 14px;
+        right: 14px;
+        bottom: max(14px, env(safe-area-inset-bottom));
+        width: auto;
+    }
+
+    .v3-security-block { flex-direction: column; align-items: stretch; }
+    .v3-reset-password { width: 100%; }
+
+    .membros-grid { grid-template-columns: 1fr !important; }
+    .membro-card-publico { min-height: 0; }
+
+    .perfil-header .perfil-info-barra { gap: 10px; }
+    .perfil-nome-funcao { min-width: 0; }
+    .perfil-nome-funcao h1 { overflow-wrap: anywhere; }
+    .perfil-acoes { width: 100%; }
+    .perfil-acoes .btn-principal { width: 100%; justify-content: center; }
+
+    .kanban-topo { align-items: stretch !important; gap: 10px !important; }
+    .kanban-topo .btn-principal { width: 100%; justify-content: center; }
+    .kanban-legenda { font-size: .78rem; }
+
+    .post-criador { align-items: flex-start; }
+    .post-criador-avatar { width: 38px !important; height: 38px !important; }
+    .post-criador-corpo { min-width: 0; }
+    .post-criador-acoes { gap: 8px; align-items: stretch !important; }
+    .post-criador-anexos { display: flex; flex-wrap: wrap; }
+    #btnPublicarPost { min-width: 92px; }
+
+    /* Modais viram bottom sheets seguros para teclado virtual e notch. */
+    .modal-overlay {
+        align-items: flex-end !important;
+        padding: 0 !important;
+    }
+    .modal-card {
+        width: 100% !important;
+        max-width: none !important;
+        max-height: min(92dvh, 760px) !important;
+        border-radius: 22px 22px 0 0 !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    }
+    .modal-linha { grid-template-columns: 1fr !important; }
+    .modal-card input,
+    .modal-card textarea,
+    .modal-card select { font-size: 16px !important; }
+    .modal-acoes {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+        padding-top: 10px;
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+        background: inherit;
+    }
+
+    .dash-col-esquerda .notificacoes-card,
+    .dash-col-esquerda .atividades-card { display: none; }
+}
