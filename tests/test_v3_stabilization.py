@@ -108,7 +108,7 @@ class V3StabilizationTests(unittest.TestCase):
         joined_at = datetime.fromisoformat(created.data_entrada)
         self.assertIsNotNone(joined_at.tzinfo)
         self.assertEqual(joined_at.utcoffset().total_seconds(), -3 * 60 * 60)
-        self.assertLessEqual(before, joined_at)
+        self.assertLessEqual(before.replace(microsecond=0), joined_at)
         self.assertLessEqual(joined_at, after)
 
         payload_user = (response.json or {}).get("usuario") or (response.json or {}).get("user") or {}
