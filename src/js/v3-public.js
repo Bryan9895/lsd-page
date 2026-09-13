@@ -68,7 +68,8 @@
 
     function createBell() {
         if (!token() || document.getElementById("v3NotificationBell")) return;
-        const host = document.querySelector(".nav-account-actions") || document.querySelector(".nav-right") || document.querySelector("nav");
+        const account = document.getElementById("area-usuario");
+        const host = account?.parentElement || document.querySelector(".nav-account-actions") || document.querySelector(".nav-right") || document.querySelector("nav");
         if (!host) return;
         const wrap = document.createElement("div");
         wrap.className = "v3-notification-wrap v3-notification-public";
@@ -80,7 +81,9 @@
                 <div class="v3-notification-panel-head"><strong>Notificações</strong><a href="dashboard.html">Ver perfil</a></div>
                 <div class="v3-notification-items" id="v3NotificationItems"><div class="v3-notification-empty">Carregando...</div></div>
             </section>`;
-        host.prepend(wrap);
+        // Na landing page, o sino fica entre o menu e o botão/atalho da conta.
+        if (account && account.parentElement === host) host.insertBefore(wrap, account);
+        else host.prepend(wrap);
         const button = wrap.querySelector("#v3NotificationBell");
         const panel = wrap.querySelector("#v3NotificationPanel");
         button.addEventListener("click", (event) => {
