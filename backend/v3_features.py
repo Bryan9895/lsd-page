@@ -69,7 +69,6 @@ def register_v3_features(app, db, namespace):
     def add_notification(user_id, tipo, titulo, mensagem, *, dedupe_minutes=2):
         if not Notification or not user_id:
             return False
-        # Evita duplicidade causada por retry/reload imediato da mesma ação.
         cutoff = datetime.utcnow() - timedelta(minutes=dedupe_minutes)
         query = Notification.query.filter_by(
             user_id=user_id,
@@ -100,7 +99,6 @@ def register_v3_features(app, db, namespace):
         return value
 
     # Corrige dados históricos duplicados antes de criar a trava definitiva.
-    # Flask-SQLAlchemy exige um application context mesmo durante o import WSGI.
     if UserAchievement is not None:
         table = UserAchievement.__tablename__
         with app.app_context():
@@ -115,7 +113,6 @@ def register_v3_features(app, db, namespace):
                 ))
                 db.session.commit()
             except Exception:
-                # Bancos antigos podem ainda estar no meio de uma migration. Não derrube o site.
                 db.session.rollback()
                 app.logger.exception("Não foi possível consolidar conquistas duplicadas.")
 
@@ -123,25 +120,17 @@ def register_v3_features(app, db, namespace):
     def v3_before_request():
         g.v3_user = current_user()
 
-        # Membro comum só pode criar card para si ou sem responsável.
         if request.method == "POST" and request.path == "/api/cards" and g.v3_user:
             if not bool(getattr(g.v3_user, "is_admin", False)):
                 data = request.get_json(silent=True) or {}
                 responsavel = data.get("responsavel_id")
-                allowed = {
-                    None,
-                    "",
-                    "logado",
-                    g.v3_user.id,
-                    str(g.v3_user.id),
-                }
+                allowed = {None, "", "logado", g.v3_user.id, str(g.v3_user.id)}
                 if responsavel not in allowed:
                     return jsonify({
                         "success": False,
                         "message": "Membros podem atribuir o card apenas a si mesmos ou deixá-lo sem responsável."
                     }), 403
 
-        # Guarda a composição anterior para descobrir quem entrou em um projeto.
         match = PROJECT_ADMIN_RE.match(request.path)
         if request.method == "PUT" and match and match.group(1) and Project is not None:
             projeto = db.session.get(Project, int(match.group(1)))
@@ -159,18 +148,39 @@ def register_v3_features(app, db, namespace):
         projeto = db.session.get(Project, int(projeto_id))
         if not projeto:
             return
+
         before_ids = getattr(g, "v3_project_member_ids", set())
         current_members = list(getattr(projeto, "membros", []) or [])
+        current_ids = {member.id for member in current_members}
         new_members = [member for member in current_members if member.id not in before_ids]
         if request.method == "POST":
             new_members = current_members
-        for member in new_members:
+
+        for newcomer in new_members:
             add_notification(
-                member.id,
+                newcomer.id,
                 "projeto",
                 "Você entrou em um projeto",
                 f"Você agora participa do projeto {getattr(projeto, 'nome', 'LSD')}.",
             )
+            # Quem já fazia parte do projeto recebe a atividade no sino também.
+            for teammate in current_members:
+                if teammate.id == newcomer.id or teammate.id not in before_ids:
+                    continue
+                add_notification(
+                    teammate.id,
+                    "projeto",
+                    "Novo membro no projeto",
+                    f"{newcomer.nome} entrou no projeto {getattr(projeto, 'nome', 'LSD')}.",
+                )
+            leader = getattr(projeto, "lider", None)
+            if leader and leader.id != newcomer.id and leader.id not in current_ids:
+                add_notification(
+                    leader.id,
+                    "projeto",
+                    "Novo membro no projeto",
+                    f"{newcomer.nome} entrou no projeto {getattr(projeto, 'nome', 'LSD')}.",
+                )
 
     def notify_social_event():
         actor = getattr(g, "v3_user", None)
@@ -195,7 +205,6 @@ def register_v3_features(app, db, namespace):
             post = db.session.get(Post, post_id)
             if not post or post.user_id == actor.id:
                 return
-            # O endpoint é toggle; só avise se a reação continuar registrada.
             reaction = PostReaction.query.filter_by(post_id=post_id, user_id=actor.id).first()
             if reaction:
                 emoji = getattr(reaction, "emoji", "") or "curtiu"
@@ -233,7 +242,6 @@ def register_v3_features(app, db, namespace):
 
         payload = response.get_json(silent=True) if response.is_json else None
 
-        # Perfil público: inclui o mesmo nível calculado para o dono da conta.
         profile_match = MEMBER_PROFILE_RE.match(request.path)
         if profile_match and isinstance(payload, dict) and nivel_usuario is not None:
             member = db.session.get(User, int(profile_match.group(1)))
@@ -243,7 +251,6 @@ def register_v3_features(app, db, namespace):
                 if isinstance(payload.get("membro"), dict):
                     payload["membro"]["nivel"] = level
 
-        # Percentual de conquista = usuários únicos / usuários totais, nunca linhas.
         if isinstance(payload, dict) and UserAchievement is not None:
             achievements = payload.get("conquistas")
             if isinstance(achievements, list):
@@ -261,12 +268,8 @@ def register_v3_features(app, db, namespace):
                         .count()
                     )
                     item["total_desbloqueios"] = unique_count
-                    item["percentual_desbloqueio"] = round(
-                        (unique_count / total_users) * 100,
-                        1,
-                    )
+                    item["percentual_desbloqueio"] = round((unique_count / total_users) * 100, 1)
 
-        # Alimenta o sino com eventos que antes existiam apenas como atividade.
         changed = False
         if request.method in {"POST", "PUT"} and PROJECT_ADMIN_RE.match(request.path):
             before = set(db.session.new)
@@ -289,7 +292,6 @@ def register_v3_features(app, db, namespace):
             response.content_type = "application/json; charset=utf-8"
         return response
 
-    # O comunicado desta fase é interno: substitui o envio por e-mail sem mudar a URL da UI.
     def internal_announcement():
         actor = current_user()
         if not actor:
@@ -301,10 +303,7 @@ def register_v3_features(app, db, namespace):
         subject = str(data.get("assunto") or "").strip()
         message = str(data.get("mensagem") or "").strip()
         if len(subject) < 3 or len(message) < 10:
-            return jsonify({
-                "success": False,
-                "message": "Informe um assunto e uma mensagem válidos."
-            }), 400
+            return jsonify({"success": False, "message": "Informe um assunto e uma mensagem válidos."}), 400
 
         users = User.query.order_by(User.id.asc()).all()
         for member in users:
