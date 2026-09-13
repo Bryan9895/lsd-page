@@ -4,6 +4,7 @@
 
     const TOKEN_KEY = "token_lsd";
     const NAIVE_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
+    const LEGACY_JOIN_DATE = /^(?:Jan|Fev|Mar|Abr|Mai|Jun|Jul|Ago|Set|Out|Nov|Dez)\s+\d{4}$/i;
 
     const token = () => {
         try { const value = localStorage.getItem(TOKEN_KEY); if (value) return value; } catch (_) {}
@@ -51,12 +52,32 @@
         return typeof value === "string" && NAIVE_ISO.test(value) ? `${value}Z` : value;
     }
 
-    // Corrige datetimes UTC antigos que chegavam sem o sufixo Z.
+    function formatFortalezaDate(value) {
+        if (!value) return "Agora";
+        if (typeof value === "string" && LEGACY_JOIN_DATE.test(value.trim())) {
+            // Dados antigos guardavam apenas mês/ano. Não inventamos dia nem hora.
+            return value.trim();
+        }
+        const date = new Date(normalizeDate(value));
+        if (Number.isNaN(date.getTime())) return String(value || "");
+        return new Intl.DateTimeFormat("pt-BR", {
+            timeZone: "America/Fortaleza",
+            dateStyle: "short",
+            timeStyle: "short",
+        }).format(date);
+    }
+
+    // Corrige datetimes UTC antigos que chegavam sem o sufixo Z e mantém
+    // todos os horários do dashboard no fuso oficial do laboratório.
     try {
         if (typeof formatarData === "function") {
             const baseFormatarData = formatarData;
             formatarData = function v3FormatarData(value) {
-                return baseFormatarData(normalizeDate(value));
+                if (typeof value === "string" && LEGACY_JOIN_DATE.test(value.trim())) {
+                    return value.trim();
+                }
+                const formatted = formatFortalezaDate(value);
+                return formatted || baseFormatarData(normalizeDate(value));
             };
         }
     } catch (_) { /* mantém o formatador original */ }
@@ -113,7 +134,6 @@
                 </div>
             </section>`;
         host.prepend(wrap);
-
         const button = wrap.querySelector("#v3NotificationBell");
         const panel = wrap.querySelector("#v3NotificationPanel");
         button.addEventListener("click", (event) => {
