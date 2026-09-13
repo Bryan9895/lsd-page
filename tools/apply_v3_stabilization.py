@@ -87,6 +87,22 @@ def patch_dashboard_html():
     path.write_text(text, encoding="utf-8")
 
 
+def patch_dashboard_js_copy():
+    path = ROOT / "src" / "js" / "dashboard.js"
+    text = path.read_text(encoding="utf-8")
+    text = text.replace(
+        'if (status) status.textContent = `${resposta.dados.destinatarios} destinatário(s) processado(s).`;',
+        'if (status) status.textContent = `${resposta.dados.destinatarios} membro(s) notificado(s).`;',
+        1,
+    )
+    text = text.replace(
+        'mostrarToast("Comunicado enviado com sucesso.", "sucesso");',
+        'mostrarToast("Comunicado publicado com sucesso.", "sucesso");',
+        1,
+    )
+    path.write_text(text, encoding="utf-8")
+
+
 def wrap_script(original_name, base_name, enhancement_name):
     js_dir = ROOT / "src" / "js"
     original = js_dir / original_name
@@ -107,6 +123,7 @@ def wrap_script(original_name, base_name, enhancement_name):
 
 
 def patch_scripts():
+    patch_dashboard_js_copy()
     wrap_script("dashboard.js", "dashboard-base.js", "v3-dashboard.js")
     wrap_script("script.js", "script-base.js", "v3-public.js")
 
