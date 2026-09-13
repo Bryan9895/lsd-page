@@ -111,6 +111,61 @@ def patch_scripts():
     wrap_script("script.js", "script-base.js", "v3-public.js")
 
 
+def patch_tests():
+    path = ROOT / "tests" / "test_password_reset.py"
+    text = path.read_text(encoding="utf-8")
+    text = text.replace(
+        "from backend.app import app, db, User, Post",
+        "from backend.app import app, db, User, Post, Notification",
+        1,
+    )
+    start = text.find("    def test_admin_announcement_uses_unique_bcc_recipients(self):")
+    end = text.find("\nif __name__ == '__main__':", start)
+    if start >= 0 and end > start:
+        method = '''    def test_admin_announcement_uses_internal_notifications(self):
+        admin = User(nome='Admin', email='admin@example.com',
+                     senha_hash=generate_password_hash('admin-password'), is_admin=True)
+        duplicate = User(nome='Duplicado', email='MEMBER@example.com',
+                         senha_hash=generate_password_hash('other-password'))
+        db.session.add_all([admin, duplicate])
+        db.session.commit()
+
+        member_token = self.client.post('/api/login', json={
+            'email': 'member@example.com', 'senha': 'old-password'
+        }).json['token']
+        self.assertEqual(self.client.post(
+            '/api/admin/comunicados',
+            headers={'Authorization': 'Bearer ' + member_token},
+            json={'assunto': 'Aviso', 'mensagem': 'Mensagem para a equipe.'}
+        ).status_code, 403)
+
+        admin_token = self.client.post('/api/login', json={
+            'email': 'admin@example.com', 'senha': 'admin-password'
+        }).json['token']
+        with patch('backend.app.send_announcement_email') as send:
+            response = self.client.post(
+                '/api/admin/comunicados',
+                headers={'Authorization': 'Bearer ' + admin_token},
+                json={'assunto': 'Aviso', 'mensagem': 'Mensagem para a equipe.'}
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['canal'], 'notificacao_interna')
+        self.assertEqual(response.json['destinatarios'], 3)
+        send.assert_not_called()
+        self.assertEqual(Notification.query.filter_by(tipo='comunicado').count(), 3)
+
+        invalid = self.client.post(
+            '/api/admin/comunicados',
+            headers={'Authorization': 'Bearer ' + admin_token},
+            json={'assunto': 'Oi', 'mensagem': 'curta'}
+        )
+        self.assertEqual(invalid.status_code, 400)
+'''
+        text = text[:start] + method + text[end:]
+    path.write_text(text, encoding="utf-8")
+
+
 def patch_readme_note():
     path = ROOT / "docs" / "ESTABILIZACAO_V3.md"
     if not path.exists():
@@ -142,6 +197,7 @@ def main():
     patch_app()
     patch_dashboard_html()
     patch_scripts()
+    patch_tests()
     patch_readme_note()
     print("Correções V3 aplicadas com sucesso.")
 
