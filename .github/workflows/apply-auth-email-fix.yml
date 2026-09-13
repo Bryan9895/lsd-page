@@ -31,23 +31,36 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Aplicar correções
         run: python tools/apply_auth_email_fix.py
-      - name: Ajustar teste sem depender da ordem do BCC
+      - name: Ajustar verificações geradas
         run: |
           python - <<'PY'
           from pathlib import Path
-          path = Path('tests/test_password_reset.py')
-          text = path.read_text(encoding='utf-8')
+
+          test = Path('tests/test_password_reset.py')
+          text = test.read_text(encoding='utf-8')
           text = text.replace(
               "self.assertEqual(send.call_args.args[1], ['admin@example.com', 'member@example.com'])",
               "self.assertCountEqual(send.call_args.args[1], ['admin@example.com', 'member@example.com'])",
           )
-          path.write_text(text, encoding='utf-8')
+          test.write_text(text, encoding='utf-8')
+
+          projetos = Path('src/js/projetos.js')
+          text = projetos.read_text(encoding='utf-8')
+          text = text.replace(
+              'function obterTokenProjeto() {\n    try { const value = obterTokenProjeto(); if (value) return value; } catch (_) {}',
+              'function obterTokenProjeto() {\n    try { const value = localStorage.getItem(TOKEN_KEY); if (value) return value; } catch (_) {}',
+              1,
+          )
+          projetos.write_text(text, encoding='utf-8')
           PY
       - name: Testar API e integração
         run: python -m unittest discover -s tests -q
-      - name: Verificar sintaxe JavaScript
+      - name: Verificar JavaScript e fallback de storage
         run: |
           for file in src/js/*.js; do node --check "$file"; done
+          grep -F 'const value = localStorage.getItem(TOKEN_KEY)' src/js/projetos.js
+          grep -F 'sessionStorage.getItem(TOKEN_KEY)' src/js/projetos.js
+          ! grep -F 'const value = obterTokenProjeto()' src/js/projetos.js
       - name: Commitar arquivos gerados
         run: |
           if git diff --quiet; then
