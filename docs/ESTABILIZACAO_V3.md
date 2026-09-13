@@ -13,7 +13,7 @@ resolver os itens pendentes.
 | Notificações e histórico | Implementados; endpoints autenticados com cobertura parcial | Conferir avisos e atividade em conta de membro após ações reais. |
 | Estatísticas admin | API com teste de acesso e interface responsiva | Conferir os cinco contadores no servidor e em celular. |
 | CI | Workflow de unittest e sintaxe JS | Confirmar a primeira execução verde no PR. |
-| Migrations | Revisão Alembic antiga; ajustes SQL em inicialização | Inventariar tabelas/colunas do banco real, gerar uma migração compatível e ensaiá-la sobre cópia antes do deploy. |
+| Migrations | Revisão Alembic antiga; ajustes SQL em inicialização | Rodar `tools/check_deployment.py --database CAMINHO --schema` no banco real, gerar migração compatível e ensaiá-la sobre cópia antes do deploy. |
 | Layout mobile | CSS responsivo existente | Testar em aparelhos reais: navbar, modal de perfil com botão Salvar, Kanban, feed, projetos e contraste do tema escuro. |
 | Arquitetura e README | `app.py` e README ainda extensos | Extrair módulos sem mudar contratos de API; mover notas de versão antigas para `CHANGELOG.md`. |
 

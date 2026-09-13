@@ -12,6 +12,8 @@ def main():
                         help="Caminho absoluto do mesmo DATABASE_PATH configurado no WSGI")
     parser.add_argument("--uploads", default=os.environ.get("UPLOAD_FOLDER"),
                         help="Pasta de uploads configurada no WSGI")
+    parser.add_argument("--schema", action="store_true",
+                        help="Exibe tabelas e colunas para preparar migrations, sem dados pessoais")
     args = parser.parse_args()
 
     if not args.database or not Path(args.database).is_absolute():
@@ -33,6 +35,11 @@ def main():
             print("Tabelas principais: " + ", ".join(
                 nome for nome in ("users", "cards", "posts", "projects", "notifications")
                 if nome in tabelas))
+            if args.schema:
+                for tabela in sorted(tabelas - {"sqlite_sequence"}):
+                    nome_seguro = '"' + tabela.replace('"', '""') + '"'
+                    colunas = conexao.execute(f"PRAGMA table_info({nome_seguro})").fetchall()
+                    print(f"{tabela}: " + ", ".join(coluna[1] for coluna in colunas))
     except sqlite3.DatabaseError as erro:
         parser.error(f"falha ao ler SQLite: {erro}")
 

@@ -20,6 +20,9 @@ o caminho absoluto e a quantidade de membros. Confira se essa quantidade coincid
 com os dados que você espera ver no painel. Se der erro, corrija o caminho antes
 de recarregar a Web App.
 
+Para planejar as migrations, repita o comando com `--schema`: ele lista somente
+nomes de tabelas e colunas, sem expor senhas nem registros dos membros.
+
 ## Configurar a Web App
 
 1. Selecione **Manual configuration**, com a mesma versão de Python usada pelo
